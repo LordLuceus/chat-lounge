@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Message from "$lib/Message.svelte";
   import { useChat } from "ai/svelte";
   import { Howl } from "howler";
   import SvelteMarkdown from "svelte-markdown";
@@ -23,18 +24,14 @@
   <h1>Awesome Chat App</h1>
   <ul>
     {#each $messages as message}
-      {#if message.role === "system"}
-        // Don't show system messages
-      {:else if message.role === "user"}
-        <li>{message.role}: {message.content}</li>
-      {:else}
-        <li>{message.role}: <SvelteMarkdown source={message.content} /></li>
-      {/if}
+      <li>
+        <Message {message} />
+      </li>
     {/each}
   </ul>
 
   <form on:submit={handleSubmit}>
-    <textarea bind:value={$input} />
+    <textarea bind:value={$input} placeholder="Chat with Mistral" cols="200" rows="10" />
     <button type="submit">Send</button>
   </form>
 </section>
@@ -46,5 +43,29 @@
     align-items: center;
     justify-content: center;
     flex: 0.6;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  li {
+    margin: 0.5rem;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  textarea {
+    margin: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid #ccc;
+    width: 100%;
   }
 </style>

@@ -1261,7 +1261,7 @@ var init__2 = __esm({
   ".svelte-kit/output/server/nodes/1.js"() {
     index2 = 1;
     component2 = async () => component_cache2 ?? (component_cache2 = (await Promise.resolve().then(() => (init_error_svelte(), error_svelte_exports))).default);
-    imports2 = ["_app/immutable/nodes/1.DgOETrpW.js", "_app/immutable/chunks/scheduler.CYFynt7j.js", "_app/immutable/chunks/index.iosNfj23.js", "_app/immutable/chunks/entry.CkXHfhYC.js", "_app/immutable/chunks/index.D8mVmiTF.js"];
+    imports2 = ["_app/immutable/nodes/1.BSNCmJV_.js", "_app/immutable/chunks/scheduler.CYFynt7j.js", "_app/immutable/chunks/index.iosNfj23.js", "_app/immutable/chunks/entry.BvPnGTHO.js", "_app/immutable/chunks/index.D8mVmiTF.js"];
     stylesheets2 = [];
     fonts2 = [];
   }
@@ -2559,7 +2559,7 @@ var options = {
 		<div class="error">
 			<span class="status">` + status + '</span>\n			<div class="message">\n				<h1>' + message + "</h1>\n			</div>\n		</div>\n	</body>\n</html>\n"
   },
-  version_hash: "18adj20"
+  version_hash: "1mdoxa6"
 };
 async function get_hooks() {
   return {};
@@ -5587,7 +5587,7 @@ var manifest = (() => {
     assets: /* @__PURE__ */ new Set(["assets/typing.wav", "favicon.png"]),
     mimeTypes: { ".wav": "audio/wav", ".png": "image/png" },
     _: {
-      client: { "start": "_app/immutable/entry/start.D5RjRq9X.js", "app": "_app/immutable/entry/app.D3M8I3yF.js", "imports": ["_app/immutable/entry/start.D5RjRq9X.js", "_app/immutable/chunks/entry.CkXHfhYC.js", "_app/immutable/chunks/scheduler.CYFynt7j.js", "_app/immutable/chunks/index.D8mVmiTF.js", "_app/immutable/entry/app.D3M8I3yF.js", "_app/immutable/chunks/scheduler.CYFynt7j.js", "_app/immutable/chunks/index.iosNfj23.js"], "stylesheets": [], "fonts": [], "uses_env_dynamic_public": false },
+      client: { "start": "_app/immutable/entry/start.63AhPGf1.js", "app": "_app/immutable/entry/app.CGGU5_xe.js", "imports": ["_app/immutable/entry/start.63AhPGf1.js", "_app/immutable/chunks/entry.BvPnGTHO.js", "_app/immutable/chunks/scheduler.CYFynt7j.js", "_app/immutable/chunks/index.D8mVmiTF.js", "_app/immutable/entry/app.CGGU5_xe.js", "_app/immutable/chunks/scheduler.CYFynt7j.js", "_app/immutable/chunks/index.iosNfj23.js"], "stylesheets": [], "fonts": [], "uses_env_dynamic_public": false },
       nodes: [
         __memo(() => Promise.resolve().then(() => (init__(), __exports))),
         __memo(() => Promise.resolve().then(() => (init__2(), __exports2)))

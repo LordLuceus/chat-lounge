@@ -9,10 +9,10 @@ const mistral = new MistralClient(MISTRAL_API_KEY);
 
 export const POST = (async ({ request }) => {
   const { messages } = await request.json();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const response: any = await mistral.chatStream({ model: "mistral-medium", messages });
+  const response = await mistral.chatStream({ messages, model: "mistral-large-latest" });
 
-  const stream = OpenAIStream(response);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const stream = OpenAIStream(response as any);
 
   return new StreamingTextResponse(stream);
 }) satisfies RequestHandler;

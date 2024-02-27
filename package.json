@@ -32,8 +32,9 @@
   },
   "type": "module",
   "dependencies": {
-    "@sveltejs/adapter-vercel": "^5.1.0",
     "@mistralai/mistralai": "^0.0.10",
+    "@sveltejs/adapter-vercel": "^5.1.0",
+    "@vercel/analytics": "^1.2.2",
     "ai": "^2.2.36",
     "elevenlabs-js": "^1.2.6",
     "howler": "^2.2.4",

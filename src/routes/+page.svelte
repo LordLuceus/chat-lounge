@@ -1,18 +1,46 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import Message from "$lib/Message.svelte";
   import { useChat } from "ai/svelte";
-  import { Howl } from "howler";
   import SvelteMarkdown from "svelte-markdown";
+  import { page } from "$app/stores";
+  import { signIn, signOut } from "@auth/sveltekit/client";
+  import { enhance } from "$app/forms";
+  import type { ActionData } from "./$types";
 
-  const sound = new Howl({
-    src: ["/assets/typing.wav"]
-  });
+  let finishSound: HTMLAudioElement;
 
-  const { input, handleSubmit, messages } = useChat({
+  const { input, handleSubmit, messages, reload } = useChat({
     onFinish: () => {
-      sound.play();
-    }
+      finishSound?.play();
+    },
+    body: { userEmail: $page.data.session?.user?.email }
   });
+
+  let chatForm: HTMLFormElement;
+
+  function handleMessageSubmit(event: KeyboardEvent) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      chatForm.dispatchEvent(new Event("submit"));
+    }
+  }
+
+  onMount(() => {
+    chatForm?.querySelector("textarea")?.focus();
+    finishSound = new Audio("/assets/typing.wav");
+  });
+
+  export let form: ActionData;
+  let apiKeyInput: HTMLInputElement;
+
+  function handleApiKeyError() {
+    apiKeyInput?.focus();
+  }
+
+  $: if (form?.message) {
+    handleApiKeyError();
+  }
 </script>
 
 <svelte:head>
@@ -20,21 +48,65 @@
   <meta name="description" content="Chat" />
 </svelte:head>
 
-<section>
+<header>
   <h1>Awesome Chat App</h1>
-  <ul>
-    {#each $messages as message}
-      <li>
-        <Message {message} />
-      </li>
-    {/each}
-  </ul>
+  {#if $page.data.session}
+    <h1>Signed in as {$page.data.session.user?.name}</h1>
+    <button on:click={() => signOut()}>Sign out</button>
+  {/if}
+  {#if !$page.data.session}
+    <button on:click={() => signIn("google")}>Sign in with Google</button>
+  {/if}
+</header>
 
-  <form on:submit={handleSubmit}>
-    <textarea bind:value={$input} placeholder="Chat with Mistral" cols="200" rows="10" />
-    <button type="submit">Send</button>
-  </form>
-</section>
+<main>
+  {#if $page.data.session}
+    {#if !$page.data.hasApiKeys}
+      <section>
+        <h2>Add your API keys to chat</h2>
+        <form method="POST" use:enhance>
+          <label>
+            <span>Mistral API Key</span>
+            <input type="text" name="mistralApiKey" bind:this={apiKeyInput} />
+          </label>
+          {#if form?.message}
+            <p role="alert">{form.message}</p>
+          {/if}
+          <button type="submit">Save</button>
+        </form>
+      </section>
+    {:else}
+      <section>
+        <ul>
+          {#each $messages as message}
+            <li>
+              <Message {message} />
+            </li>
+          {/each}
+        </ul>
+        {#if $messages.at(-1)?.role === "assistant"}
+          <button on:click={() => reload()}>Regenerate</button>
+        {/if}
+
+        <form on:submit={handleSubmit} bind:this={chatForm}>
+          <textarea
+            bind:value={$input}
+            placeholder="Chat with Mistral"
+            cols="200"
+            rows="1"
+            on:keydown={handleMessageSubmit}
+            autocapitalize="on"
+          />
+          <button type="submit">Send</button>
+        </form>
+      </section>
+    {/if}
+  {:else}
+    <section>
+      <h2>Please sign in to chat</h2>
+    </section>
+  {/if}
+</main>
 
 <style>
   section {

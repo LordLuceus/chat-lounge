@@ -13,6 +13,7 @@
   <section>
     <div>
       <span>{message.role}: </span>
+      <br />
       {#if message.role === "user"}
         <span>{message.content}</span>
       {:else}

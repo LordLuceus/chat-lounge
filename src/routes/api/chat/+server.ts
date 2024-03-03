@@ -1,15 +1,38 @@
 import MistralClient from "@mistralai/mistralai";
 import { OpenAIStream, StreamingTextResponse } from "ai";
-import { MISTRAL_API_KEY } from "$env/static/private";
+import prisma from "$lib/prisma";
 import type { RequestHandler } from "@sveltejs/kit";
+import type { CreateMessage, Message } from "ai/svelte";
+import { getApiKey } from "$lib/api-keys";
 
 export const config = { runtime: "edge" };
 
-const mistral = new MistralClient(MISTRAL_API_KEY);
-
 export const POST = (async ({ request }) => {
-  const { messages } = await request.json();
-  const response = await mistral.chatStream({ messages, model: "mistral-large-latest" });
+  const { messages, userEmail } = await request.json();
+
+  const user = await prisma.user.findFirst({
+    where: {
+      email: userEmail
+    }
+  });
+
+  if (!user) {
+    return new Response("User not found", { status: 404 });
+  }
+
+  const apiKey = await getApiKey(user.id, "MISTRAL");
+
+  if (!apiKey) {
+    return new Response("API key not found", { status: 404 });
+  }
+
+  const client = new MistralClient(apiKey.key);
+
+  const response = await client.chatStream({
+    messages,
+    model: "mistral-medium",
+    temperature: 1.0
+  });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const stream = OpenAIStream(response as any);

@@ -43,7 +43,6 @@
     "@sveltejs/adapter-vercel": "^5.1.0",
     "@vercel/analytics": "^1.2.2",
     "ai": "^2.2.36",
-    "dotenv": "^16.4.5",
     "openai": "^4.28.4",
     "prisma": "^5.10.2",
     "svelte-markdown": "^0.4.1",

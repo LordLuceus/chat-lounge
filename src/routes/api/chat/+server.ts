@@ -4,6 +4,8 @@ import prisma from "$lib/prisma";
 import type { RequestHandler } from "@sveltejs/kit";
 import { getApiKey } from "$lib/api-keys";
 
+export const config = { runtime: "edge" };
+
 export const POST = (async ({ request }) => {
   const { messages, userEmail } = await request.json();
 

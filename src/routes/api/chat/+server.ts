@@ -2,10 +2,7 @@ import MistralClient from "@mistralai/mistralai";
 import { OpenAIStream, StreamingTextResponse } from "ai";
 import prisma from "$lib/prisma";
 import type { RequestHandler } from "@sveltejs/kit";
-import type { CreateMessage, Message } from "ai/svelte";
 import { getApiKey } from "$lib/api-keys";
-
-export const config = { runtime: "edge" };
 
 export const POST = (async ({ request }) => {
   const { messages, userEmail } = await request.json();

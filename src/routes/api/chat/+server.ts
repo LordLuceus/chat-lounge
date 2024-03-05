@@ -1,5 +1,5 @@
 import MistralClient from "@mistralai/mistralai";
-import { OpenAIStream, StreamingTextResponse } from "ai";
+import { MistralStream, StreamingTextResponse } from "ai";
 import prisma from "$lib/prisma";
 import type { RequestHandler } from "@sveltejs/kit";
 import { getApiKey } from "$lib/api-keys";
@@ -33,8 +33,7 @@ export const POST = (async ({ request }) => {
     temperature: 1.0
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const stream = OpenAIStream(response as any);
+  const stream = MistralStream(response);
 
   return new StreamingTextResponse(stream);
 }) satisfies RequestHandler;

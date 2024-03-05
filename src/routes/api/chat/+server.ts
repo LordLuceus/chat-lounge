@@ -7,11 +7,11 @@ import { getApiKey } from "$lib/api-keys";
 export const config = { runtime: "edge" };
 
 export const POST = (async ({ request }) => {
-  const { messages, userEmail } = await request.json();
+  const { messages, userId } = await request.json();
 
-  const user = await prisma.user.findFirst({
+  const user = await prisma.user.findUnique({
     where: {
-      email: userEmail
+      id: userId
     }
   });
 

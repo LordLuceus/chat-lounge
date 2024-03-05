@@ -2,7 +2,6 @@
   import { onMount } from "svelte";
   import Message from "$lib/Message.svelte";
   import { useChat } from "ai/svelte";
-  import SvelteMarkdown from "svelte-markdown";
   import { page } from "$app/stores";
   import { signIn, signOut } from "@auth/sveltekit/client";
   import { enhance } from "$app/forms";
@@ -14,7 +13,7 @@
     onFinish: () => {
       finishSound?.play();
     },
-    body: { userEmail: $page.data.session?.user?.email }
+    body: { userId: $page.data.session?.user?.id }
   });
 
   let chatForm: HTMLFormElement;

@@ -43,6 +43,6 @@
     "ai": "^2.2.36",
     "openai": "^4.28.4",
     "prisma": "^5.10.2",
-    "svelte-markdown": "^0.4.1"
+    "svelte-exmarkdown": "^3.0.3"
   }
 }

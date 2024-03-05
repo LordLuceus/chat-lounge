@@ -1,6 +1,10 @@
 <script lang="ts">
   import type { Message } from "ai/svelte";
-  import SvelteMarkdown from "svelte-markdown";
+  import Markdown from "svelte-exmarkdown";
+  import { gfmPlugin } from "svelte-exmarkdown/gfm";
+  import { page } from "$app/stores";
+
+  const plugins = [gfmPlugin()];
 
   export let message: Message;
 
@@ -10,15 +14,12 @@
 </script>
 
 {#if message.role === "user" || message.role === "assistant"}
-  <section>
-    <div>
-      <span>{message.role}: </span>
-      <br />
+  <section aria-label="{message.role} message">
+    <div class="{message.role}-message">
       {#if message.role === "user"}
-        <span>{message.content}</span>
-      {:else}
-        <SvelteMarkdown source={message.content} />
+        <img src={$page.data.session?.user?.image} alt={$page.data.session?.user?.name} />
       {/if}
+      <Markdown md={message.content} {plugins} />
       {#if message.role === "assistant"}
         <button on:click={copyToClipboard}>Copy</button>
       {/if}
@@ -39,5 +40,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+
+  .user-message {
+    background-color: green;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+  }
+
+  .assistant-message {
+    background-color: blue;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
   }
 </style>

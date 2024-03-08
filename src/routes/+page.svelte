@@ -47,65 +47,52 @@
   <meta name="description" content="Chat" />
 </svelte:head>
 
-<header>
-  <h1>Awesome Chat App</h1>
-  {#if $page.data.session}
-    <h1>Signed in as {$page.data.session.user?.name}</h1>
-    <button on:click={() => signOut()}>Sign out</button>
-  {/if}
-  {#if !$page.data.session}
-    <button on:click={() => signIn("google")}>Sign in with Google</button>
-  {/if}
-</header>
-
-<main>
-  {#if $page.data.session}
-    {#if !$page.data.hasApiKeys}
-      <section>
-        <h2>Add your API keys to chat</h2>
-        <form method="POST" use:enhance>
-          <label>
-            <span>Mistral API Key</span>
-            <input type="text" name="mistralApiKey" bind:this={apiKeyInput} />
-          </label>
-          {#if form?.message}
-            <p role="alert">{form.message}</p>
-          {/if}
-          <button type="submit">Save</button>
-        </form>
-      </section>
-    {:else}
-      <section>
-        <ul>
-          {#each $messages as message}
-            <li>
-              <Message {message} />
-            </li>
-          {/each}
-        </ul>
-        {#if $messages.at(-1)?.role === "assistant"}
-          <button on:click={() => reload()}>Regenerate</button>
+{#if $page.data.session}
+  {#if !$page.data.hasApiKeys}
+    <section>
+      <h2>Add your API keys to chat</h2>
+      <form method="POST" use:enhance>
+        <label>
+          <span>Mistral API Key</span>
+          <input type="text" name="mistralApiKey" bind:this={apiKeyInput} />
+        </label>
+        {#if form?.message}
+          <p role="alert">{form.message}</p>
         {/if}
-
-        <form on:submit={handleSubmit} bind:this={chatForm}>
-          <textarea
-            bind:value={$input}
-            placeholder="Chat with Mistral"
-            cols="200"
-            rows="1"
-            on:keydown={handleMessageSubmit}
-            autocapitalize="on"
-          />
-          <button type="submit">Send</button>
-        </form>
-      </section>
-    {/if}
+        <button type="submit">Save</button>
+      </form>
+    </section>
   {:else}
     <section>
-      <h2>Please sign in to chat</h2>
+      <ul>
+        {#each $messages as message}
+          <li>
+            <Message {message} />
+          </li>
+        {/each}
+      </ul>
+      {#if $messages.at(-1)?.role === "assistant"}
+        <button on:click={() => reload()}>Regenerate</button>
+      {/if}
+
+      <form on:submit={handleSubmit} bind:this={chatForm}>
+        <textarea
+          bind:value={$input}
+          placeholder="Chat with Mistral"
+          cols="200"
+          rows="1"
+          on:keydown={handleMessageSubmit}
+          autocapitalize="on"
+        />
+        <button type="submit">Send</button>
+      </form>
     </section>
   {/if}
-</main>
+{:else}
+  <section>
+    <h2>Please sign in to chat</h2>
+  </section>
+{/if}
 
 <style>
   section {
@@ -114,15 +101,6 @@
     align-items: center;
     justify-content: center;
     flex: 0.6;
-  }
-
-  ul {
-    list-style: none;
-    padding: 0;
-  }
-
-  li {
-    margin: 0.5rem;
   }
 
   form {

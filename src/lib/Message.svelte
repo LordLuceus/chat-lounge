@@ -3,6 +3,7 @@
   import Markdown from "svelte-exmarkdown";
   import { gfmPlugin } from "svelte-exmarkdown/gfm";
   import { page } from "$app/stores";
+  import { Button } from "$lib/components/ui/button";
 
   const plugins = [gfmPlugin()];
 
@@ -21,7 +22,7 @@
       {/if}
       <Markdown md={message.content} {plugins} />
       {#if message.role === "assistant"}
-        <button on:click={copyToClipboard}>Copy</button>
+        <Button on:click={copyToClipboard}>Copy</Button>
       {/if}
     </div>
   </section>

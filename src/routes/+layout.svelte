@@ -1,22 +1,29 @@
 <script lang="ts">
   import "../app.pcss";
-  import { page } from "$app/stores";
+  import type { PageData } from "./$types";
+  import { goto } from "$app/navigation";
   import { signIn, signOut } from "@auth/sveltekit/client";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+
+  export let data: PageData;
 </script>
 
 <header>
-  {#if $page.data.session}
+  <a href="/">
+    <img src="/assets/chatmate_logo.webp" alt="ChatMate" />
+  </a>
+  {#if data.session}
     <DropdownMenu.Root>
       <DropdownMenu.Trigger>
-        <img src={$page.data.session?.user?.image} alt={$page.data.session?.user?.name} />
+        <img src={data.session?.user?.image} alt={data.session?.user?.name} />
       </DropdownMenu.Trigger>
       <DropdownMenu.Content>
+        <DropdownMenu.Item on:click={() => goto("/settings")}>Settings</DropdownMenu.Item>
         <DropdownMenu.Item on:click={() => signOut()}>Sign out</DropdownMenu.Item>
       </DropdownMenu.Content>
     </DropdownMenu.Root>
   {/if}
-  {#if !$page.data.session}
+  {#if !data.session}
     <button on:click={() => signIn("google")}>Sign in with Google</button>
   {/if}
 </header>

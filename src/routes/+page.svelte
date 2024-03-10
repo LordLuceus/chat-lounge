@@ -1,19 +1,21 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import Message from "$lib/Message.svelte";
+  import { Button } from "$lib/components/ui/button";
+  import { Textarea } from "$lib/components/ui/textarea";
+  import Message from "$lib/components/Message.svelte";
   import { useChat } from "ai/svelte";
-  import { page } from "$app/stores";
   import { signIn, signOut } from "@auth/sveltekit/client";
   import { enhance } from "$app/forms";
-  import type { ActionData } from "./$types";
+  import type { PageData } from "./$types";
 
+  export let data: PageData;
   let finishSound: HTMLAudioElement;
 
   const { input, handleSubmit, messages, reload } = useChat({
     onFinish: () => {
       finishSound?.play();
     },
-    body: { userId: $page.data.session?.user?.id }
+    body: { userId: data.session?.user?.id }
   });
 
   let chatForm: HTMLFormElement;
@@ -26,42 +28,23 @@
   }
 
   onMount(() => {
-    chatForm?.querySelector("textarea")?.focus();
+    (document.querySelector(".chat-input") as HTMLTextAreaElement)?.focus();
     finishSound = new Audio("/assets/typing.wav");
   });
-
-  export let form: ActionData;
-  let apiKeyInput: HTMLInputElement;
-
-  function handleApiKeyError() {
-    apiKeyInput?.focus();
-  }
-
-  $: if (form?.message) {
-    handleApiKeyError();
-  }
 </script>
 
 <svelte:head>
-  <title>Chat</title>
-  <meta name="description" content="Chat" />
+  <title>ChatMate</title>
+  <meta
+    name="description"
+    content="ChatMate: Engage with cutting-edge AI models for instant text and voice conversations. Experience seamless, intelligent interactions tailored to your needs. Perfect for learning, entertainment, and efficient communication."
+  />
 </svelte:head>
 
-{#if $page.data.session}
-  {#if !$page.data.hasApiKeys}
-    <section>
-      <h2>Add your API keys to chat</h2>
-      <form method="POST" use:enhance>
-        <label>
-          <span>Mistral API Key</span>
-          <input type="text" name="mistralApiKey" bind:this={apiKeyInput} />
-        </label>
-        {#if form?.message}
-          <p role="alert">{form.message}</p>
-        {/if}
-        <button type="submit">Save</button>
-      </form>
-    </section>
+{#if data.session}
+  {#if !data.keys}
+    <p>You don't have any API keys set.</p>
+    <a href="/settings">Go to settings</a>
   {:else}
     <section>
       <ul>
@@ -76,15 +59,15 @@
       {/if}
 
       <form on:submit={handleSubmit} bind:this={chatForm}>
-        <textarea
+        <Textarea
           bind:value={$input}
-          placeholder="Chat with Mistral"
-          cols="200"
-          rows="1"
           on:keydown={handleMessageSubmit}
-          autocapitalize="on"
+          placeholder="Type your message..."
+          class="chat-input"
+          rows={1}
+          cols={200}
         />
-        <button type="submit">Send</button>
+        <Button type="submit">Send</Button>
       </form>
     </section>
   {/if}
@@ -108,13 +91,5 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-  }
-
-  textarea {
-    margin: 0.5rem;
-    padding: 0.5rem;
-    border-radius: 0.5rem;
-    border: 1px solid #ccc;
-    width: 100%;
   }
 </style>

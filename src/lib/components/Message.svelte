@@ -4,6 +4,7 @@
   import { gfmPlugin } from "svelte-exmarkdown/gfm";
   import { page } from "$app/stores";
   import { Button } from "$lib/components/ui/button";
+  import Tts from "./TTS.svelte";
 
   const plugins = [gfmPlugin()];
 
@@ -22,6 +23,7 @@
       {/if}
       <Markdown md={message.content} {plugins} />
       {#if message.role === "assistant"}
+        <Tts text={message.content} />
         <Button on:click={copyToClipboard}>Copy</Button>
       {/if}
     </div>

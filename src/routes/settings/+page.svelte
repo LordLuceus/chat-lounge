@@ -1,0 +1,59 @@
+<script lang="ts">
+  import { signOut } from "@auth/sveltekit/client";
+  import { Button } from "$lib/components/ui/button";
+  import * as Dialog from "$lib/components/ui/dialog";
+  import type { PageData } from "./$types";
+
+  export let data: PageData;
+</script>
+
+<svelte:head>
+  <title>Settings | ChatMate</title>
+  <meta name="description" content="User settings page for ChatMate" />
+</svelte:head>
+
+<section>
+  <h1>Settings</h1>
+  <p>Welcome, {data.session?.user?.name}!</p>
+  <p>Here you can manage your account settings.</p>
+  <h2>API Keys</h2>
+  <p>
+    Manage your API keys for supported providers. To use the app, at least one of Mistral or OpenAI
+    is required. ElevenLabs is required for voice conversations.
+  </p>
+  <h3>Mistral</h3>
+  {#if data.keys?.mistral}
+    <p>Your Mistral API key is set.</p>
+    <Button>Change</Button>
+  {:else}
+    <p>You haven't set your Mistral API key yet.</p>
+    <Button>Set</Button>
+  {/if}
+  <h3>OpenAI</h3>
+  {#if data.keys?.openai}
+    <p>Your OpenAI API key is set.</p>
+    <Button>Change</Button>
+  {:else}
+    <p>You haven't set your OpenAI API key yet.</p>
+    <Button>Set</Button>
+  {/if}
+  <h3>ElevenLabs</h3>
+  {#if data.keys?.eleven}
+    <p>Your ElevenLabs API key is set.</p>
+    <Button>Change</Button>
+  {:else}
+    <p>You haven't set your ElevenLabs API key yet.</p>
+    <Button>Set</Button>
+  {/if}
+  <Button on:click={() => signOut()}>Sign out</Button>
+</section>
+
+<style>
+  section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 0.6;
+  }
+</style>

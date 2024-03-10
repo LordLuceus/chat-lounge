@@ -1,17 +1,34 @@
 import { ElevenLabsClient } from "elevenlabs-edge";
 import { error } from "@sveltejs/kit";
+import { getApiKey } from "$lib/api-keys";
+import prisma from "$lib/prisma";
 import type { RequestHandler } from "@sveltejs/kit";
-import { ELEVENLABS_API_KEY } from "$env/static/private";
 import type { Config } from "@sveltejs/adapter-vercel";
-
-const eleven = new ElevenLabsClient({ apiKey: ELEVENLABS_API_KEY });
 
 export const config: Config = { runtime: "edge" };
 
 export const POST = (async ({ request }) => {
-  const { text } = await request.json();
+  const { text, userId } = await request.json();
 
   try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId
+      }
+    });
+
+    if (!user) {
+      return new Response("User not found", { status: 404 });
+    }
+
+    const apiKey = await getApiKey(user.id, "ELEVENLABS");
+
+    if (!apiKey) {
+      return new Response("API key not found", { status: 404 });
+    }
+
+    const eleven = new ElevenLabsClient({ apiKey: apiKey.key });
+
     const response = await eleven.generate({
       text,
       voice: "Stephen",

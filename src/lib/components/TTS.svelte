@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { page } from "$app/stores";
+
   export let text: string;
 
   const tts = async (): Promise<void> => {
@@ -20,7 +22,7 @@
             headers: {
               "Content-Type": "application/json"
             },
-            body: JSON.stringify({ text })
+            body: JSON.stringify({ text, userId: $page.data.session?.user?.id })
           });
           const stream = response.body;
 

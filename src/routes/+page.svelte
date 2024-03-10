@@ -45,6 +45,9 @@
   {#if !data.keys}
     <p>You don't have any API keys set.</p>
     <a href="/settings">Go to settings</a>
+  {:else if !data.keys.mistral && !data.keys.openai}
+    <p>You need either a Mistral or an OpenAI API key to chat.</p>
+    <a href="/settings">Go to settings</a>
   {:else}
     <section>
       <ul>

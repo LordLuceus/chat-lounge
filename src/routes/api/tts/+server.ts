@@ -18,13 +18,13 @@ export const POST = (async ({ request }) => {
     });
 
     if (!user) {
-      return new Response("User not found", { status: 404 });
+      return error(404, { message: "User not found" });
     }
 
     const apiKey = await getApiKey(user.id, "ELEVENLABS");
 
     if (!apiKey) {
-      return new Response("API key not found", { status: 404 });
+      return error(404, { message: "API key not found" });
     }
 
     const eleven = new ElevenLabsClient({ apiKey: apiKey.key });

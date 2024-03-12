@@ -1,8 +1,12 @@
 <script lang="ts">
   import type { Message } from "ai/svelte";
+  import * as Avatar from "$lib/components/ui/avatar";
   import Markdown from "svelte-exmarkdown";
   import { gfmPlugin } from "svelte-exmarkdown/gfm";
   import { page } from "$app/stores";
+  import { Button } from "$lib/components/ui/button";
+  import Tts from "./TTS.svelte";
+  import { toast } from "svelte-sonner";
 
   const plugins = [gfmPlugin()];
 
@@ -10,6 +14,7 @@
 
   async function copyToClipboard() {
     await navigator.clipboard.writeText(message.content);
+    toast.success("Message copied to clipboard");
   }
 </script>
 
@@ -17,11 +22,20 @@
   <section aria-label="{message.role} message">
     <div class="{message.role}-message">
       {#if message.role === "user"}
-        <img src={$page.data.session?.user?.image} alt={$page.data.session?.user?.name} />
+        <Avatar.Root>
+          <Avatar.Image
+            src={$page.data.session?.user?.image}
+            alt={$page.data.session?.user?.name}
+          />
+          <Avatar.Fallback>{$page.data.session?.user?.name}</Avatar.Fallback>
+        </Avatar.Root>
       {/if}
       <Markdown md={message.content} {plugins} />
+      {#if $page.data.keys.eleven && message.role === "assistant"}
+        <Tts text={message.content} on:playAudio />
+      {/if}
       {#if message.role === "assistant"}
-        <button on:click={copyToClipboard}>Copy</button>
+        <Button on:click={copyToClipboard}>Copy</Button>
       {/if}
     </div>
   </section>

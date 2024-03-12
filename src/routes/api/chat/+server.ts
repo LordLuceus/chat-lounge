@@ -1,8 +1,8 @@
 import MistralClient from "@mistralai/mistralai";
 import { MistralStream, StreamingTextResponse } from "ai";
 import prisma from "$lib/prisma";
-import type { RequestHandler } from "@sveltejs/kit";
-import { getApiKey } from "$lib/api-keys";
+import { error, type RequestHandler } from "@sveltejs/kit";
+import { getApiKey } from "$lib/settings/api-keys";
 
 export const config = { runtime: "edge" };
 
@@ -16,13 +16,13 @@ export const POST = (async ({ request }) => {
   });
 
   if (!user) {
-    return new Response("User not found", { status: 404 });
+    return error(404, { message: "User not found" });
   }
 
   const apiKey = await getApiKey(user.id, "MISTRAL");
 
   if (!apiKey) {
-    return new Response("API key not found", { status: 404 });
+    return error(404, { message: "API key not found" });
   }
 
   const client = new MistralClient(apiKey.key);

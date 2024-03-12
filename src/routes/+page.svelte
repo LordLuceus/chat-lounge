@@ -1,19 +1,24 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import Message from "$lib/Message.svelte";
+  import { onMount, onDestroy } from "svelte";
+  import { browser } from "$app/environment";
+  import { Button } from "$lib/components/ui/button";
+  import { Textarea } from "$lib/components/ui/textarea";
+  import Message from "$lib/components/Message.svelte";
   import { useChat } from "ai/svelte";
-  import { page } from "$app/stores";
   import { signIn, signOut } from "@auth/sveltekit/client";
   import { enhance } from "$app/forms";
-  import type { ActionData } from "./$types";
+  import type { PageData } from "./$types";
+  import { toast } from "svelte-sonner";
 
+  export let data: PageData;
   let finishSound: HTMLAudioElement;
+  let currentAudio = "";
 
   const { input, handleSubmit, messages, reload } = useChat({
     onFinish: () => {
       finishSound?.play();
     },
-    body: { userId: $page.data.session?.user?.id }
+    body: { userId: data.session?.user?.id }
   });
 
   let chatForm: HTMLFormElement;
@@ -25,87 +30,87 @@
     }
   }
 
-  onMount(() => {
-    chatForm?.querySelector("textarea")?.focus();
-    finishSound = new Audio("/assets/typing.wav");
-  });
-
-  export let form: ActionData;
-  let apiKeyInput: HTMLInputElement;
-
-  function handleApiKeyError() {
-    apiKeyInput?.focus();
+  async function copyLastMessage() {
+    if (!$messages) return;
+    const lastMessage = $messages.at(-1);
+    if (lastMessage?.role !== "assistant") return;
+    await navigator.clipboard.writeText(lastMessage.content);
+    toast.success("Last message copied to clipboard");
   }
 
-  $: if (form?.message) {
-    handleApiKeyError();
+  function handleCopyLastMessage(event: KeyboardEvent) {
+    if (event.ctrlKey && event.shiftKey && event.code === "KeyC") {
+      event.preventDefault();
+      copyLastMessage();
+    }
+  }
+
+  onMount(() => {
+    (document.querySelector(".chat-input") as HTMLTextAreaElement)?.focus();
+    finishSound = new Audio("/assets/typing.wav");
+    window.addEventListener("keydown", handleCopyLastMessage);
+  });
+
+  onDestroy(() => {
+    if (browser) window.removeEventListener("keydown", handleCopyLastMessage);
+  });
+
+  function setCurrentAudio(src: string) {
+    currentAudio = src;
   }
 </script>
 
 <svelte:head>
-  <title>Chat</title>
-  <meta name="description" content="Chat" />
+  <title>ChatMate</title>
+  <meta
+    name="description"
+    content="ChatMate: Engage with cutting-edge AI models for instant text and voice conversations. Experience seamless, intelligent interactions tailored to your needs. Perfect for learning, entertainment, and efficient communication."
+  />
 </svelte:head>
 
-<header>
-  <h1>Awesome Chat App</h1>
-  {#if $page.data.session}
-    <h1>Signed in as {$page.data.session.user?.name}</h1>
-    <button on:click={() => signOut()}>Sign out</button>
-  {/if}
-  {#if !$page.data.session}
-    <button on:click={() => signIn("google")}>Sign in with Google</button>
-  {/if}
-</header>
-
-<main>
-  {#if $page.data.session}
-    {#if !$page.data.hasApiKeys}
-      <section>
-        <h2>Add your API keys to chat</h2>
-        <form method="POST" use:enhance>
-          <label>
-            <span>Mistral API Key</span>
-            <input type="text" name="mistralApiKey" bind:this={apiKeyInput} />
-          </label>
-          {#if form?.message}
-            <p role="alert">{form.message}</p>
-          {/if}
-          <button type="submit">Save</button>
-        </form>
-      </section>
-    {:else}
-      <section>
-        <ul>
-          {#each $messages as message}
-            <li>
-              <Message {message} />
-            </li>
-          {/each}
-        </ul>
-        {#if $messages.at(-1)?.role === "assistant"}
-          <button on:click={() => reload()}>Regenerate</button>
-        {/if}
-
-        <form on:submit={handleSubmit} bind:this={chatForm}>
-          <textarea
-            bind:value={$input}
-            placeholder="Chat with Mistral"
-            cols="200"
-            rows="1"
-            on:keydown={handleMessageSubmit}
-            autocapitalize="on"
-          />
-          <button type="submit">Send</button>
-        </form>
-      </section>
-    {/if}
+{#if data.session}
+  {#if !data.keys}
+    <p>You don't have any API keys set.</p>
+    <a href="/settings">Go to settings</a>
+  {:else if !data.keys.mistral && !data.keys.openai}
+    <p>You need either a Mistral or an OpenAI API key to chat.</p>
+    <a href="/settings">Go to settings</a>
   {:else}
     <section>
-      <h2>Please sign in to chat</h2>
+      <ul>
+        {#each $messages as message}
+          <li>
+            <Message {message} on:playAudio={(e) => setCurrentAudio(e.detail)} />
+          </li>
+        {/each}
+      </ul>
+      {#if $messages.at(-1)?.role === "assistant"}
+        <button on:click={() => reload()}>Regenerate</button>
+      {/if}
+
+      <form on:submit={handleSubmit} bind:this={chatForm}>
+        <Textarea
+          bind:value={$input}
+          on:keydown={handleMessageSubmit}
+          placeholder="Type your message..."
+          class="chat-input"
+          rows={1}
+          cols={200}
+        />
+        <Button type="submit">Send</Button>
+      </form>
     </section>
+    {#if currentAudio}
+      <section aria-label="Audio player">
+        <audio src={currentAudio} controls autoplay />
+      </section>
+    {/if}
   {/if}
-</main>
+{:else}
+  <section>
+    <h2>Please sign in to chat</h2>
+  </section>
+{/if}
 
 <style>
   section {
@@ -116,27 +121,10 @@
     flex: 0.6;
   }
 
-  ul {
-    list-style: none;
-    padding: 0;
-  }
-
-  li {
-    margin: 0.5rem;
-  }
-
   form {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-  }
-
-  textarea {
-    margin: 0.5rem;
-    padding: 0.5rem;
-    border-radius: 0.5rem;
-    border: 1px solid #ccc;
-    width: 100%;
   }
 </style>

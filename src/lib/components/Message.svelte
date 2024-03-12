@@ -6,6 +6,7 @@
   import { page } from "$app/stores";
   import { Button } from "$lib/components/ui/button";
   import Tts from "./TTS.svelte";
+  import { toast } from "svelte-sonner";
 
   const plugins = [gfmPlugin()];
 
@@ -13,6 +14,7 @@
 
   async function copyToClipboard() {
     await navigator.clipboard.writeText(message.content);
+    toast.success("Message copied to clipboard");
   }
 </script>
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { Button } from "$lib/components/ui/button";
   import { Textarea } from "$lib/components/ui/textarea";
   import Message from "$lib/components/Message.svelte";
@@ -7,6 +7,7 @@
   import { signIn, signOut } from "@auth/sveltekit/client";
   import { enhance } from "$app/forms";
   import type { PageData } from "./$types";
+  import { toast } from "svelte-sonner";
 
   export let data: PageData;
   let finishSound: HTMLAudioElement;
@@ -28,9 +29,29 @@
     }
   }
 
+  async function copyLastMessage() {
+    if (!$messages) return;
+    const lastMessage = $messages.at(-1);
+    if (lastMessage?.role !== "assistant") return;
+    await navigator.clipboard.writeText(lastMessage.content);
+    toast.success("Last message copied to clipboard");
+  }
+
+  function handleCopyLastMessage(event: KeyboardEvent) {
+    if (event.ctrlKey && event.shiftKey && event.code === "KeyC") {
+      event.preventDefault();
+      copyLastMessage();
+    }
+  }
+
   onMount(() => {
     (document.querySelector(".chat-input") as HTMLTextAreaElement)?.focus();
     finishSound = new Audio("/assets/typing.wav");
+    window.addEventListener("keydown", handleCopyLastMessage);
+  });
+
+  onDestroy(() => {
+    window.removeEventListener("keydown", handleCopyLastMessage);
   });
 
   function setCurrentAudio(src: string) {

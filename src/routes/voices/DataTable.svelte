@@ -3,6 +3,7 @@
   import { readable } from "svelte/store";
   import * as Table from "$lib/components/ui/table";
   import VoicePreviewButton from "./VoicePreviewButton.svelte";
+  import DataTableActions from "./DataTableActions.svelte";
   import type { VoiceResponse } from "elevenlabs-edge/dist/api";
 
   export let voices: VoiceResponse[];
@@ -16,12 +17,18 @@
       cell: ({ value }) => {
         return createRender(VoicePreviewButton, {
           name: value.name,
-          previewUrl: value.preview_url as string
+          previewUrl: value.preview_url
         });
       }
     }),
     table.column({ accessor: "category", header: "Category" }),
-    table.column({ accessor: ({ voice_id }) => voice_id, header: "" })
+    table.column({
+      accessor: ({ voice_id }) => voice_id,
+      header: "Actions",
+      cell: ({ value }) => {
+        return createRender(DataTableActions, { id: value });
+      }
+    })
   ]);
 
   const { headerRows, pageRows, tableAttrs, tableBodyAttrs } = table.createViewModel(columns);

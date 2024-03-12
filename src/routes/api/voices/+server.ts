@@ -3,7 +3,7 @@ import { ElevenLabsClient } from "elevenlabs-edge";
 import prisma from "$lib/prisma";
 import type { Config } from "@sveltejs/adapter-vercel";
 import { error, json } from "@sveltejs/kit";
-import { getApiKey } from "$lib/api-keys";
+import { getApiKey } from "$lib/settings/api-keys";
 
 export const config: Config = { runtime: "edge" };
 

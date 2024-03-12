@@ -2,7 +2,7 @@ import MistralClient from "@mistralai/mistralai";
 import { MistralStream, StreamingTextResponse } from "ai";
 import prisma from "$lib/prisma";
 import { error, type RequestHandler } from "@sveltejs/kit";
-import { getApiKey } from "$lib/api-keys";
+import { getApiKey } from "$lib/settings/api-keys";
 
 export const config = { runtime: "edge" };
 

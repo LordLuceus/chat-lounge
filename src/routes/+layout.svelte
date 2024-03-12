@@ -4,6 +4,7 @@
   import { goto } from "$app/navigation";
   import { signIn, signOut } from "@auth/sveltekit/client";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+  import * as Avatar from "$lib/components/ui/avatar";
 
   export let data: PageData;
 </script>
@@ -19,7 +20,10 @@
   {#if data.session}
     <DropdownMenu.Root>
       <DropdownMenu.Trigger>
-        <img src={data.session?.user?.image} alt={data.session?.user?.name} />
+        <Avatar.Root>
+          <Avatar.Image src={data.session.user?.image} alt={data.session.user?.name} />
+          <Avatar.Fallback>{data.session.user?.name}</Avatar.Fallback>
+        </Avatar.Root>
       </DropdownMenu.Trigger>
       <DropdownMenu.Content>
         <DropdownMenu.Item on:click={() => goto("/settings")}>Settings</DropdownMenu.Item>

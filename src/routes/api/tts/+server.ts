@@ -1,6 +1,7 @@
 import { ElevenLabsClient } from "elevenlabs-edge";
 import { error } from "@sveltejs/kit";
-import { getApiKey } from "$lib/api-keys";
+import { getApiKey } from "$lib/settings/api-keys";
+import { getPreferences } from "$lib/settings/preferences";
 import prisma from "$lib/prisma";
 import type { RequestHandler } from "@sveltejs/kit";
 import type { Config } from "@sveltejs/adapter-vercel";
@@ -29,10 +30,13 @@ export const POST = (async ({ request }) => {
 
     const eleven = new ElevenLabsClient({ apiKey: apiKey.key });
 
+    const preferences = await getPreferences(user.id);
+
+    const voice = preferences?.defaultVoiceId || (await eleven.voices.getAll()).voices[0].voice_id;
     const response = await eleven.generate({
       text,
-      voice: "Stephen",
-      model_id: "eleven_multilingual_v2",
+      voice,
+      model_id: "eleven_turbo_v2",
       stream: true
     });
     return new Response(response);

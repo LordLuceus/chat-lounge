@@ -1,6 +1,6 @@
 import type { Actions } from "./$types";
 import prisma from "$lib/prisma";
-import { saveApiKey } from "$lib/api-keys";
+import { saveApiKey } from "$lib/settings/api-keys";
 import { fail } from "@sveltejs/kit";
 import { AIProvider } from "@prisma/client";
 

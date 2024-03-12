@@ -5,12 +5,16 @@
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { toast } from "svelte-sonner";
   import { page } from "$app/stores";
+  import { invalidateAll } from "$app/navigation";
 
   export let id: string;
+  export let category: string;
 
   let setDefaultError = false;
   let setDefaultSuccess = false;
   let copyIdSuccess = false;
+  let deleteSuccess = false;
+  let deleteError = false;
 
   async function setDefault() {
     try {
@@ -38,6 +42,24 @@
     copyIdSuccess = true;
   }
 
+  async function deleteVoice() {
+    try {
+      const res = await fetch(`/api/voices/${id}`, {
+        method: "DELETE"
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to delete voice");
+        deleteError = true;
+      }
+
+      deleteSuccess = true;
+      await invalidateAll();
+    } catch (error) {
+      deleteError = true;
+    }
+  }
+
   $: {
     if (setDefaultSuccess) {
       toast.success("Voice set as default");
@@ -53,6 +75,16 @@
       toast.success("Voice ID copied to clipboard");
       copyIdSuccess = false;
     }
+
+    if (deleteSuccess) {
+      toast.success("Voice deleted");
+      deleteSuccess = false;
+    }
+
+    if (deleteError) {
+      toast.error("Failed to delete voice");
+      deleteError = false;
+    }
   }
 </script>
 
@@ -67,6 +99,9 @@
     <DropdownMenu.Group>
       <DropdownMenu.Label>Actions</DropdownMenu.Label>
       <DropdownMenu.Item on:click={setDefault}>Set as default</DropdownMenu.Item>
+      {#if category !== "premade"}
+        <DropdownMenu.Item on:click={deleteVoice}>Delete</DropdownMenu.Item>
+      {/if}
       <DropdownMenu.Item on:click={copyId}>Copy voice ID</DropdownMenu.Item>
     </DropdownMenu.Group>
   </DropdownMenu.Content>

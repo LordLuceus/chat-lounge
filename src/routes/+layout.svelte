@@ -16,7 +16,9 @@
   </a>
   <nav>
     <a href="/">Home</a>
-    <a href="/voices">Voices</a>
+    {#if data.session}
+      <a href="/voices">Voices</a>
+    {/if}
   </nav>
   {#if data.session}
     <DropdownMenu.Root>

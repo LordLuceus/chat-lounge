@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Render, Subscribe, createRender, createTable } from "svelte-headless-table";
-  import { readable } from "svelte/store";
+  import { writable } from "svelte/store";
   import * as Table from "$lib/components/ui/table";
   import VoicePreviewButton from "./VoicePreviewButton.svelte";
   import DataTableActions from "./DataTableActions.svelte";
@@ -8,7 +8,11 @@
 
   export let voices: VoiceResponse[];
 
-  const table = createTable(readable(voices));
+  const voicesStore = writable(voices);
+
+  $: voicesStore.set(voices);
+
+  const table = createTable(voicesStore);
 
   const columns = table.createColumns([
     table.column({
@@ -23,10 +27,10 @@
     }),
     table.column({ accessor: "category", header: "Category" }),
     table.column({
-      accessor: ({ voice_id }) => voice_id,
+      accessor: ({ voice_id, category }) => ({ voice_id, category }),
       header: "Actions",
       cell: ({ value }) => {
-        return createRender(DataTableActions, { id: value });
+        return createRender(DataTableActions, { id: value.voice_id, category: value.category });
       }
     })
   ]);

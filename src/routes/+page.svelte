@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
+  import { browser } from "$app/environment";
   import { Button } from "$lib/components/ui/button";
   import { Textarea } from "$lib/components/ui/textarea";
   import Message from "$lib/components/Message.svelte";
@@ -51,7 +52,7 @@
   });
 
   onDestroy(() => {
-    window.removeEventListener("keydown", handleCopyLastMessage);
+    if (browser) window.removeEventListener("keydown", handleCopyLastMessage);
   });
 
   function setCurrentAudio(src: string) {

@@ -16,7 +16,7 @@
   </a>
   <nav>
     <a href="/">Home</a>
-    {#if data.session}
+    {#if data.session && data?.keys?.eleven}
       <a href="/voices">Voices</a>
     {/if}
   </nav>

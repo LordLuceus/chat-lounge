@@ -10,6 +10,7 @@
 
   export let data: PageData;
   let finishSound: HTMLAudioElement;
+  let currentAudio = "";
 
   const { input, handleSubmit, messages, reload } = useChat({
     onFinish: () => {
@@ -31,6 +32,10 @@
     (document.querySelector(".chat-input") as HTMLTextAreaElement)?.focus();
     finishSound = new Audio("/assets/typing.wav");
   });
+
+  function setCurrentAudio(src: string) {
+    currentAudio = src;
+  }
 </script>
 
 <svelte:head>
@@ -53,7 +58,7 @@
       <ul>
         {#each $messages as message}
           <li>
-            <Message {message} />
+            <Message {message} on:playAudio={(e) => setCurrentAudio(e.detail)} />
           </li>
         {/each}
       </ul>
@@ -73,6 +78,11 @@
         <Button type="submit">Send</Button>
       </form>
     </section>
+    {#if currentAudio}
+      <section aria-label="Audio player">
+        <audio src={currentAudio} controls autoplay />
+      </section>
+    {/if}
   {/if}
 {:else}
   <section>

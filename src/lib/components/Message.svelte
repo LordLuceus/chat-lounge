@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Message } from "ai/svelte";
+  import * as Avatar from "$lib/components/ui/avatar";
   import Markdown from "svelte-exmarkdown";
   import { gfmPlugin } from "svelte-exmarkdown/gfm";
   import { page } from "$app/stores";
@@ -19,13 +20,19 @@
   <section aria-label="{message.role} message">
     <div class="{message.role}-message">
       {#if message.role === "user"}
-        <img src={$page.data.session?.user?.image} alt={$page.data.session?.user?.name} />
+        <Avatar.Root>
+          <Avatar.Image
+            src={$page.data.session?.user?.image}
+            alt={$page.data.session?.user?.name}
+          />
+          <Avatar.Fallback>{$page.data.session?.user?.name}</Avatar.Fallback>
+        </Avatar.Root>
       {/if}
       <Markdown md={message.content} {plugins} />
+      {#if $page.data.keys.eleven && message.role === "assistant"}
+        <Tts text={message.content} on:playAudio />
+      {/if}
       {#if message.role === "assistant"}
-        {#if $page.data.keys.eleven}
-          <Tts text={message.content} />
-        {/if}
         <Button on:click={copyToClipboard}>Copy</Button>
       {/if}
     </div>

@@ -31,7 +31,7 @@
       <form method="POST" action="/settings?/apiKey&provider={provider}" use:enhance>
         <Label>
           <span>API Key</span>
-          <Input type="text" name="apiKey" bind:this={apiKeyInput} />
+          <Input type="text" name="apiKey" bind:this={apiKeyInput} required />
         </Label>
         {#if form?.message}
           <p role="alert">{form.message}</p>

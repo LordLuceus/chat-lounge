@@ -1,5 +1,8 @@
 <script lang="ts">
   import { page } from "$app/stores";
+  import { createEventDispatcher } from "svelte";
+
+  const dispatch = createEventDispatcher();
 
   export let text: string;
 
@@ -11,6 +14,8 @@
 
     const mediaSource = new MediaSource();
     const audioUrl = URL.createObjectURL(mediaSource);
+
+    dispatch("playAudio", audioUrl);
 
     mediaSource.addEventListener(
       "sourceopen",
@@ -47,10 +52,18 @@
       },
       { once: true }
     );
-
-    const audio = new Audio(audioUrl);
-    audio.play();
   };
 </script>
 
 <button on:click={tts}>Speak</button>
+
+<style>
+  button {
+    padding: 0.5rem 1rem;
+    background-color: var(--color-primary);
+    color: var(--color-text);
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+  }
+</style>

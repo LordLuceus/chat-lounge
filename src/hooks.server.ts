@@ -3,7 +3,7 @@ import { handle as authenticationHandle } from "$lib/auth";
 import { sequence } from "@sveltejs/kit/hooks";
 
 const authorizationHandle = (async ({ event, resolve }) => {
-  if (event.url.pathname.startsWith("/api")) {
+  if (event.url.pathname.startsWith("/settings") || event.url.pathname.startsWith("/voices")) {
     const session = await event.locals.auth();
 
     if (!session) throw redirect(303, "/");

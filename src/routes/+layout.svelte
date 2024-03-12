@@ -5,6 +5,7 @@
   import { signIn, signOut } from "@auth/sveltekit/client";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import * as Avatar from "$lib/components/ui/avatar";
+  import { Toaster } from "$lib/components/ui/sonner";
 
   export let data: PageData;
 </script>
@@ -39,6 +40,10 @@
 <main>
   <slot />
 </main>
+
+<div role="alert">
+  <Toaster />
+</div>
 
 <style>
   header {

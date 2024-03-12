@@ -51,9 +51,11 @@
     "clsx": "^2.1.0",
     "elevenlabs-edge": "^0.1.6",
     "lucide-svelte": "^0.344.0",
+    "mode-watcher": "^0.2.2",
     "openai": "^4.28.4",
     "prisma": "^5.10.2",
     "svelte-exmarkdown": "^3.0.3",
+    "svelte-sonner": "^0.3.19",
     "tailwind-merge": "^2.2.1",
     "tailwind-variants": "^0.2.0"
   }

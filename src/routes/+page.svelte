@@ -13,6 +13,8 @@
   export let data: PageData;
   let finishSound: HTMLAudioElement;
   let currentAudio = "";
+  let audioBlobUrl = "";
+  let audioFileName = `elevenlabs_${new Date().toISOString()}.mp3`;
 
   const { input, handleSubmit, messages, reload } = useChat({
     onFinish: () => {
@@ -58,6 +60,10 @@
   function setCurrentAudio(src: string) {
     currentAudio = src;
   }
+
+  function setAudioBlobUrl(url: string) {
+    audioBlobUrl = url;
+  }
 </script>
 
 <svelte:head>
@@ -80,7 +86,11 @@
       <ul>
         {#each $messages as message}
           <li>
-            <Message {message} on:playAudio={(e) => setCurrentAudio(e.detail)} />
+            <Message
+              {message}
+              on:playAudio={(e) => setCurrentAudio(e.detail)}
+              on:downloadAudio={(e) => setAudioBlobUrl(e.detail)}
+            />
           </li>
         {/each}
       </ul>
@@ -103,6 +113,9 @@
     {#if currentAudio}
       <section aria-label="Audio player">
         <audio src={currentAudio} controls autoplay />
+        {#if audioBlobUrl}
+          <a href={audioBlobUrl} download={audioFileName}> Download audio </a>
+        {/if}
       </section>
     {/if}
   {/if}

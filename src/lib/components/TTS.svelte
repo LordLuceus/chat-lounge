@@ -14,6 +14,7 @@
 
     const mediaSource = new MediaSource();
     const audioUrl = URL.createObjectURL(mediaSource);
+    const chunks: Uint8Array[] = [];
 
     dispatch("playAudio", audioUrl);
 
@@ -37,9 +38,13 @@
           const pump = async (): Promise<void> => {
             const { done, value } = await reader.read();
             if (done) {
+              const audioBlob = new Blob(chunks, { type: "audio/mpeg" });
+              const downloadUrl = URL.createObjectURL(audioBlob);
+              dispatch("downloadAudio", downloadUrl);
               mediaSource.endOfStream();
               return;
             }
+            chunks.push(value);
             sourceBuffer.appendBuffer(value);
             sourceBuffer.addEventListener("updateend", pump, { once: true });
           };

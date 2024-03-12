@@ -32,7 +32,7 @@
       {/if}
       <Markdown md={message.content} {plugins} />
       {#if $page.data.keys.eleven && message.role === "assistant"}
-        <Tts text={message.content} on:playAudio />
+        <Tts text={message.content} on:playAudio on:downloadAudio />
       {/if}
       {#if message.role === "assistant"}
         <Button on:click={copyToClipboard}>Copy</Button>

@@ -1,12 +1,10 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
-  import { browser } from "$app/environment";
+  import { onMount } from "svelte";
   import { Button } from "$lib/components/ui/button";
   import { Textarea } from "$lib/components/ui/textarea";
   import Message from "$lib/components/Message.svelte";
   import { useChat } from "ai/svelte";
   import { signIn, signOut } from "@auth/sveltekit/client";
-  import { enhance } from "$app/forms";
   import type { PageData } from "./$types";
   import { toast } from "svelte-sonner";
 
@@ -50,11 +48,6 @@
   onMount(() => {
     (document.querySelector(".chat-input") as HTMLTextAreaElement)?.focus();
     finishSound = new Audio("/assets/typing.wav");
-    window.addEventListener("keydown", handleCopyLastMessage);
-  });
-
-  onDestroy(() => {
-    if (browser) window.removeEventListener("keydown", handleCopyLastMessage);
   });
 
   function setCurrentAudio(src: string) {
@@ -65,6 +58,8 @@
     audioBlobUrl = url;
   }
 </script>
+
+<svelte:window on:keydown={handleCopyLastMessage} />
 
 <svelte:head>
   <title>ChatMate</title>

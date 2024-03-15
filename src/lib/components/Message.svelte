@@ -4,6 +4,7 @@
   import Markdown from "svelte-exmarkdown";
   import { gfmPlugin } from "svelte-exmarkdown/gfm";
   import { page } from "$app/stores";
+  import { copyCodeBlocks } from "$lib/actions/copy-code";
   import { Button } from "$lib/components/ui/button";
   import Tts from "./TTS.svelte";
   import { toast } from "svelte-sonner";
@@ -20,7 +21,7 @@
 
 {#if message.role === "user" || message.role === "assistant"}
   <section aria-label="{message.role} message">
-    <div class="{message.role}-message">
+    <div class="{message.role}-message" use:copyCodeBlocks={{ content: message.content }}>
       {#if message.role === "user"}
         <Avatar.Root>
           <Avatar.Image

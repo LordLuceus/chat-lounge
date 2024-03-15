@@ -47,7 +47,7 @@
     "@sveltejs/adapter-vercel": "^5.1.0",
     "@vercel/analytics": "^1.2.2",
     "ai": "^2.2.36",
-    "bits-ui": "^0.19.6",
+    "bits-ui": "^0.19.7",
     "clsx": "^2.1.0",
     "elevenlabs-edge": "^0.1.6",
     "lucide-svelte": "^0.344.0",

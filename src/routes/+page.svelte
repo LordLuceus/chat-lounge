@@ -14,9 +14,9 @@
   let finishSound: HTMLAudioElement;
   let currentAudio = "";
   let audioBlobUrl = "";
-  let audioFileName = `elevenlabs_${new Date().toISOString()}.mp3`;
+  let audioFileName = `TTS_${new Date().toISOString()}.mp3`;
 
-  const { input, handleSubmit, messages, reload } = useChat({
+  const { error, input, handleSubmit, messages, reload } = useChat({
     onFinish: () => {
       finishSound?.play();
     },
@@ -83,19 +83,21 @@
     <a href="/settings">Go to settings</a>
   {:else}
     <section>
-      <ul>
+      <div class="chat-list">
         {#each $messages as message}
-          <li>
-            <Message
-              {message}
-              on:playAudio={(e) => setCurrentAudio(e.detail)}
-              on:downloadAudio={(e) => setAudioBlobUrl(e.detail)}
-            />
-          </li>
+          <Message
+            {message}
+            on:playAudio={(e) => setCurrentAudio(e.detail)}
+            on:downloadAudio={(e) => setAudioBlobUrl(e.detail)}
+          />
         {/each}
-      </ul>
+      </div>
       {#if $messages.at(-1)?.role === "assistant"}
         <button on:click={() => reload()}>Regenerate</button>
+      {/if}
+      {#if $error}
+        <p class="error">There was an error while getting a response from the AI.</p>
+        <Button on:click={() => reload()}>Try again</Button>
       {/if}
 
       <form on:submit={handleSubmit} bind:this={chatForm}>
@@ -139,5 +141,15 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+  }
+
+  .chat-list {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem;
+    width: 100%;
   }
 </style>

@@ -1,6 +1,6 @@
 <script lang="ts">
   import MoreHorizontal from "lucide-svelte/icons/more-horizontal";
-  import * as Alert from "$lib/components/ui/alert";
+  import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { Button } from "$lib/components/ui/button";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { toast } from "svelte-sonner";
@@ -15,6 +15,7 @@
   let copyIdSuccess = false;
   let deleteSuccess = false;
   let deleteError = false;
+  let deleteDialogOpen = false;
 
   async function setDefault() {
     try {
@@ -27,7 +28,6 @@
       });
 
       if (!res.ok) {
-        throw new Error("Failed to set voice as default");
         setDefaultError = true;
       }
 
@@ -49,7 +49,6 @@
       });
 
       if (!res.ok) {
-        throw new Error("Failed to delete voice");
         deleteError = true;
       }
 
@@ -88,6 +87,21 @@
   }
 </script>
 
+<AlertDialog.Root bind:open={deleteDialogOpen}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Are you sure?</AlertDialog.Title>
+      <AlertDialog.Description>
+        This will permanently delete the voice. You can't undo this action.
+      </AlertDialog.Description>
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+      <AlertDialog.Action on:click={deleteVoice}>Delete</AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>
+
 <DropdownMenu.Root>
   <DropdownMenu.Trigger asChild let:builder>
     <Button variant="ghost" builders={[builder]} size="icon" class="relative h-8 w-8 p-0">
@@ -100,7 +114,9 @@
       <DropdownMenu.Label>Actions</DropdownMenu.Label>
       <DropdownMenu.Item on:click={setDefault}>Set as default</DropdownMenu.Item>
       {#if category !== "premade"}
-        <DropdownMenu.Item on:click={deleteVoice}>Delete</DropdownMenu.Item>
+        <DropdownMenu.Item on:click={() => (deleteDialogOpen = true)}
+          >Delete voice</DropdownMenu.Item
+        >
       {/if}
       <DropdownMenu.Item on:click={copyId}>Copy voice ID</DropdownMenu.Item>
     </DropdownMenu.Group>

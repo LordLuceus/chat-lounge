@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import { createEventDispatcher } from "svelte";
+  import { Button } from "$lib/components/ui/button";
 
   const dispatch = createEventDispatcher();
 
@@ -60,15 +61,4 @@
   };
 </script>
 
-<button on:click={tts}>Speak</button>
-
-<style>
-  button {
-    padding: 0.5rem 1rem;
-    background-color: var(--color-primary);
-    color: var(--color-text);
-    border: none;
-    border-radius: 0.25rem;
-    cursor: pointer;
-  }
-</style>
+<Button on:click={tts}>Speak</Button>

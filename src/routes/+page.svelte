@@ -2,8 +2,7 @@
   import { onMount, tick } from "svelte";
   import { Button } from "$lib/components/ui/button";
   import { Textarea } from "$lib/components/ui/textarea";
-  import * as Command from "$lib/components/ui/command";
-  import * as Popover from "$lib/components/ui/popover";
+  import Select from "svelte-select";
   import Message from "$lib/components/Message.svelte";
   import { useChat } from "ai/svelte";
   import { signIn, signOut } from "@auth/sveltekit/client";
@@ -32,15 +31,24 @@
   let currentAudio = "";
   let audioBlobUrl = "";
   let audioFileName = `TTS_${new Date().toISOString()}.mp3`;
-  let modelValue = models[0].value;
-  $: selectedModel = models.find((model) => model.value === modelValue)?.label;
-  let modelSelectOpen = false;
+
+  let selectedModel = models[0];
+
+  let selectedVoice: { label: string; value: string } | undefined = data.voices?.map((voice) => ({
+    label: `${voice.name} (${voice.category})`,
+    value: voice.voice_id
+  }))[0];
+
+  $: voiceItems = data.voices?.map((voice) => ({
+    label: `${voice.name} (${voice.category})`,
+    value: voice.voice_id
+  }));
 
   const { error, input, handleSubmit, messages, reload } = useChat({
     onFinish: () => {
       finishSound?.play();
     },
-    body: { userId: data.session?.user?.id, model: modelValue }
+    body: { userId: data.session?.user?.id, model: selectedModel.value }
   });
 
   function handleMessageSubmit(event: KeyboardEvent) {
@@ -71,9 +79,19 @@
 
     const storedModel = localStorage.getItem("selectedModel");
     if (storedModel) {
+      const parsedModel: { label: string; value: string } = JSON.parse(storedModel);
       // Check if the stored model is valid
-      if (models.find((model) => model.value === storedModel)) {
-        modelValue = storedModel;
+      if (models.find((model) => model.value === parsedModel.value)) {
+        selectedModel = parsedModel;
+      }
+    }
+
+    const storedVoice = localStorage.getItem("selectedVoice");
+    if (storedVoice) {
+      const parsedVoice: { label: string; value: string } = JSON.parse(storedVoice);
+      // Check if the stored voice is valid
+      if (data.voices?.find((voice) => voice.voice_id === parsedVoice.value)) {
+        selectedVoice = parsedVoice;
       }
     }
   });
@@ -86,12 +104,9 @@
     audioBlobUrl = url;
   }
 
-  function closeAndFocusTrigger(triggerId: string) {
-    modelSelectOpen = false;
-    tick().then(() => {
-      document.getElementById(triggerId)?.focus();
-    });
-  }
+  const ariaListOpen = (label: string, count: number) => {
+    return `${label}, ${count} ${count < 2 ? "option" : "options"} available.`;
+  };
 </script>
 
 <svelte:window on:keydown={handleCopyLastMessage} />
@@ -115,47 +130,35 @@
     <a href="/settings">Go to settings</a>
   {:else}
     {#if $messages.length === 0}
-      <Popover.Root bind:open={modelSelectOpen} let:ids>
-        <Popover.Trigger asChild let:builder>
-          <Button
-            builders={[builder]}
-            variant="outline"
-            role="combobox"
-            aria-expanded={modelSelectOpen}
-            class="w-[200px] justify-between"
-          >
-            {selectedModel}
-          </Button>
-        </Popover.Trigger>
-        <Popover.Content class="w-[200px] p-0">
-          <Command.Root>
-            <Command.Input placeholder="Select model..." class="h-9" />
-            <Command.Empty>No model found.</Command.Empty>
-            <Command.Group>
-              {#each models as model}
-                <Command.Item
-                  value={model.value}
-                  onSelect={(currentValue) => {
-                    modelValue = currentValue;
-                    closeAndFocusTrigger(ids.trigger);
-                    localStorage.setItem("selectedModel", modelValue);
-                  }}
-                >
-                  {model.label}
-                </Command.Item>
-              {/each}
-            </Command.Group>
-          </Command.Root>
-        </Popover.Content>
-      </Popover.Root>
+      <Select
+        bind:value={selectedModel}
+        items={models}
+        placeholder="Select model..."
+        on:change={(e) => localStorage.setItem("selectedModel", JSON.stringify(selectedModel))}
+        {ariaListOpen}
+        clearable={false}
+      />
     {:else}
-      <p>{selectedModel}</p>
+      <p>{selectedModel.label}</p>
     {/if}
+
+    {#if data.keys.eleven && data.voices}
+      <Select
+        bind:value={selectedVoice}
+        items={voiceItems}
+        placeholder="Select voice..."
+        on:change={(e) => localStorage.setItem("selectedVoice", JSON.stringify(selectedVoice))}
+        {ariaListOpen}
+        clearable={false}
+      />
+    {/if}
+
     <section>
       <div class="chat-list">
         {#each $messages as message}
           <Message
             {message}
+            voice={selectedVoice?.value}
             on:playAudio={(e) => setCurrentAudio(e.detail)}
             on:downloadAudio={(e) => setAudioBlobUrl(e.detail)}
           />
@@ -164,23 +167,25 @@
       {#if $messages.at(-1)?.role === "assistant"}
         <button
           on:click={() =>
-            reload({ options: { body: { userId: data.session?.user?.id, model: modelValue } } })}
-          >Regenerate</button
+            reload({
+              options: { body: { userId: data.session?.user?.id, model: selectedModel.value } }
+            })}>Regenerate</button
         >
       {/if}
       {#if $error}
         <p class="error">There was an error while getting a response from the AI.</p>
         <Button
           on:click={() =>
-            reload({ options: { body: { userId: data.session?.user?.id, model: modelValue } } })}
-          >Try again</Button
+            reload({
+              options: { body: { userId: data.session?.user?.id, model: selectedModel.value } }
+            })}>Try again</Button
         >
       {/if}
 
       <form
         on:submit={(e) =>
           handleSubmit(e, {
-            options: { body: { userId: data.session?.user?.id, model: modelValue } }
+            options: { body: { userId: data.session?.user?.id, model: selectedModel.value } }
           })}
         bind:this={chatForm}
       >

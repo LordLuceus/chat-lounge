@@ -12,6 +12,7 @@
   const plugins = [gfmPlugin()];
 
   export let message: Message;
+  export let voice: string | undefined;
 
   async function copyToClipboard() {
     await navigator.clipboard.writeText(message.content);
@@ -33,7 +34,7 @@
       {/if}
       <Markdown md={message.content} {plugins} />
       {#if $page.data.keys.eleven && message.role === "assistant"}
-        <Tts text={message.content} on:playAudio on:downloadAudio />
+        <Tts text={message.content} {voice} on:playAudio on:downloadAudio />
       {/if}
       {#if message.role === "assistant"}
         <Button on:click={copyToClipboard}>Copy</Button>

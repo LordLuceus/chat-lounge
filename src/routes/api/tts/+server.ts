@@ -1,6 +1,5 @@
 import { error } from "@sveltejs/kit";
 import { getApiKey } from "$lib/settings/api-keys";
-import { getPreferences } from "$lib/settings/preferences";
 import prisma from "$lib/prisma";
 import { PUBLIC_ELEVENLABS_BASE_URL } from "$env/static/public";
 import type { RequestHandler } from "@sveltejs/kit";
@@ -10,7 +9,7 @@ import type { ElevenLabsError } from "$lib/types/elevenlabs/elevenlabs-error";
 export const config: Config = { runtime: "edge" };
 
 export const POST = (async ({ request }) => {
-  const { text, userId } = await request.json();
+  const { text, voice, userId } = await request.json();
 
   const user = await prisma.user.findUnique({
     where: {
@@ -28,19 +27,18 @@ export const POST = (async ({ request }) => {
     return error(404, { message: "API key not found" });
   }
 
-  const preferences = await getPreferences(user.id);
+  if (!voice) {
+    return error(400, { message: "No voice provided" });
+  }
 
-  const response = await fetch(
-    `${PUBLIC_ELEVENLABS_BASE_URL}/text-to-speech/${preferences?.defaultVoiceId}/stream`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "xi-api-key": apiKey.key
-      },
-      body: JSON.stringify({ text, model_id: "eleven_turbo_v2" })
-    }
-  );
+  const response = await fetch(`${PUBLIC_ELEVENLABS_BASE_URL}/text-to-speech/${voice}/stream`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "xi-api-key": apiKey.key
+    },
+    body: JSON.stringify({ text, model_id: "eleven_turbo_v2" })
+  });
 
   if (!response.ok) {
     const result: ElevenLabsError = await response.json();

@@ -7,6 +7,7 @@
   const dispatch = createEventDispatcher();
 
   export let text: string;
+  export let voice: string | undefined;
 
   const tts = async (): Promise<void> => {
     if (!window.MediaSource) {
@@ -30,7 +31,7 @@
             headers: {
               "Content-Type": "application/json"
             },
-            body: JSON.stringify({ text, userId: $page.data.session?.user?.id })
+            body: JSON.stringify({ text, userId: $page.data.session?.user?.id, voice })
           });
 
           if (!response.ok) {

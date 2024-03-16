@@ -33,10 +33,7 @@ export const POST = (async ({ request }) => {
     temperature: 1.0
   });
 
-  const stream = MistralStream(response, {
-    onCompletion: async (message) => console.log({ completion: message }),
-    onToken: async (token) => console.log({ token })
-  });
+  const stream = MistralStream(response);
 
   return new StreamingTextResponse(stream);
 }) satisfies RequestHandler;

@@ -2,6 +2,7 @@
   import { page } from "$app/stores";
   import { createEventDispatcher } from "svelte";
   import { Button } from "$lib/components/ui/button";
+  import { toast } from "svelte-sonner";
 
   const dispatch = createEventDispatcher();
 
@@ -31,9 +32,20 @@
             },
             body: JSON.stringify({ text, userId: $page.data.session?.user?.id })
           });
+
+          if (!response.ok) {
+            mediaSource.endOfStream("network");
+
+            dispatch("playAudio", null);
+
+            const error = await response.json();
+            toast.error(error.message);
+            return;
+          }
+
           const stream = response.body;
 
-          if (!stream) throw new Error("No audio stream available");
+          if (!stream) return;
 
           const reader = stream.getReader();
           const pump = async (): Promise<void> => {

@@ -7,7 +7,7 @@ import { getApiKey } from "$lib/settings/api-keys";
 export const config = { runtime: "edge" };
 
 export const POST = (async ({ request }) => {
-  const { messages, userId } = await request.json();
+  const { messages, model, userId } = await request.json();
 
   const user = await prisma.user.findUnique({
     where: {
@@ -29,7 +29,7 @@ export const POST = (async ({ request }) => {
 
   const response = await client.chatStream({
     messages,
-    model: "mistral-medium",
+    model,
     temperature: 1.0
   });
 

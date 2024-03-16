@@ -11,6 +11,7 @@
   export let openText: string;
   export let form: ActionData;
   let apiKeyInput: Input;
+  let open = false;
 
   function handleApiKeyError() {
     apiKeyInput?.focus();
@@ -21,17 +22,23 @@
   }
 </script>
 
-<Dialog.Root>
+<Dialog.Root bind:open>
   <Dialog.Trigger>{openText}</Dialog.Trigger>
   <Dialog.Content>
     <Dialog.Header>
       <Dialog.Title>Set your {provider} API key</Dialog.Title>
     </Dialog.Header>
     <section>
-      <form method="POST" action="/settings?/apiKey&provider={provider}" use:enhance>
+      <form
+        method="POST"
+        action="/settings?/apiKey&provider={provider}"
+        use:enhance={() => {
+          open = false;
+        }}
+      >
         <Label>
           <span>API Key</span>
-          <Input type="text" name="apiKey" bind:this={apiKeyInput} required />
+          <Input type="text" name="apiKey" bind:this={apiKeyInput} />
         </Label>
         {#if form?.message}
           <p role="alert">{form.message}</p>

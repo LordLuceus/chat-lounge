@@ -1,9 +1,11 @@
 import { dev } from "$app/environment";
 import { PrismaClient } from "@prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
-import { Pool } from "@neondatabase/serverless";
+import { Pool, neonConfig } from "@neondatabase/serverless";
+import ws from "ws";
 import { POSTGRES_PRISMA_URL } from "$env/static/private";
 
+neonConfig.webSocketConstructor = ws;
 let prisma: PrismaClient;
 
 if (dev) {

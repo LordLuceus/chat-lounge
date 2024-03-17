@@ -10,7 +10,7 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "lint": "prettier --check . && eslint .",
     "format": "prettier --write .",
-    "postinstall": "prisma migrate deploy && prisma generate --no-engine"
+    "postinstall": "prisma migrate deploy && prisma generate"
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^3.0.0",
@@ -42,8 +42,9 @@
     "@auth/prisma-adapter": "^1.4.0",
     "@auth/sveltekit": "^0.13.0",
     "@mistralai/mistralai": "latest",
+    "@neondatabase/serverless": "^0.9.0",
+    "@prisma/adapter-neon": "^5.11.0",
     "@prisma/client": "^5.10.2",
-    "@prisma/extension-accelerate": "^1.0.0",
     "@sveltejs/adapter-vercel": "^5.1.0",
     "@vercel/analytics": "^1.2.2",
     "ai": "^2.2.36",

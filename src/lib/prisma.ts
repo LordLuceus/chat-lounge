@@ -1,10 +1,17 @@
 import { dev } from "$app/environment";
-import { PrismaClient as PrismaClientEdge } from "@prisma/client/edge";
 import { PrismaClient } from "@prisma/client";
-import { withAccelerate } from "@prisma/extension-accelerate";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { Pool } from "@neondatabase/serverless";
+import { POSTGRES_PRISMA_URL } from "$env/static/private";
 
-const prisma = dev
-  ? new PrismaClient().$extends(withAccelerate())
-  : new PrismaClientEdge().$extends(withAccelerate());
+let prisma: PrismaClient;
+
+if (dev) {
+  prisma = new PrismaClient();
+} else {
+  const neon = new Pool({ connectionString: POSTGRES_PRISMA_URL });
+  const adapter = new PrismaNeon(neon);
+  prisma = new PrismaClient({ adapter });
+}
 
 export default prisma;

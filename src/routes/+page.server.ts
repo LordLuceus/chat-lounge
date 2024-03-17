@@ -8,7 +8,7 @@ export const load = (async ({ fetch, parent }) => {
   const { session } = await parent();
 
   if (!session) {
-    return { status: 401, redirect: "/login" };
+    return {};
   }
 
   const response = await fetch("/api/voices");

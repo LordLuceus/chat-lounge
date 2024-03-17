@@ -4,7 +4,13 @@ import type { Config } from "@sveltejs/adapter-vercel";
 
 export const config: Config = { runtime: "edge" };
 
-export const load = (async ({ fetch }) => {
+export const load = (async ({ fetch, parent }) => {
+  const { session } = await parent();
+
+  if (!session) {
+    return { status: 401, redirect: "/login" };
+  }
+
   const response = await fetch("/api/voices");
 
   if (response.ok) {

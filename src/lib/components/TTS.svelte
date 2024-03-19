@@ -31,7 +31,6 @@
     ttsGenerating.set(true);
 
     if (!streamSupported) {
-      toast.info("Generating audio... Not streaming.");
       const response = await fetch(`/api/tts`, {
         method: "POST",
         headers: {
@@ -49,7 +48,6 @@
       }
 
       const audioBlob = await response.blob();
-      console.log("audioBlob", audioBlob.type);
       const downloadUrl = URL.createObjectURL(audioBlob);
       dispatch("playAudio", downloadUrl);
       dispatch("downloadAudio", downloadUrl);
@@ -124,8 +122,6 @@
   };
 </script>
 
-// TODO: If we're currently generating audio, disable the button so we don't spam the server. Show a
-spinner or something. Share the state across all TTS buttons.
 <Button on:click={tts} disabled={$ttsGenerating}>
   {#if $ttsGenerating}
     <Loader />

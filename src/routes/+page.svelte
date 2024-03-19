@@ -1,11 +1,10 @@
 <script lang="ts">
-  import { onMount, tick } from "svelte";
+  import { onMount } from "svelte";
   import { Button } from "$lib/components/ui/button";
   import { Textarea } from "$lib/components/ui/textarea";
   import Select from "svelte-select";
   import Message from "$lib/components/Message.svelte";
   import { useChat } from "ai/svelte";
-  import { signIn, signOut } from "@auth/sveltekit/client";
   import type { PageData } from "./$types";
   import { toast } from "svelte-sonner";
 
@@ -100,8 +99,9 @@
     currentAudio = src;
   }
 
-  function setAudioBlobUrl(url: string) {
+  function setAudioUrlAndFilename(url: string, filename: string) {
     audioBlobUrl = url;
+    audioFileName = filename;
   }
 
   const ariaListOpen = (label: string, count: number) => {
@@ -160,7 +160,8 @@
             {message}
             voice={selectedVoice?.value}
             on:playAudio={(e) => setCurrentAudio(e.detail)}
-            on:downloadAudio={(e) => setAudioBlobUrl(e.detail)}
+            on:downloadAudio={(e) =>
+              setAudioUrlAndFilename(e.detail.downloadUrl, e.detail.filename)}
           />
         {/each}
       </div>

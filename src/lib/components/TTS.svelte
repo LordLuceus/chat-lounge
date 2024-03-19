@@ -5,6 +5,7 @@
   import { toast } from "svelte-sonner";
   import { ttsGenerating } from "$lib/stores/tts-generating-store";
   import { Loader } from "lucide-svelte";
+  import { generateAudioFilename } from "$lib/filename";
 
   const dispatch = createEventDispatcher();
 
@@ -50,7 +51,7 @@
       const audioBlob = await response.blob();
       const downloadUrl = URL.createObjectURL(audioBlob);
       dispatch("playAudio", downloadUrl);
-      dispatch("downloadAudio", downloadUrl);
+      dispatch("downloadAudio", { downloadUrl, filename: generateAudioFilename(text) });
       ttsGenerating.set(false);
       return;
     }
@@ -100,7 +101,7 @@
             if (done) {
               const audioBlob = new Blob(chunks, { type: "audio/mpeg" });
               const downloadUrl = URL.createObjectURL(audioBlob);
-              dispatch("downloadAudio", downloadUrl);
+              dispatch("downloadAudio", { downloadUrl, filename: generateAudioFilename(text) });
               mediaSource.endOfStream();
               ttsGenerating.set(false);
               return;

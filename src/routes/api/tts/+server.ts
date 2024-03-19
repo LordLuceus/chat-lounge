@@ -9,7 +9,7 @@ import type { ElevenLabsError } from "$lib/types/elevenlabs/elevenlabs-error";
 export const config: Config = { runtime: "edge" };
 
 export const POST = (async ({ request }) => {
-  const { text, voice, userId } = await request.json();
+  const { stream, text, voice, userId } = await request.json();
 
   const user = await prisma.user.findUnique({
     where: {
@@ -31,18 +31,22 @@ export const POST = (async ({ request }) => {
     return error(400, { message: "No voice provided" });
   }
 
-  const response = await fetch(`${PUBLIC_ELEVENLABS_BASE_URL}/text-to-speech/${voice}/stream`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "xi-api-key": apiKey.key
-    },
-    body: JSON.stringify({ text, model_id: "eleven_turbo_v2" })
-  });
+  const response = await fetch(
+    `${PUBLIC_ELEVENLABS_BASE_URL}/text-to-speech/${voice}${stream ? "/stream" : ""}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "xi-api-key": apiKey.key
+      },
+      body: JSON.stringify({ text, model_id: "eleven_turbo_v2" })
+    }
+  );
 
   if (!response.ok) {
     const result: ElevenLabsError = await response.json();
 
+    console.log(result);
     return error(response.status, result.detail.message);
   }
 

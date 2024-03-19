@@ -54,7 +54,7 @@
   function handleMessageSubmit(event: KeyboardEvent) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      chatForm.dispatchEvent(new Event("submit"));
+      chatForm.requestSubmit();
     }
   }
 

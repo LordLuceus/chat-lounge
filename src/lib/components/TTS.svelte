@@ -3,15 +3,57 @@
   import { createEventDispatcher } from "svelte";
   import { Button } from "$lib/components/ui/button";
   import { toast } from "svelte-sonner";
+  import { ttsGenerating } from "$lib/stores/tts-generating-store";
+  import { Loader } from "lucide-svelte";
 
   const dispatch = createEventDispatcher();
 
   export let text: string;
   export let voice: string | undefined;
 
+  let streamSupported = true;
+
   const tts = async (): Promise<void> => {
     if (!window.MediaSource) {
       console.error("MediaSource API is not supported in this browser");
+      streamSupported = false;
+    }
+
+    if (!MediaSource.isTypeSupported("audio/mpeg")) {
+      streamSupported = false;
+    }
+
+    if ($ttsGenerating) {
+      console.warn("TTS is already generating");
+      return;
+    }
+
+    ttsGenerating.set(true);
+
+    if (!streamSupported) {
+      toast.info("Generating audio... Not streaming.");
+      const response = await fetch(`/api/tts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ text, userId: $page.data.session?.user?.id, voice, stream: false })
+      });
+
+      if (!response.ok) {
+        ttsGenerating.set(false);
+        dispatch("playAudio", null);
+        const error = await response.json();
+        toast.error(error.message);
+        return;
+      }
+
+      const audioBlob = await response.blob();
+      console.log("audioBlob", audioBlob.type);
+      const downloadUrl = URL.createObjectURL(audioBlob);
+      dispatch("playAudio", downloadUrl);
+      dispatch("downloadAudio", downloadUrl);
+      ttsGenerating.set(false);
       return;
     }
 
@@ -31,7 +73,12 @@
             headers: {
               "Content-Type": "application/json"
             },
-            body: JSON.stringify({ text, userId: $page.data.session?.user?.id, voice })
+            body: JSON.stringify({
+              text,
+              userId: $page.data.session?.user?.id,
+              voice,
+              stream: true
+            })
           });
 
           if (!response.ok) {
@@ -41,6 +88,7 @@
 
             const error = await response.json();
             toast.error(error.message);
+            ttsGenerating.set(false);
             return;
           }
 
@@ -56,6 +104,7 @@
               const downloadUrl = URL.createObjectURL(audioBlob);
               dispatch("downloadAudio", downloadUrl);
               mediaSource.endOfStream();
+              ttsGenerating.set(false);
               return;
             }
             chunks.push(value);
@@ -67,6 +116,7 @@
         } catch (error) {
           console.error("Error fetching or processing audio", error);
           mediaSource.endOfStream("network");
+          ttsGenerating.set(false);
         }
       },
       { once: true }
@@ -74,4 +124,11 @@
   };
 </script>
 
-<Button on:click={tts}>Speak</Button>
+// TODO: If we're currently generating audio, disable the button so we don't spam the server. Show a
+spinner or something. Share the state across all TTS buttons.
+<Button on:click={tts} disabled={$ttsGenerating}>
+  {#if $ttsGenerating}
+    <Loader />
+  {/if}
+  <span>{$ttsGenerating ? "Generating..." : "Speak"}</span>
+</Button>

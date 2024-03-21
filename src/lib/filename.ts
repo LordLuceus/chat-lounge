@@ -4,12 +4,9 @@ export const generateAudioFilename = (text: string, extension: string = "mp3") =
   }
 
   // Sanitize the text to create a safe filename:
-  // Replace any character that's not alphanumeric, a hyphen, or a space with an underscore.
-  // Then trim to remove leading/trailing whitespace and replace spaces with underscores.
-  const sanitizedText = text
-    .replace(/[^a-zA-Z0-9 -]/g, "_")
-    .trim()
-    .replace(/\s+/g, "_");
+  // Replace any character that's not alphanumeric, a hyphen, an apostrophe, or a space with an underscore.
+  // Then trim to remove leading/trailing whitespace.
+  const sanitizedText = text.replace(/[^a-zA-Z0-9 -'.,]/g, "_").trim();
 
   // Truncate the text to ensure the filename is not excessively long.
   // We choose 100 characters because it's within common filesystem limits and provides enough context.

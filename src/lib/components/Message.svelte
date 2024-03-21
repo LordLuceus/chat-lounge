@@ -1,15 +1,16 @@
 <script lang="ts">
-  import type { Message } from "ai/svelte";
-  import * as Avatar from "$lib/components/ui/avatar";
-  import Markdown from "svelte-exmarkdown";
-  import { gfmPlugin } from "svelte-exmarkdown/gfm";
   import { page } from "$app/stores";
   import { copyCodeBlocks } from "$lib/actions/copy-code";
+  import * as Avatar from "$lib/components/ui/avatar";
   import { Button } from "$lib/components/ui/button";
-  import Tts from "./TTS.svelte";
+  import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
+  import type { Message } from "ai/svelte";
+  import Markdown from "svelte-exmarkdown";
+  import { gfmPlugin } from "svelte-exmarkdown/gfm";
   import { toast } from "svelte-sonner";
+  import Tts from "./TTS.svelte";
 
-  const plugins = [gfmPlugin()];
+  const plugins = [gfmPlugin(), lineBreaksPlugin];
 
   export let message: Message;
   export let voice: string | undefined;

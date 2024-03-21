@@ -1,4 +1,7 @@
-import prisma from "$lib/prisma";
+import { db } from "$lib/drizzle/db";
+import { AIProvider, apiKeys } from "$lib/drizzle/schema";
+import type { Config } from "@sveltejs/adapter-vercel";
+import { eq } from "drizzle-orm";
 import type { LayoutServerLoad } from "./$types";
 
 interface ApiKeys {
@@ -7,25 +10,18 @@ interface ApiKeys {
   openai: boolean;
 }
 
+export const config: Config = { runtime: "edge" };
+
 export const load = (async (event) => {
   const session = await event.locals.auth();
 
   if (session?.user?.id) {
-    const apiKeys = await prisma.apiKey.findMany({
-      where: { userId: session?.user?.id }
-    });
-
-    if (!apiKeys) {
-      return {
-        session,
-        keys: null
-      };
-    }
+    const storedKeys = await db.select().from(apiKeys).where(eq(apiKeys.userId, session.user.id));
 
     const keys: ApiKeys = {
-      mistral: apiKeys.some((key) => key.provider === "MISTRAL"),
-      eleven: apiKeys.some((key) => key.provider === "ELEVENLABS"),
-      openai: apiKeys.some((key) => key.provider === "OPENAI")
+      mistral: storedKeys.some((key) => key.provider === AIProvider.Mistral),
+      eleven: storedKeys.some((key) => key.provider === AIProvider.ElevenLabs),
+      openai: storedKeys.some((key) => key.provider === AIProvider.OpenAI)
     };
 
     return {

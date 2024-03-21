@@ -1,35 +1,45 @@
-import type { RequestHandler } from "./$types";
-import { ElevenLabsClient } from "elevenlabs-edge";
-import prisma from "$lib/prisma";
-import type { Config } from "@sveltejs/adapter-vercel";
-import { error, json } from "@sveltejs/kit";
+import { PUBLIC_ELEVENLABS_BASE_URL } from "$env/static/public";
+import { db } from "$lib/drizzle/db";
+import { AIProvider, users } from "$lib/drizzle/schema";
 import { getApiKey } from "$lib/settings/api-keys";
+import type { ElevenLabsError } from "$lib/types/elevenlabs/elevenlabs-error";
+import type { Voices } from "$lib/types/elevenlabs/voices";
+import type { Config } from "@sveltejs/adapter-vercel";
+import { error, json, type RequestHandler } from "@sveltejs/kit";
+import { eq } from "drizzle-orm";
 
 export const config: Config = { runtime: "edge" };
 
-export const GET: RequestHandler = async ({ locals }) => {
-  const session = await locals.auth();
+export const GET = (async ({ url }) => {
+  const userId = url.searchParams.get("userId");
 
-  const user = await prisma.user.findUnique({
-    where: {
-      id: session?.user?.id
-    }
-  });
+  if (!userId) {
+    return error(400, { message: "No user ID provided" });
+  }
+
+  const user = (await db.select().from(users).where(eq(users.id, userId))).at(0);
 
   if (!user) {
     return error(404, { message: "User not found" });
   }
 
-  const apiKey = await getApiKey(user.id, "ELEVENLABS");
+  const apiKey = await getApiKey(user.id, AIProvider.ElevenLabs);
 
   if (!apiKey) {
     return error(404, { message: "API key not found" });
   }
 
-  const eleven = new ElevenLabsClient({ apiKey: apiKey.key });
+  const response = await fetch(`${PUBLIC_ELEVENLABS_BASE_URL}/voices`, {
+    headers: { "xi-api-key": apiKey.key }
+  });
 
-  const voices = await eleven.voices.getAll();
+  if (!response.ok) {
+    const result: ElevenLabsError = await response.json();
 
+    return error(response.status, result.detail.message);
+  }
+
+  const voices: Voices = await response.json();
   // Sort voices by category
   const result = voices.voices.toSorted((a, b) => {
     if (a.category < b.category) {
@@ -42,4 +52,4 @@ export const GET: RequestHandler = async ({ locals }) => {
   });
 
   return json(result);
-};
+}) satisfies RequestHandler;

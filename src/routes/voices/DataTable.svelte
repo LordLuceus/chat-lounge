@@ -1,12 +1,12 @@
 <script lang="ts">
+  import * as Table from "$lib/components/ui/table";
+  import type { Voice } from "$lib/types/elevenlabs/voices";
   import { Render, Subscribe, createRender, createTable } from "svelte-headless-table";
   import { writable } from "svelte/store";
-  import * as Table from "$lib/components/ui/table";
-  import VoicePreviewButton from "./VoicePreviewButton.svelte";
   import DataTableActions from "./DataTableActions.svelte";
-  import type { VoiceResponse } from "elevenlabs-edge/dist/api";
+  import VoicePreviewButton from "./VoicePreviewButton.svelte";
 
-  export let voices: VoiceResponse[];
+  export let voices: Voice[];
 
   const voicesStore = writable(voices);
 

@@ -1,7 +1,8 @@
 <script lang="ts">
   import ApiKeyForm from "$lib/components/ApiKeyForm.svelte";
-  import { signOut } from "@auth/sveltekit/client";
   import { Button } from "$lib/components/ui/button";
+  import { AIProvider } from "$lib/drizzle/schema";
+  import { signOut } from "@auth/sveltekit/client";
   import type { ActionData, PageData } from "./$types";
 
   export let data: PageData;
@@ -25,26 +26,26 @@
   <h3>Mistral</h3>
   {#if data.keys?.mistral}
     <p>Your Mistral API key is set.</p>
-    <ApiKeyForm provider="MISTRAL" openText="Change" {form} />
+    <ApiKeyForm provider={AIProvider.Mistral} openText="Change" {form} />
   {:else}
     <p>You haven't set your Mistral API key yet.</p>
-    <ApiKeyForm provider="MISTRAL" openText="Set" {form} />
+    <ApiKeyForm provider={AIProvider.Mistral} openText="Set" {form} />
   {/if}
   <h3>OpenAI</h3>
   {#if data.keys?.openai}
     <p>Your OpenAI API key is set.</p>
-    <ApiKeyForm provider="OPENAI" openText="Change" {form} />
+    <ApiKeyForm provider={AIProvider.OpenAI} openText="Change" {form} />
   {:else}
     <p>You haven't set your OpenAI API key yet.</p>
-    <ApiKeyForm provider="OPENAI" openText="Set" {form} />
+    <ApiKeyForm provider={AIProvider.OpenAI} openText="Set" {form} />
   {/if}
   <h3>ElevenLabs</h3>
   {#if data.keys?.eleven}
     <p>Your ElevenLabs API key is set.</p>
-    <ApiKeyForm provider="ELEVENLABS" openText="Change" {form} />
+    <ApiKeyForm provider={AIProvider.ElevenLabs} openText="Change" {form} />
   {:else}
     <p>You haven't set your ElevenLabs API key yet.</p>
-    <ApiKeyForm provider="ELEVENLABS" openText="Set" {form} />
+    <ApiKeyForm provider={AIProvider.ElevenLabs} openText="Set" {form} />
   {/if}
   <Button on:click={() => signOut()}>Sign out</Button>
 </section>

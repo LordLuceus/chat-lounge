@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import Message from "$lib/components/Message.svelte";
   import { Button } from "$lib/components/ui/button";
   import { Textarea } from "$lib/components/ui/textarea";
-  import Select from "svelte-select";
-  import Message from "$lib/components/Message.svelte";
   import { useChat } from "ai/svelte";
-  import type { PageData } from "./$types";
+  import { onMount } from "svelte";
+  import Select from "svelte-select";
   import { toast } from "svelte-sonner";
+  import type { PageData } from "./$types";
 
   const models = [
     {

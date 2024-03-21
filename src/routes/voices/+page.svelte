@@ -1,6 +1,6 @@
 <script lang="ts">
-  import DataTable from "./DataTable.svelte";
   import type { PageData } from "./$types";
+  import DataTable from "./DataTable.svelte";
 
   export let data: PageData;
 </script>

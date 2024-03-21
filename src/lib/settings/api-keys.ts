@@ -1,31 +1,27 @@
-import prisma from "$lib/prisma";
-import type { AIProvider } from "@prisma/client";
+import { db } from "$lib/drizzle/db";
+import { AIProvider, apiKeys } from "$lib/drizzle/schema";
+import { and, eq } from "drizzle-orm";
 
 export const saveApiKey = async (key: string, userId: string, provider: AIProvider) => {
-  const existingApiKey = await prisma.apiKey.findFirst({
-    where: { userId, provider }
-  });
+  const existingApiKey = (
+    await db
+      .select()
+      .from(apiKeys)
+      .where(and(eq(apiKeys.userId, userId), eq(apiKeys.provider, provider)))
+  ).at(0);
 
   if (existingApiKey) {
-    return prisma.apiKey.update({
-      where: { id: existingApiKey.id },
-      data: { key }
-    });
+    return db.update(apiKeys).set({ key }).where(eq(apiKeys.id, existingApiKey.id));
   }
 
-  return prisma.apiKey.create({
-    data: {
-      key,
-      userId,
-      provider
-    }
-  });
+  return db.insert(apiKeys).values({ key, userId, provider });
 };
 
 export const getApiKey = async (userId: string, provider: AIProvider) => {
-  const apiKey = await prisma.apiKey.findFirst({
-    where: { userId, provider }
-  });
-  if (!apiKey) return null;
-  return apiKey;
+  return (
+    await db
+      .select()
+      .from(apiKeys)
+      .where(and(eq(apiKeys.userId, userId), eq(apiKeys.provider, provider)))
+  ).at(0);
 };

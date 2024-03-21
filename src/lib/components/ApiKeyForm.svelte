@@ -4,7 +4,7 @@
   import * as Dialog from "$lib/components/ui/dialog";
   import { Input } from "$lib/components/ui/input";
   import { Label } from "$lib/components/ui/label";
-  import type { AIProvider } from "@prisma/client";
+  import { AIProvider } from "$lib/drizzle/schema";
   import type { ActionData } from "../../routes/settings/$types";
 
   export let provider: AIProvider;
@@ -38,7 +38,7 @@
       >
         <Label>
           <span>API Key</span>
-          <Input type="text" name="apiKey" bind:this={apiKeyInput} />
+          <Input type="text" name="apiKey" bind:this={apiKeyInput} required />
         </Label>
         {#if form?.message}
           <p role="alert">{form.message}</p>

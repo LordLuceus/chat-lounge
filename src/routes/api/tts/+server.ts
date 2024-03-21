@@ -1,27 +1,24 @@
-import { error } from "@sveltejs/kit";
-import { getApiKey } from "$lib/settings/api-keys";
-import prisma from "$lib/prisma";
 import { PUBLIC_ELEVENLABS_BASE_URL } from "$env/static/public";
-import type { RequestHandler } from "@sveltejs/kit";
-import type { Config } from "@sveltejs/adapter-vercel";
+import { db } from "$lib/drizzle/db";
+import { AIProvider, users } from "$lib/drizzle/schema";
+import { getApiKey } from "$lib/settings/api-keys";
 import type { ElevenLabsError } from "$lib/types/elevenlabs/elevenlabs-error";
+import type { Config } from "@sveltejs/adapter-vercel";
+import { error, type RequestHandler } from "@sveltejs/kit";
+import { eq } from "drizzle-orm";
 
 export const config: Config = { runtime: "edge" };
 
 export const POST = (async ({ request }) => {
   const { stream, text, voice, userId } = await request.json();
 
-  const user = await prisma.user.findUnique({
-    where: {
-      id: userId
-    }
-  });
+  const user = (await db.select().from(users).where(eq(users.id, userId))).at(0);
 
   if (!user) {
     return error(404, { message: "User not found" });
   }
 
-  const apiKey = await getApiKey(user.id, "ELEVENLABS");
+  const apiKey = await getApiKey(user.id, AIProvider.ElevenLabs);
 
   if (!apiKey) {
     return error(404, { message: "API key not found" });
@@ -46,7 +43,6 @@ export const POST = (async ({ request }) => {
   if (!response.ok) {
     const result: ElevenLabsError = await response.json();
 
-    console.log(result);
     return error(response.status, result.detail.message);
   }
 

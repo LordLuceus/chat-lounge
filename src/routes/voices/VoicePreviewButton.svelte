@@ -3,7 +3,7 @@
   import { playingAudio } from "$lib/stores/audio-store";
 
   export let name: string;
-  export let previewUrl: string | undefined;
+  export let previewUrl: string | null;
 
   function previewVoice() {
     playingAudio.update((currentAudio) => {
@@ -13,7 +13,8 @@
       }
       return null;
     });
-    const audio = new Audio(previewUrl);
+
+    const audio = new Audio(previewUrl!);
     audio.play();
     playingAudio.set(audio);
   }

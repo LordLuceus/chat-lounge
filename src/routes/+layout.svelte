@@ -1,11 +1,11 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
+  import * as Avatar from "$lib/components/ui/avatar";
+  import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+  import { Toaster } from "$lib/components/ui/sonner";
+  import { signIn, signOut } from "@auth/sveltekit/client";
   import "../app.pcss";
   import type { PageData } from "./$types";
-  import { goto } from "$app/navigation";
-  import { signIn, signOut } from "@auth/sveltekit/client";
-  import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
-  import * as Avatar from "$lib/components/ui/avatar";
-  import { Toaster } from "$lib/components/ui/sonner";
 
   export let data: PageData;
 </script>

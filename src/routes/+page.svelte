@@ -1,7 +1,11 @@
 <script lang="ts">
+  // TODO: This component is getting kind of massive. Consider splitting it into smaller components. We'll have to do it eventually anyway, once we start implementing threads.
+
   import Message from "$lib/components/Message.svelte";
+  import Recorder from "$lib/components/Recorder.svelte";
   import { Button } from "$lib/components/ui/button";
   import { Textarea } from "$lib/components/ui/textarea";
+  import { generateTTS } from "$lib/services/tts-service";
   import { useChat } from "ai/svelte";
   import { onMount } from "svelte";
   import Select from "svelte-select";
@@ -27,9 +31,10 @@
 
   let chatForm: HTMLFormElement;
   let finishSound: HTMLAudioElement;
-  let currentAudio = "";
+  let currentAudio: string | null = null;
   let audioBlobUrl = "";
   let audioFileName = `TTS_${new Date().toISOString()}.mp3`;
+  let voiceMessage: string;
 
   let selectedModel = models[0];
 
@@ -43,9 +48,23 @@
     value: voice.voice_id
   }));
 
-  const { error, input, handleSubmit, messages, reload } = useChat({
-    onFinish: () => {
-      finishSound?.play();
+  const { append, error, handleSubmit, input, isLoading, messages, reload, stop } = useChat({
+    onFinish: async (message) => {
+      if (voiceMessage) {
+        // It's a voice message, don't play the sound. Get a TTS response instead.
+        await generateTTS({
+          text: message.content,
+          userId: data.session?.user?.id,
+          voice: selectedVoice?.value,
+          onPlayAudio: (audioUrl: string | null) => setCurrentAudio(audioUrl),
+          onDownloadAudio: ({ downloadUrl, filename }) =>
+            setAudioUrlAndFilename(downloadUrl, filename),
+          onError: (error: string) => toast.error(error)
+        });
+        setVoiceMessage("");
+      } else {
+        finishSound.play();
+      }
     },
     body: { userId: data.session?.user?.id, model: selectedModel.value }
   });
@@ -95,7 +114,7 @@
     }
   });
 
-  function setCurrentAudio(src: string) {
+  function setCurrentAudio(src: string | null) {
     currentAudio = src;
   }
 
@@ -107,6 +126,19 @@
   const ariaListOpen = (label: string, count: number) => {
     return `${label}, ${count} ${count < 2 ? "option" : "options"} available.`;
   };
+
+  function setVoiceMessage(message: string) {
+    voiceMessage = message;
+  }
+
+  $: {
+    if (voiceMessage) {
+      append(
+        { content: voiceMessage, role: "user" },
+        { options: { body: { userId: data.session?.user?.id, model: selectedModel.value } } }
+      );
+    }
+  }
 </script>
 
 <svelte:window on:keydown={handleCopyLastMessage} />
@@ -166,12 +198,16 @@
         {/each}
       </div>
       {#if $messages.at(-1)?.role === "assistant"}
-        <button
-          on:click={() =>
-            reload({
-              options: { body: { userId: data.session?.user?.id, model: selectedModel.value } }
-            })}>Regenerate</button
-        >
+        {#if $isLoading}
+          <Button on:click={stop}>Stop generating</Button>
+        {:else}
+          <Button
+            on:click={() =>
+              reload({
+                options: { body: { userId: data.session?.user?.id, model: selectedModel.value } }
+              })}>Regenerate</Button
+          >
+        {/if}
       {/if}
       {#if $error}
         <p class="error">There was an error while getting a response from the AI.</p>
@@ -200,6 +236,9 @@
         />
         <Button type="submit">Send</Button>
       </form>
+      {#if data.keys.openai}
+        <Recorder {setVoiceMessage} />
+      {/if}
     </section>
     {#if currentAudio}
       <section aria-label="Audio player">

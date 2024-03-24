@@ -25,3 +25,7 @@ export const getApiKey = async (userId: string, provider: AIProvider) => {
       .where(and(eq(apiKeys.userId, userId), eq(apiKeys.provider, provider)))
   ).at(0);
 };
+
+export const getApiKeys = async (userId: string) => {
+  return db.select().from(apiKeys).where(eq(apiKeys.userId, userId));
+};

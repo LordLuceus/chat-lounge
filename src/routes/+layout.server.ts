@@ -1,7 +1,6 @@
-import { db } from "$lib/drizzle/db";
-import { AIProvider, apiKeys } from "$lib/drizzle/schema";
+import { AIProvider } from "$lib/drizzle/schema";
+import { getApiKeys } from "$lib/server/api-keys-service";
 import type { Config } from "@sveltejs/adapter-vercel";
-import { eq } from "drizzle-orm";
 import type { LayoutServerLoad } from "./$types";
 
 interface ApiKeys {
@@ -16,7 +15,7 @@ export const load = (async (event) => {
   const session = await event.locals.auth();
 
   if (session?.user?.id) {
-    const storedKeys = await db.select().from(apiKeys).where(eq(apiKeys.userId, session.user.id));
+    const storedKeys = await getApiKeys(session.user.id);
 
     const keys: ApiKeys = {
       mistral: storedKeys.some((key) => key.provider === AIProvider.Mistral),

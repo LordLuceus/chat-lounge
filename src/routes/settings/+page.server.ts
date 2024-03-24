@@ -1,6 +1,6 @@
 import { db } from "$lib/drizzle/db";
 import { AIProvider, users } from "$lib/drizzle/schema";
-import { saveApiKey } from "$lib/settings/api-keys";
+import { saveApiKey } from "$lib/server/api-keys-service";
 import { fail } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 import type { Actions } from "./$types";

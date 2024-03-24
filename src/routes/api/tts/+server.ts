@@ -1,7 +1,7 @@
 import { PUBLIC_ELEVENLABS_BASE_URL } from "$env/static/public";
 import { db } from "$lib/drizzle/db";
 import { AIProvider, users } from "$lib/drizzle/schema";
-import { getApiKey } from "$lib/settings/api-keys";
+import { getApiKey } from "$lib/server/api-keys-service";
 import type { ElevenLabsError } from "$lib/types/elevenlabs/elevenlabs-error";
 import type { Config } from "@sveltejs/adapter-vercel";
 import { error, type RequestHandler } from "@sveltejs/kit";

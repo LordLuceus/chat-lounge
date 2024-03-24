@@ -1,6 +1,6 @@
 import { db } from "$lib/drizzle/db";
 import { AIProvider, users } from "$lib/drizzle/schema";
-import { getApiKey } from "$lib/settings/api-keys";
+import { getApiKey } from "$lib/server/api-keys-service";
 import MistralClient from "@mistralai/mistralai";
 import { error, type RequestHandler } from "@sveltejs/kit";
 import { MistralStream, StreamingTextResponse } from "ai";

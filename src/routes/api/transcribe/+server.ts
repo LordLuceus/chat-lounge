@@ -1,6 +1,6 @@
 import { db } from "$lib/drizzle/db";
 import { AIProvider, users } from "$lib/drizzle/schema";
-import { getApiKey } from "$lib/settings/api-keys";
+import { getApiKey } from "$lib/server/api-keys-service";
 import type { Config } from "@sveltejs/adapter-vercel";
 import { error, text, type RequestHandler } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";

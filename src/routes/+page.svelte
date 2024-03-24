@@ -85,7 +85,7 @@
   }
 
   function handleCopyLastMessage(event: KeyboardEvent) {
-    if (event.ctrlKey && event.shiftKey && event.code === "KeyC") {
+    if (event.ctrlKey && event.shiftKey && event.key === "C") {
       event.preventDefault();
       copyLastMessage();
     }

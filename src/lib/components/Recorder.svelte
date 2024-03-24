@@ -88,7 +88,7 @@
 
       if (response.ok) {
         const data = await response.text();
-        setVoiceMessage(data);
+        setVoiceMessage(data.trim());
       } else {
         console.error("Failed to transcribe audio");
       }
@@ -96,7 +96,16 @@
       console.error(e);
     }
   }
+
+  function handleRecordToggle(e: KeyboardEvent): void {
+    if (e.ctrlKey && e.shiftKey && e.key === "S") {
+      e.preventDefault();
+      toggleRecording();
+    }
+  }
 </script>
+
+<svelte:window on:keydown={handleRecordToggle} />
 
 <Button on:click={toggleRecording} aria-label={isRecording ? "Stop recording" : "Start recording"}>
   <Mic />

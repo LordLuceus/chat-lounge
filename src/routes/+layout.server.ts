@@ -1,4 +1,5 @@
 import { AIProvider } from "$lib/drizzle/schema";
+import { getAgents } from "$lib/server/agents-service";
 import { getApiKeys } from "$lib/server/api-keys-service";
 import type { Config } from "@sveltejs/adapter-vercel";
 import type { LayoutServerLoad } from "./$types";
@@ -23,14 +24,16 @@ export const load = (async (event) => {
       openai: storedKeys.some((key) => key.provider === AIProvider.OpenAI)
     };
 
+    const agents = await getAgents(session.user.id);
+
     return {
       session,
-      keys
+      keys,
+      agents
     };
   }
 
   return {
-    session,
-    keys: null
+    session
   };
 }) satisfies LayoutServerLoad;

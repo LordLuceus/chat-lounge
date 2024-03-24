@@ -36,16 +36,25 @@
   let audioFileName = `TTS_${new Date().toISOString()}.mp3`;
   let voiceMessage: string;
 
-  let selectedModel = models[0];
+  let selectedModel = models.at(0);
 
-  let selectedVoice: { label: string; value: string } | undefined = data.voices?.map((voice) => ({
-    label: `${voice.name} (${voice.category})`,
-    value: voice.voice_id
-  }))[0];
+  let selectedVoice: { label: string; value: string } | undefined = data.voices
+    ?.map((voice) => ({
+      label: `${voice.name} (${voice.category})`,
+      value: voice.voice_id
+    }))
+    .at(0);
+
+  let selectedAgent: { label: string; value: string } | null = null;
 
   $: voiceItems = data.voices?.map((voice) => ({
     label: `${voice.name} (${voice.category})`,
     value: voice.voice_id
+  }));
+
+  $: agentItems = data.agents?.map((agent) => ({
+    label: agent.name,
+    value: agent.id
   }));
 
   const { append, error, handleSubmit, input, isLoading, messages, reload, stop } = useChat({
@@ -66,7 +75,11 @@
         finishSound.play();
       }
     },
-    body: { userId: data.session?.user?.id, model: selectedModel.value }
+    body: {
+      userId: data.session?.user?.id,
+      model: selectedModel?.value,
+      agent: null
+    }
   });
 
   function handleMessageSubmit(event: KeyboardEvent) {
@@ -112,6 +125,15 @@
         selectedVoice = parsedVoice;
       }
     }
+
+    const storedAgent = localStorage.getItem("selectedAgent");
+    if (storedAgent) {
+      const parsedAgent: { label: string; value: string } = JSON.parse(storedAgent);
+      // Check if the stored agent is valid
+      if (data.agents?.find((agent) => agent.id === parsedAgent.value)) {
+        selectedAgent = parsedAgent;
+      }
+    }
   });
 
   function setCurrentAudio(src: string | null) {
@@ -135,7 +157,15 @@
     if (voiceMessage) {
       append(
         { content: voiceMessage, role: "user" },
-        { options: { body: { userId: data.session?.user?.id, model: selectedModel.value } } }
+        {
+          options: {
+            body: {
+              userId: data.session?.user?.id,
+              model: selectedModel?.value,
+              agent: selectedAgent?.value
+            }
+          }
+        }
       );
     }
   }
@@ -170,8 +200,18 @@
         {ariaListOpen}
         clearable={false}
       />
+      {#if data.agents && data.agents.length > 0}
+        <Select
+          bind:value={selectedAgent}
+          items={agentItems}
+          placeholder="Select agent..."
+          on:change={(e) => localStorage.setItem("selectedAgent", JSON.stringify(selectedModel))}
+          {ariaListOpen}
+        />
+      {/if}
     {:else}
-      <p>{selectedModel.label}</p>
+      <p>{selectedModel?.label}</p>
+      <p>{selectedAgent?.label}</p>
     {/if}
 
     {#if data.keys.eleven && data.voices}
@@ -204,7 +244,13 @@
           <Button
             on:click={() =>
               reload({
-                options: { body: { userId: data.session?.user?.id, model: selectedModel.value } }
+                options: {
+                  body: {
+                    userId: data.session?.user?.id,
+                    model: selectedModel?.value,
+                    agent: selectedAgent?.value
+                  }
+                }
               })}>Regenerate</Button
           >
         {/if}
@@ -214,7 +260,13 @@
         <Button
           on:click={() =>
             reload({
-              options: { body: { userId: data.session?.user?.id, model: selectedModel.value } }
+              options: {
+                body: {
+                  userId: data.session?.user?.id,
+                  model: selectedModel?.value,
+                  agent: selectedAgent?.value
+                }
+              }
             })}>Try again</Button
         >
       {/if}
@@ -222,7 +274,13 @@
       <form
         on:submit={(e) =>
           handleSubmit(e, {
-            options: { body: { userId: data.session?.user?.id, model: selectedModel.value } }
+            options: {
+              body: {
+                userId: data.session?.user?.id,
+                model: selectedModel?.value,
+                agent: selectedAgent?.value
+              }
+            }
           })}
         bind:this={chatForm}
       >

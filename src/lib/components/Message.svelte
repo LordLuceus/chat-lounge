@@ -5,6 +5,7 @@
   import { Button } from "$lib/components/ui/button";
   import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
   import type { Message } from "ai/svelte";
+  import { BotMessageSquare } from "lucide-svelte";
   import Markdown from "svelte-exmarkdown";
   import { gfmPlugin } from "svelte-exmarkdown/gfm";
   import { toast } from "svelte-sonner";
@@ -32,6 +33,8 @@
           />
           <Avatar.Fallback>{$page.data.session?.user?.name}</Avatar.Fallback>
         </Avatar.Root>
+      {:else}
+        <BotMessageSquare />
       {/if}
       <Markdown md={message.content} {plugins} />
       {#if $page.data.keys.eleven && message.role === "assistant"}

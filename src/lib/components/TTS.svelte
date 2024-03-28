@@ -3,7 +3,7 @@
   import { Button } from "$lib/components/ui/button";
   import { generateTTS } from "$lib/services/tts-service";
   import { ttsGenerating } from "$lib/stores/tts-generating-store";
-  import { Loader } from "lucide-svelte";
+  import { Loader, Speech } from "lucide-svelte";
   import { createEventDispatcher } from "svelte";
   import { toast } from "svelte-sonner";
 
@@ -11,6 +11,7 @@
 
   export let text: string;
   export let voice: string | undefined;
+
   const handlePlayAudio = (audioUrl: string | null) => {
     dispatch("playAudio", audioUrl);
   };
@@ -44,6 +45,8 @@
 <Button on:click={tts} disabled={$ttsGenerating}>
   {#if $ttsGenerating}
     <Loader />
+  {:else}
+    <Speech />
   {/if}
   <span>{$ttsGenerating ? "Generating..." : "Speak"}</span>
 </Button>

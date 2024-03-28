@@ -1,9 +1,11 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import * as Avatar from "$lib/components/ui/avatar";
+  import { Button } from "$lib/components/ui/button";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Toaster } from "$lib/components/ui/sonner";
   import { signIn, signOut } from "@auth/sveltekit/client";
+  import { ModeWatcher, resetMode, setMode } from "mode-watcher";
   import "../app.pcss";
   import type { PageData } from "./$types";
 
@@ -37,7 +39,21 @@
   {#if !data.session}
     <button on:click={() => signIn("google")}>Sign in with Google</button>
   {/if}
+  <DropdownMenu.Root>
+    <DropdownMenu.Trigger asChild let:builder>
+      <Button builders={[builder]} variant="outline" size="icon">
+        <span>Toggle theme</span>
+      </Button>
+    </DropdownMenu.Trigger>
+    <DropdownMenu.Content align="end">
+      <DropdownMenu.Item on:click={() => setMode("light")}>Light</DropdownMenu.Item>
+      <DropdownMenu.Item on:click={() => setMode("dark")}>Dark</DropdownMenu.Item>
+      <DropdownMenu.Item on:click={() => resetMode()}>System</DropdownMenu.Item>
+    </DropdownMenu.Content>
+  </DropdownMenu.Root>
 </header>
+
+<ModeWatcher />
 
 <main>
   <slot />

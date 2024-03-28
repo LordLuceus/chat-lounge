@@ -2,28 +2,17 @@
   import { page } from "$app/stores";
   import { Button } from "$lib/components/ui/button";
   import { generateTTS } from "$lib/services/tts-service";
+  import { audioFilename, currentAudioUrl, downloadUrl } from "$lib/stores/audio-store";
   import { ttsGenerating } from "$lib/stores/tts-generating-store";
   import { Loader, Speech } from "lucide-svelte";
-  import { createEventDispatcher } from "svelte";
   import { toast } from "svelte-sonner";
-
-  const dispatch = createEventDispatcher();
 
   export let text: string;
   export let voice: string | undefined;
 
-  const handlePlayAudio = (audioUrl: string | null) => {
-    dispatch("playAudio", audioUrl);
-  };
-
-  const handleDownloadAudio = ({
-    downloadUrl,
-    filename
-  }: {
-    downloadUrl: string;
-    filename: string;
-  }) => {
-    dispatch("downloadAudio", { downloadUrl, filename });
+  const handleDownloadAudio = ({ url, filename }: { url: string; filename: string }) => {
+    audioFilename.set(filename);
+    downloadUrl.set(url);
   };
 
   const handleError = (error: string) => {
@@ -35,8 +24,9 @@
       text,
       userId: $page.data.session?.user?.id,
       voice,
-      onPlayAudio: handlePlayAudio,
-      onDownloadAudio: handleDownloadAudio,
+      onPlayAudio: (audioUrl) => currentAudioUrl.set(audioUrl),
+      onDownloadAudio: ({ downloadUrl, filename }) =>
+        handleDownloadAudio({ url: downloadUrl, filename }),
       onError: handleError
     });
   };

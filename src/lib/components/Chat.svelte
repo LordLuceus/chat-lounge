@@ -1,15 +1,16 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import Message from "$lib/components/Message.svelte";
+  import Recorder from "$lib/components/Recorder.svelte";
   import { Button } from "$lib/components/ui/button";
   import { Textarea } from "$lib/components/ui/textarea";
   import { generateTTS } from "$lib/services/tts-service";
+  import { audioFilename, currentAudioUrl, downloadUrl } from "$lib/stores/audio-store";
   import type { Voice } from "$lib/types/elevenlabs/voices";
   import { useChat } from "ai/svelte";
   import { onMount } from "svelte";
   import Select from "svelte-select";
   import { toast } from "svelte-sonner";
-  import Recorder from "./Recorder.svelte";
 
   export let voices: Voice[] | undefined;
   export let agents: { id: string; name: string; description: string | null }[] | undefined;
@@ -31,9 +32,6 @@
 
   let chatForm: HTMLFormElement;
   let finishSound: HTMLAudioElement;
-  let currentAudio: string | null = null;
-  let audioBlobUrl = "";
-  let audioFileName = `TTS_${new Date().toISOString()}.mp3`;
   let voiceMessage: string;
 
   let selectedModel = models.at(0);
@@ -65,9 +63,9 @@
           text: message.content,
           userId: $page.data.session?.user?.id,
           voice: selectedVoice?.value,
-          onPlayAudio: (audioUrl: string | null) => setCurrentAudio(audioUrl),
+          onPlayAudio: (audioUrl: string | null) => currentAudioUrl.set(audioUrl),
           onDownloadAudio: ({ downloadUrl, filename }) =>
-            setAudioUrlAndFilename(downloadUrl, filename),
+            setDownloadUrlAndFilename(downloadUrl, filename),
           onError: (error: string) => toast.error(error)
         });
         setVoiceMessage("");
@@ -136,13 +134,9 @@
     }
   });
 
-  function setCurrentAudio(src: string | null) {
-    currentAudio = src;
-  }
-
-  function setAudioUrlAndFilename(url: string, filename: string) {
-    audioBlobUrl = url;
-    audioFileName = filename;
+  function setDownloadUrlAndFilename(url: string, filename: string) {
+    downloadUrl.set(url);
+    audioFilename.set(filename);
   }
 
   function setVoiceMessage(message: string) {
@@ -216,12 +210,7 @@
 <section>
   <div class="chat-list">
     {#each $messages as message}
-      <Message
-        {message}
-        voice={selectedVoice?.value}
-        on:playAudio={(e) => setCurrentAudio(e.detail)}
-        on:downloadAudio={(e) => setAudioUrlAndFilename(e.detail.downloadUrl, e.detail.filename)}
-      />
+      <Message {message} voice={selectedVoice?.value} />
     {/each}
   </div>
   {#if $messages.at(-1)?.role === "assistant"}
@@ -285,11 +274,11 @@
   {/if}
 </section>
 
-{#if currentAudio}
+{#if $currentAudioUrl}
   <section aria-label="Audio player">
-    <audio src={currentAudio} controls autoplay />
-    {#if audioBlobUrl}
-      <a href={audioBlobUrl} download={audioFileName}> Download audio </a>
+    <audio src={$currentAudioUrl} controls autoplay />
+    {#if $downloadUrl}
+      <a href={$downloadUrl} download={$audioFilename}> Download audio </a>
     {/if}
   </section>
 {/if}

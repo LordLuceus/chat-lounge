@@ -5,6 +5,7 @@
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Toaster } from "$lib/components/ui/sonner";
   import { signIn, signOut } from "@auth/sveltekit/client";
+  import { SunMoon } from "lucide-svelte";
   import { ModeWatcher, resetMode, setMode } from "mode-watcher";
   import "../app.pcss";
   import type { PageData } from "./$types";
@@ -42,7 +43,8 @@
   <DropdownMenu.Root>
     <DropdownMenu.Trigger asChild let:builder>
       <Button builders={[builder]} variant="outline" size="icon">
-        <span>Toggle theme</span>
+        <SunMoon />
+        <span class="sr-only">Toggle theme</span>
       </Button>
     </DropdownMenu.Trigger>
     <DropdownMenu.Content align="end">
@@ -58,6 +60,10 @@
 <main>
   <slot />
 </main>
+
+<footer>
+  <a href="/changelog">Changelog</a>
+</footer>
 
 <div role="alert">
   <Toaster />

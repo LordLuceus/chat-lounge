@@ -12,7 +12,7 @@
     "format": "prettier --write .",
     "generate": "drizzle-kit generate:sqlite",
     "push": "drizzle-kit push:sqlite",
-    "postinstall": "npm run push"
+    "postinstall": "pnpm run push"
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^3.0.0",

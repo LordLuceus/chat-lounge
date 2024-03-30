@@ -1,23 +1,9 @@
-import type { Voice } from "$lib/types/elevenlabs/voices";
+import { loadUserData } from "$lib/helpers/load-user-data";
 import type { Config } from "@sveltejs/adapter-vercel";
 import type { PageServerLoad } from "./$types";
 
 export const config: Config = { runtime: "edge" };
 
-export const load = (async ({ fetch, parent }) => {
-  const { session } = await parent();
-
-  if (!session) {
-    return {};
-  }
-
-  const response = await fetch("/api/voices?userId=" + session?.user?.id);
-
-  if (response.ok) {
-    return {
-      voices: (await response.json()) as Voice[]
-    };
-  }
-
-  return {};
+export const load = (async (event) => {
+  return loadUserData(event);
 }) satisfies PageServerLoad;

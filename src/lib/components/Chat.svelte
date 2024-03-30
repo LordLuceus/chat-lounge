@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { page } from "$app/stores";
   import Message from "$lib/components/Message.svelte";
   import Recorder from "$lib/components/Recorder.svelte";
+  import Toast from "$lib/components/Toast.svelte";
   import { Button } from "$lib/components/ui/button";
   import { Textarea } from "$lib/components/ui/textarea";
   import { generateTTS } from "$lib/services/tts-service";
@@ -12,8 +12,10 @@
   import Select from "svelte-select";
   import { toast } from "svelte-sonner";
 
-  export let voices: Voice[] | undefined;
   export let agents: { id: string; name: string; description: string | null }[] | undefined;
+  export let apiKeys: { mistral: boolean; openai: boolean; eleven: boolean } | undefined;
+  export let voices: Voice[] | undefined;
+  export let userId: string | undefined;
 
   const models = [
     {
@@ -61,7 +63,7 @@
         // It's a voice message, don't play the sound. Get a TTS response instead.
         await generateTTS({
           text: message.content,
-          userId: $page.data.session?.user?.id,
+          userId,
           voice: selectedVoice?.value,
           onPlayAudio: (audioUrl: string | null) => currentAudioUrl.set(audioUrl),
           onDownloadAudio: ({ downloadUrl, filename }) =>
@@ -74,7 +76,6 @@
       }
     },
     body: {
-      userId: $page.data.session?.user?.id,
       model: selectedModel?.value,
       agent: null
     }
@@ -92,7 +93,7 @@
     const lastMessage = $messages.at(-1);
     if (lastMessage?.role !== "assistant") return;
     await navigator.clipboard.writeText(lastMessage.content);
-    toast.success("Last message copied to clipboard");
+    toast.success(Toast, { componentProps: { text: "Last message copied to clipboard." } });
   }
 
   function handleCopyLastMessage(event: KeyboardEvent) {
@@ -150,7 +151,6 @@
         {
           options: {
             body: {
-              userId: $page.data.session?.user?.id,
               model: selectedModel?.value,
               agent: selectedAgent?.value
             }
@@ -196,7 +196,7 @@
   {/if}
 {/if}
 
-{#if $page.data.keys.eleven && voices}
+{#if apiKeys?.eleven && voices}
   <Select
     bind:value={selectedVoice}
     items={voiceItems}
@@ -222,7 +222,6 @@
           reload({
             options: {
               body: {
-                userId: $page.data.session?.user?.id,
                 model: selectedModel?.value,
                 agent: selectedAgent?.value
               }
@@ -238,7 +237,6 @@
         reload({
           options: {
             body: {
-              userId: $page.data.session?.user?.id,
               model: selectedModel?.value,
               agent: selectedAgent?.value
             }
@@ -252,7 +250,6 @@
       handleSubmit(e, {
         options: {
           body: {
-            userId: $page.data.session?.user?.id,
             model: selectedModel?.value,
             agent: selectedAgent?.value
           }
@@ -269,7 +266,7 @@
       cols={200}
     />
   </form>
-  {#if $page.data.keys.openai}
+  {#if apiKeys?.openai}
     <Recorder {setVoiceMessage} />
   {/if}
 </section>

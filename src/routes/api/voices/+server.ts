@@ -1,23 +1,22 @@
 import { PUBLIC_ELEVENLABS_BASE_URL } from "$env/static/public";
-import { db } from "$lib/drizzle/db";
-import { AIProvider, users } from "$lib/drizzle/schema";
+import { AIProvider } from "$lib/drizzle/schema";
 import { getApiKey } from "$lib/server/api-keys-service";
+import { getUser } from "$lib/server/users-service";
 import type { ElevenLabsError } from "$lib/types/elevenlabs/elevenlabs-error";
 import type { Voices } from "$lib/types/elevenlabs/voices";
 import type { Config } from "@sveltejs/adapter-vercel";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
-import { eq } from "drizzle-orm";
 
 export const config: Config = { runtime: "edge" };
 
-export const GET = (async ({ url }) => {
-  const userId = url.searchParams.get("userId");
-
-  if (!userId) {
-    return error(400, { message: "No user ID provided" });
+export const GET = (async ({ locals }) => {
+  if (!locals.session?.userId) {
+    return error(401, { message: "Unauthorized" });
   }
 
-  const user = (await db.select().from(users).where(eq(users.id, userId))).at(0);
+  const { userId } = locals.session;
+
+  const user = await getUser(userId);
 
   if (!user) {
     return error(404, { message: "User not found" });

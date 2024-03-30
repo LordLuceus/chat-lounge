@@ -14,21 +14,15 @@ export async function getAgents(userId: string) {
 }
 
 export async function getAgent(userId: string, agentId: string) {
-  return (
-    await db
-      .select()
-      .from(agents)
-      .where(and(eq(agents.userId, userId), eq(agents.id, agentId)))
-  ).at(0);
+  return db.query.agents.findFirst({
+    where: and(eq(agents.userId, userId), eq(agents.id, agentId))
+  });
 }
 
 export async function getAgentByName(userId: string, name: string) {
-  return (
-    await db
-      .select()
-      .from(agents)
-      .where(and(eq(agents.userId, userId), eq(agents.name, name)))
-  ).at(0);
+  return db.query.agents.findFirst({
+    where: and(eq(agents.userId, userId), eq(agents.name, name))
+  });
 }
 
 export async function saveAgent({ userId, name, description, instructions }: AgentSaveOptions) {

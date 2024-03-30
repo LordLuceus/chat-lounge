@@ -1,12 +1,12 @@
-import { db } from "$lib/drizzle/db";
-import { AIProvider, users } from "$lib/drizzle/schema";
+import { AIProvider } from "$lib/drizzle/schema";
 import { saveApiKey } from "$lib/server/api-keys-service";
+import { getUser } from "$lib/server/users-service";
 import { fail } from "@sveltejs/kit";
-import { eq } from "drizzle-orm";
 import type { Actions } from "./$types";
 
 export const actions: Actions = {
   apiKey: async ({ locals, request, url }) => {
+    const { session } = locals;
     const formData = await request.formData();
     const provider = url.searchParams.get("provider");
 
@@ -16,13 +16,11 @@ export const actions: Actions = {
 
     const apiKey = formData.get("apiKey") as string;
 
-    const session = await locals.auth();
-
-    if (!session?.user) {
+    if (!session?.userId) {
       return fail(401, { message: "Unauthorized" });
     }
 
-    const user = (await db.select().from(users).where(eq(users.id, session.user.id!))).at(0);
+    const user = await getUser(session.userId);
 
     if (!user) {
       return fail(401, { message: "Unauthorized" });

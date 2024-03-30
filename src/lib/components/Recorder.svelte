@@ -1,6 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/environment";
-  import { page } from "$app/stores";
+  import Toast from "$lib/components/Toast.svelte";
   import { Button } from "$lib/components/ui/button";
   import { Mic } from "lucide-svelte";
   import { onDestroy, onMount } from "svelte";
@@ -50,7 +50,11 @@
     } catch (e) {
       console.error(e);
       isRecording = false;
-      toast.warning("Failed to start recording. Please check your microphone permissions.");
+      toast.warning(Toast, {
+        componentProps: {
+          text: "Failed to start recording. Please check your microphone permissions."
+        }
+      });
     }
   }
 
@@ -81,7 +85,7 @@
     formData.append("audio", audio, "audio.webm");
 
     try {
-      const response = await fetch(`/api/transcribe?userId=${$page.data.session?.user?.id}`, {
+      const response = await fetch("/api/transcribe", {
         method: "POST",
         body: formData
       });

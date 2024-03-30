@@ -1,17 +1,21 @@
-import { db } from "$lib/drizzle/db";
-import { AIProvider, users } from "$lib/drizzle/schema";
+import { AIProvider } from "$lib/drizzle/schema";
 import { getApiKey } from "$lib/server/api-keys-service";
+import { getUser } from "$lib/server/users-service";
 import MistralClient from "@mistralai/mistralai";
 import { error, type RequestHandler } from "@sveltejs/kit";
 import { MistralStream, StreamingTextResponse } from "ai";
-import { eq } from "drizzle-orm";
 
 export const config = { runtime: "edge" };
 
-export const POST = (async ({ request }) => {
-  const { messages, model, userId } = await request.json();
+export const POST = (async ({ locals, request }) => {
+  if (!locals.session?.userId) {
+    return error(401, { message: "Unauthorized" });
+  }
 
-  const user = (await db.select().from(users).where(eq(users.id, userId))).at(0);
+  const { messages, model } = await request.json();
+  const { userId } = locals.session;
+
+  const user = await getUser(userId);
 
   if (!user) {
     return error(404, { message: "User not found" });

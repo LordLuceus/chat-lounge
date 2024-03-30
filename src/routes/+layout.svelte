@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
-  import * as Avatar from "$lib/components/ui/avatar";
+  import { page } from "$app/stores";
   import { Button } from "$lib/components/ui/button";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Toaster } from "$lib/components/ui/sonner";
-  import { signIn, signOut } from "@auth/sveltekit/client";
+  import SignInButton from "clerk-sveltekit/client/SignInButton.svelte";
+  import SignUpButton from "clerk-sveltekit/client/SignUpButton.svelte";
+  import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
+  import SignedOut from "clerk-sveltekit/client/SignedOut.svelte";
+  import UserButton from "clerk-sveltekit/client/UserButton.svelte";
   import { SunMoon } from "lucide-svelte";
   import { ModeWatcher, resetMode, setMode } from "mode-watcher";
   import "../app.pcss";
-  import type { PageData } from "./$types";
-
-  export let data: PageData;
 </script>
 
 <header>
@@ -19,27 +19,23 @@
   </a>
   <nav>
     <a href="/">Home</a>
-    {#if data.session && data?.keys?.eleven}
+    {#if $page.data?.keys?.eleven}
       <a href="/voices">Voices</a>
     {/if}
   </nav>
-  {#if data.session}
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger>
-        <Avatar.Root>
-          <Avatar.Image src={data.session.user?.image} alt={data.session.user?.name} />
-          <Avatar.Fallback>{data.session.user?.name}</Avatar.Fallback>
-        </Avatar.Root>
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Content>
-        <DropdownMenu.Item on:click={() => goto("/settings")}>Settings</DropdownMenu.Item>
-        <DropdownMenu.Item on:click={() => signOut()}>Sign out</DropdownMenu.Item>
-      </DropdownMenu.Content>
-    </DropdownMenu.Root>
-  {/if}
-  {#if !data.session}
-    <button on:click={() => signIn("google")}>Sign in with Google</button>
-  {/if}
+  <SignedIn>
+    <a href="/settings">Settings</a>
+    <UserButton
+      afterSignOutUrl="/auth/sign-in"
+      signInUrl="/auth/sign-in"
+      userProfileMode="navigation"
+      userProfileUrl="/profile"
+    />
+  </SignedIn>
+  <SignedOut>
+    <SignInButton />
+    <SignUpButton />
+  </SignedOut>
   <DropdownMenu.Root>
     <DropdownMenu.Trigger asChild let:builder>
       <Button builders={[builder]} variant="outline" size="icon">
@@ -65,9 +61,7 @@
   <a href="/changelog">Changelog</a>
 </footer>
 
-<div role="alert">
-  <Toaster />
-</div>
+<Toaster />
 
 <style>
   header {

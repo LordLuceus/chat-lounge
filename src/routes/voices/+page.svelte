@@ -11,4 +11,6 @@
 </svelte:head>
 
 <h1>Voices</h1>
-<DataTable voices={data.voices} />
+{#if data.voices}
+  <DataTable voices={data.voices} />
+{/if}

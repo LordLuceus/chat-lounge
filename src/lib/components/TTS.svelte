@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { page } from "$app/stores";
+  import Toast from "$lib/components/Toast.svelte";
   import { Button } from "$lib/components/ui/button";
   import { generateTTS } from "$lib/services/tts-service";
   import { audioFilename, currentAudioUrl, downloadUrl } from "$lib/stores/audio-store";
@@ -9,6 +9,7 @@
 
   export let text: string;
   export let voice: string | undefined;
+  export let userId: string | undefined;
 
   const handleDownloadAudio = ({ url, filename }: { url: string; filename: string }) => {
     audioFilename.set(filename);
@@ -16,13 +17,13 @@
   };
 
   const handleError = (error: string) => {
-    toast.error(error);
+    toast.error(Toast, { componentProps: { text: error } });
   };
 
   const tts = async (): Promise<void> => {
     await generateTTS({
       text,
-      userId: $page.data.session?.user?.id,
+      userId,
       voice,
       onPlayAudio: (audioUrl) => currentAudioUrl.set(audioUrl),
       onDownloadAudio: ({ downloadUrl, filename }) =>

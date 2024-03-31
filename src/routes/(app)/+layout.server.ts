@@ -6,13 +6,8 @@ import type { LayoutServerLoad } from "./$types";
 export const config: Config = { runtime: "edge" };
 
 export const load = (async ({ locals }) => {
-  if (!locals.session?.userId) {
-    return {};
-  }
-
   const { userId } = locals.session;
-
-  const storedKeys = await getApiKeys(userId);
+  const storedKeys = await getApiKeys(userId!);
 
   const keys = {
     mistral: storedKeys.some((key) => key.provider === AIProvider.Mistral),

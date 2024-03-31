@@ -1,16 +1,20 @@
 <script lang="ts">
-  import { page } from "$app/stores";
+  import { goto } from "$app/navigation";
+  import * as Avatar from "$lib/components/ui/avatar";
   import { Button } from "$lib/components/ui/button";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Toaster } from "$lib/components/ui/sonner";
+  import ClerkLoaded from "clerk-sveltekit/client/ClerkLoaded.svelte";
   import SignInButton from "clerk-sveltekit/client/SignInButton.svelte";
   import SignUpButton from "clerk-sveltekit/client/SignUpButton.svelte";
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
   import SignedOut from "clerk-sveltekit/client/SignedOut.svelte";
-  import UserButton from "clerk-sveltekit/client/UserButton.svelte";
   import { SunMoon } from "lucide-svelte";
   import { ModeWatcher, resetMode, setMode } from "mode-watcher";
-  import "../app.pcss";
+  import "../../app.pcss";
+  import type { LayoutData } from "./$types";
+
+  export let data: LayoutData;
 </script>
 
 <header>
@@ -19,18 +23,33 @@
   </a>
   <nav>
     <a href="/">Home</a>
-    {#if $page.data?.keys?.eleven}
+    {#if data?.keys?.eleven}
       <a href="/voices">Voices</a>
     {/if}
   </nav>
   <SignedIn>
-    <a href="/settings">Settings</a>
-    <UserButton
-      afterSignOutUrl="/auth/sign-in"
-      signInUrl="/auth/sign-in"
-      userProfileMode="navigation"
-      userProfileUrl="/profile"
-    />
+    <ClerkLoaded let:clerk>
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger>
+          <Avatar.Root>
+            <Avatar.Image src={clerk?.user?.imageUrl} alt={clerk?.user?.username} />
+            <Avatar.Fallback>{clerk?.user?.username}</Avatar.Fallback>
+          </Avatar.Root>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content align="end">
+          <DropdownMenu.Item on:click={() => goto("/settings")}>Settings</DropdownMenu.Item>
+          <DropdownMenu.Item on:click={() => goto("/profile")}
+            >Manage your account</DropdownMenu.Item
+          >
+          <DropdownMenu.Item
+            on:click={() => {
+              clerk?.signOut();
+              goto("/auth/sign-in");
+            }}>Sign out</DropdownMenu.Item
+          >
+        </DropdownMenu.Content>
+      </DropdownMenu.Root>
+    </ClerkLoaded>
   </SignedIn>
   <SignedOut>
     <SignInButton />

@@ -5,7 +5,6 @@ import { handleClerk } from "clerk-sveltekit/server";
 
 export const handle: Handle = sequence(
   handleClerk(CLERK_SECRET_KEY, {
-    debug: true,
     protectedPaths: [
       ({ url }) => {
         if (

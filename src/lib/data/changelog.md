@@ -1,4 +1,4 @@
-# ChatMate Changelog
+# ChatLounge Changelog
 
 ## 24 Mar, 2024
 
@@ -40,4 +40,4 @@
 
 ## 25 Feb, 2024
 
-- Initial, rough version of ChatMate. This version only supports text input and output.
+- Initial, rough version of ChatLounge. This version only supports text input and output.

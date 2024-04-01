@@ -8,8 +8,8 @@
 </script>
 
 <svelte:head>
-  <title>Changelog | ChatMate</title>
-  <meta name="description" content="Changelog for ChatMate" />
+  <title>Changelog | ChatLounge</title>
+  <meta name="description" content="Changelog for ChatLounge" />
 </svelte:head>
 
 <Markdown md={changelog} {plugins} />

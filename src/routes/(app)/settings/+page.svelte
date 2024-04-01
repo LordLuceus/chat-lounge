@@ -9,8 +9,8 @@
 </script>
 
 <svelte:head>
-  <title>Settings | ChatMate</title>
-  <meta name="description" content="User settings page for ChatMate" />
+  <title>Settings | ChatLounge</title>
+  <meta name="description" content="User settings page for ChatLounge" />
 </svelte:head>
 
 <section>

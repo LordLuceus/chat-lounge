@@ -7,14 +7,14 @@
 </script>
 
 <svelte:head>
-  <title>ChatMate</title>
+  <title>ChatLounge</title>
   <meta
     name="description"
-    content="ChatMate: Engage with cutting-edge AI models for instant text and voice conversations. Experience seamless, intelligent interactions tailored to your needs. Perfect for learning, entertainment, and efficient communication."
+    content="Welcome to ChatLounge – the ultimate platform for dynamic, AI-powered conversations. Whether you're looking to engage with various AI language models through text or voice, create your own custom chatbots, or dive into group discussions, ChatLounge offers an interactive, user-friendly space for all. Connect, collaborate, and explore the endless possibilities of AI communication in a vibrant community setting. Start your ChatLounge journey today and transform the way you interact with AI!"
   />
 </svelte:head>
 
-<h1>ChatMate</h1>
+<h1>ChatLounge</h1>
 
 <SignedIn let:user>
   {#if !data.keys}

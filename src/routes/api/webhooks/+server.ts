@@ -36,15 +36,12 @@ export const POST = (async ({ request }) => {
   switch (evt.type) {
     case "user.created":
       await createUser(evt.data);
-      console.log("User created");
       break;
     case "user.updated":
       await updateUser(evt.data);
-      console.log("User updated");
       break;
     case "user.deleted":
       await deleteUser(evt.data.id);
-      console.log("User deleted");
       break;
     default:
       return error(400, { message: "Unknown event" });

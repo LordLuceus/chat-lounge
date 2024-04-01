@@ -3,8 +3,8 @@
 </script>
 
 <svelte:head>
-  <title>Sign Up | ChatMate</title>
-  <meta name="description" content="Sign up for ChatMate." />
+  <title>Sign Up | ChatLounge</title>
+  <meta name="description" content="Sign up for ChatLounge." />
 </svelte:head>
 
 <div>

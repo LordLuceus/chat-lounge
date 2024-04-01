@@ -19,7 +19,7 @@
 
 <header>
   <a href="/">
-    <img src="/assets/chatmate_logo.webp" alt="ChatMate" />
+    <img src="/assets/chatlounge_logo.webp" alt="ChatLounge" />
   </a>
   <nav>
     <a href="/">Home</a>
@@ -38,12 +38,10 @@
         </DropdownMenu.Trigger>
         <DropdownMenu.Content align="end">
           <DropdownMenu.Item on:click={() => goto("/settings")}>Settings</DropdownMenu.Item>
-          <DropdownMenu.Item on:click={() => goto("/profile")}
-            >Manage your account</DropdownMenu.Item
-          >
+          <DropdownMenu.Item on:click={() => goto("/profile")}>Account</DropdownMenu.Item>
           <DropdownMenu.Item
-            on:click={() => {
-              clerk?.signOut();
+            on:click={async () => {
+              await clerk?.signOut();
               goto("/auth/sign-in");
             }}>Sign out</DropdownMenu.Item
           >

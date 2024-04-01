@@ -1,4 +1,4 @@
-import { generateAudioFilename } from "$lib/filename";
+import { generateAudioFilename } from "$lib/helpers/filename";
 import { ttsGenerating } from "$lib/stores/tts-generating-store";
 
 interface TTSOptions {

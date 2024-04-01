@@ -1,19 +1,18 @@
-import { db } from "$lib/drizzle/db";
-import { AIProvider, users } from "$lib/drizzle/schema";
-import { getApiKey } from "$lib/settings/api-keys";
+import { AIProvider } from "$lib/drizzle/schema";
+import { getApiKey } from "$lib/server/api-keys-service";
+import { getUser } from "$lib/server/users-service";
 import type { Config } from "@sveltejs/adapter-vercel";
 import { error, text, type RequestHandler } from "@sveltejs/kit";
-import { eq } from "drizzle-orm";
 import { OpenAI } from "openai";
 
 export const config: Config = { runtime: "edge" };
 
-export const POST = (async ({ request, url }) => {
-  const userId = url.searchParams.get("userId");
+export const POST = (async ({ locals, request }) => {
+  if (!locals.session?.userId) return error(401, "Unauthorized");
 
-  if (!userId) return error(400, "No user ID provided");
+  const { userId } = locals.session;
 
-  const user = (await db.select().from(users).where(eq(users.id, userId))).at(0);
+  const user = await getUser(userId);
 
   if (!user) return error(404, "User not found");
 

@@ -1,15 +1,22 @@
-import { handle as authenticationHandle } from "$lib/auth";
-import { redirect, type Handle } from "@sveltejs/kit";
+import { CLERK_SECRET_KEY } from "$env/static/private";
+import type { Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
+import { handleClerk } from "clerk-sveltekit/server";
 
-const authorizationHandle = (async ({ event, resolve }) => {
-  if (event.url.pathname.startsWith("/settings") || event.url.pathname.startsWith("/voices")) {
-    const session = await event.locals.auth();
-
-    if (!session) throw redirect(303, "/");
-  }
-
-  return resolve(event);
-}) satisfies Handle;
-
-export const handle: Handle = sequence(authenticationHandle, authorizationHandle);
+export const handle: Handle = sequence(
+  handleClerk(CLERK_SECRET_KEY, {
+    protectedPaths: [
+      ({ url }) => {
+        if (
+          url.pathname.startsWith("/api/webhooks") ||
+          url.pathname.startsWith("/auth") ||
+          url.pathname.startsWith("/changelog")
+        ) {
+          return false;
+        }
+        return true;
+      }
+    ],
+    signInUrl: "/auth/sign-in"
+  })
+);

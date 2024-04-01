@@ -1,6 +1,6 @@
 <script lang="ts">
   import { invalidateAll } from "$app/navigation";
-  import { page } from "$app/stores";
+  import Toast from "$lib/components/Toast.svelte";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { Button } from "$lib/components/ui/button";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
@@ -22,7 +22,7 @@
 
   async function deleteVoice() {
     try {
-      const res = await fetch(`/api/voices/${id}?userId=${$page.data.session?.user?.id}`, {
+      const res = await fetch(`/api/voices/${id}`, {
         method: "DELETE"
       });
 
@@ -39,17 +39,17 @@
 
   $: {
     if (copyIdSuccess) {
-      toast.success("Voice ID copied to clipboard");
+      toast.success(Toast, { componentProps: { text: "Voice ID copied to clipboard." } });
       copyIdSuccess = false;
     }
 
     if (deleteSuccess) {
-      toast.success("Voice deleted");
+      toast.success(Toast, { componentProps: { text: "Voice deleted." } });
       deleteSuccess = false;
     }
 
     if (deleteError) {
-      toast.error("Failed to delete voice");
+      toast.error(Toast, { componentProps: { text: "Failed to delete voice." } });
       deleteError = false;
     }
   }

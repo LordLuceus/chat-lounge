@@ -1,41 +1,33 @@
 <script lang="ts">
-  import { page } from "$app/stores";
+  import Toast from "$lib/components/Toast.svelte";
   import { Button } from "$lib/components/ui/button";
   import { generateTTS } from "$lib/services/tts-service";
+  import { audioFilename, currentAudioUrl, downloadUrl } from "$lib/stores/audio-store";
   import { ttsGenerating } from "$lib/stores/tts-generating-store";
-  import { Loader } from "lucide-svelte";
-  import { createEventDispatcher } from "svelte";
+  import { Loader, Speech } from "lucide-svelte";
   import { toast } from "svelte-sonner";
-
-  const dispatch = createEventDispatcher();
 
   export let text: string;
   export let voice: string | undefined;
-  const handlePlayAudio = (audioUrl: string | null) => {
-    dispatch("playAudio", audioUrl);
-  };
+  export let userId: string | undefined;
 
-  const handleDownloadAudio = ({
-    downloadUrl,
-    filename
-  }: {
-    downloadUrl: string;
-    filename: string;
-  }) => {
-    dispatch("downloadAudio", { downloadUrl, filename });
+  const handleDownloadAudio = ({ url, filename }: { url: string; filename: string }) => {
+    audioFilename.set(filename);
+    downloadUrl.set(url);
   };
 
   const handleError = (error: string) => {
-    toast.error(error);
+    toast.error(Toast, { componentProps: { text: error } });
   };
 
   const tts = async (): Promise<void> => {
     await generateTTS({
       text,
-      userId: $page.data.session?.user?.id,
+      userId,
       voice,
-      onPlayAudio: handlePlayAudio,
-      onDownloadAudio: handleDownloadAudio,
+      onPlayAudio: (audioUrl) => currentAudioUrl.set(audioUrl),
+      onDownloadAudio: ({ downloadUrl, filename }) =>
+        handleDownloadAudio({ url: downloadUrl, filename }),
       onError: handleError
     });
   };
@@ -44,6 +36,8 @@
 <Button on:click={tts} disabled={$ttsGenerating}>
   {#if $ttsGenerating}
     <Loader />
+  {:else}
+    <Speech />
   {/if}
   <span>{$ttsGenerating ? "Generating..." : "Speak"}</span>
 </Button>

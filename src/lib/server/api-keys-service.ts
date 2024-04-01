@@ -3,12 +3,7 @@ import { AIProvider, apiKeys } from "$lib/drizzle/schema";
 import { and, eq } from "drizzle-orm";
 
 export const saveApiKey = async (key: string, userId: string, provider: AIProvider) => {
-  const existingApiKey = (
-    await db
-      .select()
-      .from(apiKeys)
-      .where(and(eq(apiKeys.userId, userId), eq(apiKeys.provider, provider)))
-  ).at(0);
+  const existingApiKey = await getApiKey(userId, provider);
 
   if (existingApiKey) {
     return db.update(apiKeys).set({ key }).where(eq(apiKeys.id, existingApiKey.id));
@@ -18,10 +13,11 @@ export const saveApiKey = async (key: string, userId: string, provider: AIProvid
 };
 
 export const getApiKey = async (userId: string, provider: AIProvider) => {
-  return (
-    await db
-      .select()
-      .from(apiKeys)
-      .where(and(eq(apiKeys.userId, userId), eq(apiKeys.provider, provider)))
-  ).at(0);
+  return db.query.apiKeys.findFirst({
+    where: and(eq(apiKeys.userId, userId), eq(apiKeys.provider, provider))
+  });
+};
+
+export const getApiKeys = async (userId: string) => {
+  return db.select().from(apiKeys).where(eq(apiKeys.userId, userId));
 };

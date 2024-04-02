@@ -12,7 +12,7 @@
     "format": "prettier --write .",
     "generate": "drizzle-kit generate:sqlite",
     "push": "drizzle-kit push:sqlite",
-    "migrate": "tsx src/lib/drizzle/migrate.ts",
+    "migrate": "node src/lib/drizzle/migrate.js",
     "postinstall": "pnpm run migrate"
   },
   "devDependencies": {
@@ -39,7 +39,6 @@
     "svelte-headless-table": "^0.18.2",
     "tailwindcss": "^3.3.6",
     "tslib": "^2.4.1",
-    "tsx": "^4.7.1",
     "typescript": "^5.0.0",
     "vite": "^5.0.3"
   },

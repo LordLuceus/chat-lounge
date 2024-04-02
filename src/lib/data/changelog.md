@@ -3,6 +3,7 @@
 ## 2 Apr, 2024
 
 - Added a getting started guide to help new users set up their API keys and start chatting with the AI.
+- Added a button to reset the conversation.
 
 ## 24 Mar, 2024
 

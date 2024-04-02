@@ -53,7 +53,7 @@
     "clerk-sveltekit": "^0.4.1",
     "clsx": "^2.1.0",
     "dotenv": "^16.4.5",
-    "drizzle-orm": "^0.30.4",
+    "drizzle-orm": "^0.30.6",
     "lucide-svelte": "^0.344.0",
     "mode-watcher": "^0.2.2",
     "openai": "^4.28.4",

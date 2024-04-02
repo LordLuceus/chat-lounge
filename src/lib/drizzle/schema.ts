@@ -19,6 +19,7 @@ export const users = sqliteTable("user", {
   updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
     .notNull()
     .default(sql`(CURRENT_TIMESTAMP)`)
+    .$onUpdate(() => new Date())
 });
 
 export const apiKeys = sqliteTable("apiKey", {
@@ -37,6 +38,7 @@ export const apiKeys = sqliteTable("apiKey", {
   updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
     .notNull()
     .default(sql`(CURRENT_TIMESTAMP)`)
+    .$onUpdate(() => new Date())
 });
 
 export const agents = sqliteTable("agent", {
@@ -56,6 +58,7 @@ export const agents = sqliteTable("agent", {
   updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
     .notNull()
     .default(sql`(CURRENT_TIMESTAMP)`)
+    .$onUpdate(() => new Date())
 });
 
 export const usersRelations = relations(users, ({ many }) => ({

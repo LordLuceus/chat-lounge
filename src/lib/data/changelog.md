@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 2 Apr, 2024
+
+- Added a getting started guide to help new users set up their API keys and start chatting with the AI.
+
 ## 24 Mar, 2024
 
 - Added a hotkey to toggle recording: `Ctrl + Shift + S`.
@@ -34,8 +38,8 @@
 ## 12 Mar, 2024
 
 - Added the ability to download generated audio files.
-- Added settings page, where you can set your API keys.
-- Added voices page, where you can manage your ElevenLabs voices.
+- Added settings page where you can set your API keys.
+- Added voices page where you can manage your ElevenLabs voices.
 - Added the ability to copy messages to the clipboard.
 
 ## 25 Feb, 2024

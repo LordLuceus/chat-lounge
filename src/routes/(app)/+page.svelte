@@ -17,12 +17,18 @@
 <h1>ChatLounge</h1>
 
 <SignedIn let:user>
-  {#if !data.keys}
+  {#if !data.keys.eleven && !data.keys.mistral && !data.keys.openai}
     <p>You don't have any API keys set.</p>
-    <a href="/settings">Set your API keys</a>
+    <p>
+      <a href="/settings">Set your API keys</a> or
+      <a href="/getting-started">Read the getting started guide</a>.
+    </p>
   {:else if !data.keys.mistral}
     <p>You need a Mistral API key to continue.</p>
-    <a href="/settings">Set your Mistral API key</a>
+    <p>
+      <a href="/settings">Set your Mistral API key</a> or
+      <a href="/getting-started">Read the getting started guide</a>.
+    </p>
   {:else}
     <Chat agents={data.agents} apiKeys={data.keys} voices={data.voices} userId={user?.id} />
   {/if}

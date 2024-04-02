@@ -57,29 +57,30 @@
     value: agent.id
   }));
 
-  const { append, error, handleSubmit, input, isLoading, messages, reload, stop } = useChat({
-    onFinish: async (message) => {
-      if (voiceMessage) {
-        // It's a voice message, don't play the sound. Get a TTS response instead.
-        await generateTTS({
-          text: message.content,
-          userId,
-          voice: selectedVoice?.value,
-          onPlayAudio: (audioUrl: string | null) => currentAudioUrl.set(audioUrl),
-          onDownloadAudio: ({ downloadUrl, filename }) =>
-            setDownloadUrlAndFilename(downloadUrl, filename),
-          onError: (error: string) => toast.error(error)
-        });
-        setVoiceMessage("");
-      } else {
-        finishSound.play();
+  const { append, error, handleSubmit, input, isLoading, messages, reload, setMessages, stop } =
+    useChat({
+      onFinish: async (message) => {
+        if (voiceMessage) {
+          // It's a voice message, don't play the sound. Get a TTS response instead.
+          await generateTTS({
+            text: message.content,
+            userId,
+            voice: selectedVoice?.value,
+            onPlayAudio: (audioUrl: string | null) => currentAudioUrl.set(audioUrl),
+            onDownloadAudio: ({ downloadUrl, filename }) =>
+              setDownloadUrlAndFilename(downloadUrl, filename),
+            onError: (error: string) => toast.error(error)
+          });
+          setVoiceMessage("");
+        } else {
+          finishSound.play();
+        }
+      },
+      body: {
+        model: selectedModel?.value,
+        agent: null
       }
-    },
-    body: {
-      model: selectedModel?.value,
-      agent: null
-    }
-  });
+    });
 
   function handleMessageSubmit(event: KeyboardEvent) {
     if (event.key === "Enter" && !event.shiftKey) {
@@ -163,6 +164,11 @@
   const ariaListOpen = (label: string, count: number) => {
     return `${label}, ${count} ${count < 2 ? "option" : "options"} available.`;
   };
+
+  function resetConversation() {
+    setMessages([]);
+    (document.querySelector(".chat-input") as HTMLTextAreaElement)?.focus();
+  }
 </script>
 
 <svelte:window on:keydown={handleCopyLastMessage} />
@@ -208,6 +214,9 @@
 {/if}
 
 <section>
+  {#if $messages.length > 0}
+    <Button on:click={resetConversation}>New conversation</Button>
+  {/if}
   <div class="chat-list">
     {#each $messages as message}
       <Message {message} voice={selectedVoice?.value} />

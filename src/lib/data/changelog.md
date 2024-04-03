@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 3 Apr, 2024
+
+- OpenAI support is in. You can now chat with OpenAI's GPT-3.5 Turbo, GPT-4, and GPT-4 Turbo models.
+
 ## 2 Apr, 2024
 
 - Added a getting started guide to help new users set up their API keys and start chatting with the AI.

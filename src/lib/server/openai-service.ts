@@ -1,0 +1,29 @@
+import { OpenAIStream, StreamingTextResponse } from "ai";
+import { OpenAI } from "openai";
+import type { ChatCompletionMessageParam } from "openai/resources/index.mjs";
+
+export async function getOpenAIResponse(
+  apiKey: string,
+  messages: ChatCompletionMessageParam[],
+  model: {
+    id: string;
+    name: string;
+    createdAt: Date;
+    updatedAt: Date;
+    provider: string;
+    tokenLimit: number;
+  }
+) {
+  const client = new OpenAI({ apiKey });
+
+  const response = await client.chat.completions.create({
+    messages,
+    model: model.id,
+    temperature: 1.0,
+    stream: true
+  });
+
+  const stream = OpenAIStream(response);
+
+  return new StreamingTextResponse(stream);
+}

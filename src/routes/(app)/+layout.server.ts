@@ -6,7 +6,7 @@ import type { LayoutServerLoad } from "./$types";
 export const config: Config = { runtime: "edge" };
 
 export const load = (async ({ locals }) => {
-  const { userId } = locals.session;
+  const { userId } = locals.session!;
   const storedKeys = await getApiKeys(userId!);
 
   const keys = {

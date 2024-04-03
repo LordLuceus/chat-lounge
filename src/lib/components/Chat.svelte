@@ -14,29 +14,15 @@
 
   export let agents: { id: string; name: string; description: string | null }[] | undefined;
   export let apiKeys: { mistral: boolean; openai: boolean; eleven: boolean } | undefined;
+  export let models: { value: string; label: string }[] | undefined;
   export let voices: Voice[] | undefined;
   export let userId: string | undefined;
-
-  const models = [
-    {
-      label: "Mistral Large",
-      value: "mistral-large-latest"
-    },
-    {
-      label: "Mistral Medium",
-      value: "mistral-medium-latest"
-    },
-    {
-      label: "Mistral Small",
-      value: "mistral-small-latest"
-    }
-  ];
 
   let chatForm: HTMLFormElement;
   let finishSound: HTMLAudioElement;
   let voiceMessage: string;
 
-  let selectedModel = models.at(0);
+  let selectedModel = models?.at(0);
 
   let selectedVoice: { label: string; value: string } | undefined = voices
     ?.map((voice) => ({
@@ -112,7 +98,7 @@
     if (storedModel) {
       const parsedModel: { label: string; value: string } = JSON.parse(storedModel);
       // Check if the stored model is valid
-      if (models.find((model) => model.value === parsedModel.value)) {
+      if (models?.find((model) => model.value === parsedModel.value)) {
         selectedModel = parsedModel;
       }
     }

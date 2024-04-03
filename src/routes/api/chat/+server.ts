@@ -1,9 +1,10 @@
 import { AIProvider } from "$lib/drizzle/schema";
 import { getApiKey } from "$lib/server/api-keys-service";
+import { getMistralResponse } from "$lib/server/mistral-service";
+import { getModel } from "$lib/server/models-service";
+import { getOpenAIResponse } from "$lib/server/openai-service";
 import { getUser } from "$lib/server/users-service";
-import MistralClient from "@mistralai/mistralai";
 import { error, type RequestHandler } from "@sveltejs/kit";
-import { MistralStream, StreamingTextResponse } from "ai";
 
 export const config = { runtime: "edge" };
 
@@ -21,21 +22,25 @@ export const POST = (async ({ locals, request }) => {
     return error(404, { message: "User not found" });
   }
 
-  const apiKey = await getApiKey(user.id, AIProvider.Mistral);
+  const modelRecord = await getModel(model);
+
+  if (!modelRecord) {
+    return error(404, { message: "Model not found" });
+  }
+
+  const apiKey = await getApiKey(user.id, modelRecord.provider as AIProvider);
 
   if (!apiKey) {
     return error(404, { message: "API key not found" });
   }
 
-  const client = new MistralClient(apiKey.key);
+  if (modelRecord.provider === "mistral") {
+    return getMistralResponse(apiKey.key, messages, modelRecord);
+  }
 
-  const response = await client.chatStream({
-    messages,
-    model,
-    temperature: 1.0
-  });
+  if (modelRecord.provider === "openai") {
+    return getOpenAIResponse(apiKey.key, messages, modelRecord);
+  }
 
-  const stream = MistralStream(response);
-
-  return new StreamingTextResponse(stream);
+  return error(500, { message: "Invalid model provider" });
 }) satisfies RequestHandler;

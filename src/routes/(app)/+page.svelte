@@ -23,13 +23,19 @@
       <a href="/settings">Set your API keys</a> or
       <a href="/getting-started">Read the getting started guide</a>.
     </p>
-  {:else if !data.keys.mistral}
-    <p>You need a Mistral API key to continue.</p>
+  {:else if !data.keys.mistral && !data.keys.openai}
+    <p>You need a Mistral or OpenAI API key to continue.</p>
     <p>
-      <a href="/settings">Set your Mistral API key</a> or
+      <a href="/settings">Set your API keys</a> or
       <a href="/getting-started">Read the getting started guide</a>.
     </p>
   {:else}
-    <Chat agents={data.agents} apiKeys={data.keys} voices={data.voices} userId={user?.id} />
+    <Chat
+      agents={data.agents}
+      apiKeys={data.keys}
+      models={data.models}
+      voices={data.voices}
+      userId={user?.id}
+    />
   {/if}
 </SignedIn>

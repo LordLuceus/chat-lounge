@@ -1,4 +1,4 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { v4 as uuidv4 } from "uuid";
 
@@ -61,15 +61,16 @@ export const agents = sqliteTable("agent", {
     .$onUpdate(() => new Date())
 });
 
-export const usersRelations = relations(users, ({ many }) => ({
-  apiKeys: many(apiKeys),
-  agents: many(agents)
-}));
-
-export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
-  user: one(users)
-}));
-
-export const agentsRelations = relations(agents, ({ one }) => ({
-  user: one(users)
-}));
+export const models = sqliteTable("model", {
+  id: text("id").notNull().primaryKey(),
+  name: text("name").notNull(),
+  provider: text("provider").notNull(),
+  tokenLimit: integer("tokenLimit").notNull(),
+  createdAt: integer("createdAt", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(CURRENT_TIMESTAMP)`),
+  updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(CURRENT_TIMESTAMP)`)
+    .$onUpdate(() => new Date())
+});

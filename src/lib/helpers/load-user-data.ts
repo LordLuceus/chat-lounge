@@ -43,8 +43,14 @@ export const loadUserData = async (
 
     if (models) {
       const apiKeys = await getApiKeys(session.userId);
-      const providers = apiKeys.map((key) => key.provider);
-      data.models = await getProviderModels(providers);
+
+      if (apiKeys.length === 0) {
+        data.models = [];
+      } else {
+        const providers = apiKeys.map((key) => key.provider);
+
+        data.models = await getProviderModels(providers);
+      }
     }
 
     if (voices) {

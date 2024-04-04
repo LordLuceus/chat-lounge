@@ -6,7 +6,7 @@ Welcome to ChatLounge! Dive into a seamless chatting experience with AI language
 
 To begin, you'll need API keys for the following services:
 
-- **Mistral AI**: Powers the core of our language models for intelligent, interactive text chats. (Support for OpenAI language models is coming soon!)
+- **Mistral AI and OpenAI**: Powers the core of our language models for intelligent, interactive text chats.
 - **ElevenLabs**: Brings life to text through high-quality text-to-speech (TTS) technology.
 - **OpenAI (Whisper Model)**: Essential for voice conversations, converting your speech to text with remarkable accuracy.
 

@@ -4,20 +4,18 @@ import { MistralStream, StreamingTextResponse } from "ai";
 export async function getMistralResponse(
   apiKey: string,
   messages: { role: string; content: string }[],
-  model: {
-    id: string;
-    name: string;
-    createdAt: Date;
-    updatedAt: Date;
-    provider: string;
-    tokenLimit: number;
-  }
+  modelId: string,
+  prompt?: string
 ) {
   const client = new MistralClient(apiKey);
 
+  if (prompt) {
+    messages.unshift({ role: "system", content: prompt });
+  }
+
   const response = await client.chatStream({
     messages,
-    model: model.id,
+    model: modelId,
     temperature: 1.0
   });
 

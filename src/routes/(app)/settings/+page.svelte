@@ -1,8 +1,8 @@
 <script lang="ts">
-  import ApiKeyForm from "$lib/components/ApiKeyForm.svelte";
   import { AIProvider } from "$lib/drizzle/schema";
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
   import type { ActionData, PageData } from "./$types";
+  import ApiKeyForm from "./ApiKeyForm.svelte";
 
   export let data: PageData;
   export let form: ActionData;

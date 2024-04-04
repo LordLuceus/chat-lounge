@@ -2,6 +2,7 @@
   import { goto } from "$app/navigation";
   import * as Avatar from "$lib/components/ui/avatar";
   import { Button } from "$lib/components/ui/button";
+  import * as Collapsible from "$lib/components/ui/collapsible";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Toaster } from "$lib/components/ui/sonner";
   import ClerkLoaded from "clerk-sveltekit/client/ClerkLoaded.svelte";
@@ -15,6 +16,8 @@
   import type { LayoutData } from "./$types";
 
   export let data: LayoutData;
+
+  let agentsExpanded = false;
 </script>
 
 <header>
@@ -23,6 +26,21 @@
   </a>
   <nav>
     <a href="/">Home</a>
+    {#if data.agents.length > 0}
+      <Collapsible.Root bind:open={agentsExpanded}>
+        <Collapsible.Trigger aria-expanded={agentsExpanded}>Agents</Collapsible.Trigger>
+        <Collapsible.Content>
+          <div class="flex-column flex">
+            {#each data.agents as agent}
+              <a href="/agents/{agent.id}">{agent.name}</a>
+            {/each}
+            <a href="/agents">All agents</a>
+          </div>
+        </Collapsible.Content>
+      </Collapsible.Root>
+    {:else}
+      <a href="/agents">Agents</a>
+    {/if}
     {#if data?.keys?.eleven}
       <a href="/voices">Voices</a>
     {/if}

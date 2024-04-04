@@ -52,6 +52,7 @@ export const agents = sqliteTable("agent", {
   name: text("name").notNull(),
   description: text("description"),
   instructions: text("instructions").notNull(),
+  lastUsedAt: integer("lastUsedAt", { mode: "timestamp_ms" }),
   createdAt: integer("createdAt", { mode: "timestamp_ms" })
     .notNull()
     .default(sql`(CURRENT_TIMESTAMP)`),

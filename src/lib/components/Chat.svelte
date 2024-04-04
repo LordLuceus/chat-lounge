@@ -12,7 +12,7 @@
   import Select from "svelte-select";
   import { toast } from "svelte-sonner";
 
-  export let agents: { id: string; name: string; description: string | null }[] | undefined;
+  export let agentId: string | undefined = undefined;
   export let apiKeys: { mistral: boolean; openai: boolean; eleven: boolean } | undefined;
   export let models: { value: string; label: string }[] | undefined;
   export let voices: Voice[] | undefined;
@@ -31,16 +31,9 @@
     }))
     .at(0);
 
-  let selectedAgent: { label: string; value: string } | null = null;
-
   $: voiceItems = voices?.map((voice) => ({
     label: `${voice.name} (${voice.category})`,
     value: voice.voice_id
-  }));
-
-  $: agentItems = agents?.map((agent) => ({
-    label: agent.name,
-    value: agent.id
   }));
 
   const { append, error, handleSubmit, input, isLoading, messages, reload, setMessages, stop } =
@@ -63,8 +56,8 @@
         }
       },
       body: {
-        model: selectedModel?.value,
-        agent: null
+        modelId: selectedModel?.value,
+        agentId
       }
     });
 
@@ -111,15 +104,6 @@
         selectedVoice = parsedVoice;
       }
     }
-
-    const storedAgent = localStorage.getItem("selectedAgent");
-    if (storedAgent) {
-      const parsedAgent: { label: string; value: string } = JSON.parse(storedAgent);
-      // Check if the stored agent is valid
-      if (agents?.find((agent) => agent.id === parsedAgent.value)) {
-        selectedAgent = parsedAgent;
-      }
-    }
   });
 
   function setDownloadUrlAndFilename(url: string, filename: string) {
@@ -138,8 +122,8 @@
         {
           options: {
             body: {
-              model: selectedModel?.value,
-              agent: selectedAgent?.value
+              modelId: selectedModel?.value,
+              agentId
             }
           }
         }
@@ -168,23 +152,10 @@
     {ariaListOpen}
     clearable={false}
   />
-  {#if agents && agents.length > 0}
-    <Select
-      bind:value={selectedAgent}
-      items={agentItems}
-      placeholder="Select agent..."
-      on:change={(e) => localStorage.setItem("selectedAgent", JSON.stringify(selectedAgent))}
-      {ariaListOpen}
-    >
-      <svelte:fragment slot="clear-icon">Clear selection</svelte:fragment>
-    </Select>
-  {/if}
 {:else}
+  <Button on:click={resetConversation}>New conversation</Button>
   {#if selectedModel}
     <p>{selectedModel.label}</p>
-  {/if}
-  {#if selectedAgent}
-    <p>{selectedAgent.label}</p>
   {/if}
 {/if}
 
@@ -200,9 +171,6 @@
 {/if}
 
 <section>
-  {#if $messages.length > 0}
-    <Button on:click={resetConversation}>New conversation</Button>
-  {/if}
   <div class="chat-list">
     {#each $messages as message}
       <Message {message} voice={selectedVoice?.value} />
@@ -217,8 +185,8 @@
           reload({
             options: {
               body: {
-                model: selectedModel?.value,
-                agent: selectedAgent?.value
+                modelId: selectedModel?.value,
+                agentId
               }
             }
           })}>Regenerate</Button
@@ -232,8 +200,8 @@
         reload({
           options: {
             body: {
-              model: selectedModel?.value,
-              agent: selectedAgent?.value
+              modelId: selectedModel?.value,
+              agentId
             }
           }
         })}>Try again</Button
@@ -245,8 +213,8 @@
       handleSubmit(e, {
         options: {
           body: {
-            model: selectedModel?.value,
-            agent: selectedAgent?.value
+            modelId: selectedModel?.value,
+            agentId
           }
         }
       })}

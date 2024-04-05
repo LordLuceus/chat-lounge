@@ -17,7 +17,6 @@
   export let apiKeys: { mistral: boolean; openai: boolean; eleven: boolean } | undefined;
   export let models: { value: string; label: string }[] | undefined;
   export let voices: Voice[] | undefined;
-  export let userId: string | undefined;
 
   let chatForm: HTMLFormElement;
   let finishSound: HTMLAudioElement;
@@ -37,6 +36,9 @@
     value: voice.voice_id
   }));
 
+  let controller: AbortController;
+  let signal: AbortSignal;
+
   const { append, error, handleSubmit, input, isLoading, messages, reload, setMessages, stop } =
     useChat({
       onFinish: async (message) => {
@@ -44,12 +46,12 @@
           // It's a voice message, don't play the sound. Get a TTS response instead.
           await generateTTS({
             text: message.content,
-            userId,
             voice: selectedVoice?.value,
             onPlayAudio: (audioUrl: string | null) => currentAudioUrl.set(audioUrl),
             onDownloadAudio: ({ downloadUrl, filename }) =>
               setDownloadUrlAndFilename(downloadUrl, filename),
-            onError: (error: string) => toast.error(error)
+            onError: (error: string) => toast.error(error),
+            signal
           });
           setVoiceMessage("");
         } else {
@@ -105,6 +107,9 @@
         selectedVoice = parsedVoice;
       }
     }
+
+    controller = new AbortController();
+    signal = controller.signal;
   });
 
   onDestroy(() => {
@@ -114,6 +119,8 @@
 
       resetAudio();
     }
+
+    controller?.abort();
   });
 
   function setDownloadUrlAndFilename(url: string, filename: string) {
@@ -129,6 +136,7 @@
     currentAudioUrl.set(null);
     downloadUrl.set("");
     audioFilename.set("");
+    controller?.abort();
   }
 
   $: {
@@ -156,6 +164,8 @@
     resetAudio();
     (document.querySelector(".chat-input") as HTMLTextAreaElement)?.focus();
   }
+
+  $: if (agentId) resetConversation();
 </script>
 
 <svelte:window on:keydown={handleCopyLastMessage} />

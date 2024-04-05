@@ -3,20 +3,20 @@ import { ttsGenerating } from "$lib/stores/tts-generating-store";
 
 interface TTSOptions {
   text: string;
-  userId?: string;
   voice?: string;
   onPlayAudio: (audioUrl: string | null) => void;
   onDownloadAudio: (downloadOptions: { downloadUrl: string; filename: string }) => void;
   onError: (error: string) => void;
+  signal: AbortSignal;
 }
 
 export async function generateTTS({
   text,
-  userId,
   voice,
   onPlayAudio,
   onDownloadAudio,
-  onError
+  onError,
+  signal
 }: TTSOptions): Promise<void> {
   let streamSupported = true;
 
@@ -37,7 +37,8 @@ export async function generateTTS({
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ text, userId, voice, stream: false })
+      body: JSON.stringify({ text, voice, stream: false }),
+      signal
     });
 
     if (!response.ok) {
@@ -74,10 +75,10 @@ export async function generateTTS({
           },
           body: JSON.stringify({
             text,
-            userId,
             voice,
             stream: true
-          })
+          }),
+          signal
         });
 
         if (!response.ok) {

@@ -38,7 +38,7 @@
         {/if}
         <Markdown md={message.content} {plugins} />
         {#if $page.data.keys.eleven && message.role === "assistant"}
-          <Tts text={message.content} {voice} userId={user?.id} />
+          <Tts text={message.content} {voice} />
         {/if}
         {#if message.role === "assistant"}
           <Button on:click={copyToClipboard}>Copy</Button>

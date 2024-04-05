@@ -11,7 +11,7 @@
   <meta name="description" content={data.agent.description} />
 </svelte:head>
 
-<h1>{data.agent.name} | ChatLounge</h1>
+<h1>{data.agent.name}</h1>
 
 <SignedIn let:user>
   <Chat

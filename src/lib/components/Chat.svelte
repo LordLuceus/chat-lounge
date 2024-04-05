@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { browser } from "$app/environment";
   import Message from "$lib/components/Message.svelte";
   import Recorder from "$lib/components/Recorder.svelte";
   import Toast from "$lib/components/Toast.svelte";
@@ -8,7 +9,7 @@
   import { audioFilename, currentAudioUrl, downloadUrl } from "$lib/stores/audio-store";
   import type { Voice } from "$lib/types/elevenlabs/voices";
   import { useChat } from "ai/svelte";
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import Select from "svelte-select";
   import { toast } from "svelte-sonner";
 
@@ -106,6 +107,15 @@
     }
   });
 
+  onDestroy(() => {
+    if (browser) {
+      finishSound.pause();
+      finishSound.remove();
+
+      resetAudio();
+    }
+  });
+
   function setDownloadUrlAndFilename(url: string, filename: string) {
     downloadUrl.set(url);
     audioFilename.set(filename);
@@ -113,6 +123,12 @@
 
   function setVoiceMessage(message: string) {
     voiceMessage = message;
+  }
+
+  function resetAudio() {
+    currentAudioUrl.set(null);
+    downloadUrl.set("");
+    audioFilename.set("");
   }
 
   $: {
@@ -137,6 +153,7 @@
 
   function resetConversation() {
     setMessages([]);
+    resetAudio();
     (document.querySelector(".chat-input") as HTMLTextAreaElement)?.focus();
   }
 </script>

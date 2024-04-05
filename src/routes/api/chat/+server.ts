@@ -1,5 +1,5 @@
 import { AIProvider } from "$lib/drizzle/schema";
-import { getAgent } from "$lib/server/agents-service";
+import { getAgent, updateLastUsed } from "$lib/server/agents-service";
 import { getApiKey } from "$lib/server/api-keys-service";
 import { getMistralResponse } from "$lib/server/mistral-service";
 import { getModel } from "$lib/server/models-service";
@@ -43,6 +43,7 @@ export const POST = (async ({ locals, request }) => {
     if (!agent) {
       return error(404, { message: "Agent not found" });
     }
+    updateLastUsed(userId, agent.id);
   }
 
   if (model.provider === "mistral") {

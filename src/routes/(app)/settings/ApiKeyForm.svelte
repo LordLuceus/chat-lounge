@@ -31,7 +31,7 @@
     <section>
       <form
         method="POST"
-        action="/settings?/apiKey&provider={provider}"
+        action="?/apiKey&provider={provider}"
         use:enhance={() => {
           open = false;
         }}

@@ -30,12 +30,12 @@
       <Collapsible.Root bind:open={agentsExpanded}>
         <Collapsible.Trigger aria-expanded={agentsExpanded}>Agents</Collapsible.Trigger>
         <Collapsible.Content>
-          <div class="flex-column flex">
+          <ul class="list-none">
             {#each data.agents as agent}
-              <a href="/agents/{agent.id}">{agent.name}</a>
+              <li><a href="/agents/{agent.id}">{agent.name}</a></li>
             {/each}
-            <a href="/agents">All agents</a>
-          </div>
+            <li><a href="/agents">All agents</a></li>
+          </ul>
         </Collapsible.Content>
       </Collapsible.Root>
     {:else}

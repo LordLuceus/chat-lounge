@@ -1,25 +1,18 @@
 <script lang="ts">
-  import Toast from "$lib/components/Toast.svelte";
   import * as Form from "$lib/components/ui/form";
   import { Input } from "$lib/components/ui/input";
   import { Textarea } from "$lib/components/ui/textarea";
-  import { toast } from "svelte-sonner";
-  import SuperDebug, { superForm, type Infer, type SuperValidated } from "sveltekit-superforms";
+  import { superForm, type Infer, type SuperValidated } from "sveltekit-superforms";
   import { zodClient } from "sveltekit-superforms/adapters";
   import { agentSchema, type AgentSchema } from "./schema";
 
   export let data: SuperValidated<Infer<AgentSchema>>;
+  export let closeDialog: () => void = () => {};
   export let action: string = "";
-  export let closeDialog: (() => void) | undefined = undefined;
 
   const form = superForm(data, {
     validators: zodClient(agentSchema),
-    onUpdated: ({ form }) => {
-      if (form.valid) {
-        toast.success(Toast, { componentProps: { text: form.message } });
-        if (closeDialog) closeDialog();
-      }
-    }
+    onUpdated: () => closeDialog()
   });
 
   const { form: formData, enhance } = form;
@@ -54,5 +47,3 @@
   </Form.Field>
   <Form.Button>Save</Form.Button>
 </form>
-
-<SuperDebug data={$formData} />

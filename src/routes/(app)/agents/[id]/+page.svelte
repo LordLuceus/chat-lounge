@@ -1,8 +1,8 @@
 <script lang="ts">
   import Chat from "$lib/components/Chat.svelte";
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
+  import AgentActions from "../AgentActions.svelte";
   import type { PageData } from "./$types";
-  import AgentDropdown from "./AgentDropdown.svelte";
 
   export let data: PageData;
 </script>
@@ -13,7 +13,7 @@
 </svelte:head>
 
 <h1>
-  <AgentDropdown />
+  <AgentActions agentId={data.agent.id} clickText={data.agent.name} />
 </h1>
 
 <SignedIn let:user>

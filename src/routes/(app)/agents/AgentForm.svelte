@@ -12,7 +12,11 @@
 
   const form = superForm(data, {
     validators: zodClient(agentSchema),
-    onUpdated: () => closeDialog()
+    onUpdated: ({ form }) => {
+      if (form.valid) {
+        closeDialog();
+      }
+    }
   });
 
   const { form: formData, enhance } = form;

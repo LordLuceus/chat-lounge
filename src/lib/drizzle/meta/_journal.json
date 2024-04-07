@@ -15,6 +15,13 @@
       "when": 1712167342479,
       "tag": "0001_flaky_alex_wilder",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1712493672250,
+      "tag": "0002_brown_wild_child",
+      "breakpoints": true
     }
   ]
 }

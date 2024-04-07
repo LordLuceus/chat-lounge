@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 7 Apr, 2024
+
+- Added agents. You can now create custom AI agents with specific personalities and characteristics. Support for agent sharing is coming soon.
+
 ## 3 Apr, 2024
 
 - OpenAI support is in. You can now chat with OpenAI's GPT-3.5 Turbo, GPT-4, and GPT-4 Turbo models.

@@ -2,15 +2,15 @@ import { db } from "$lib/drizzle/db";
 import { agents } from "$lib/drizzle/schema";
 import { and, desc, eq } from "drizzle-orm";
 
-interface AgentSaveOptions {
+interface AgentCreateOptions {
   userId: string;
   name: string;
-  description: string | null;
+  description?: string;
   instructions: string;
 }
 
 export async function getAgents(userId: string) {
-  return db.select().from(agents).where(eq(agents.userId, userId)).orderBy(desc(agents.updatedAt));
+  return db.select().from(agents).where(eq(agents.userId, userId)).orderBy(desc(agents.lastUsedAt));
 }
 
 export async function getAgent(userId: string, agentId: string) {
@@ -25,17 +25,28 @@ export async function getAgentByName(userId: string, name: string) {
   });
 }
 
-export async function saveAgent({ userId, name, description, instructions }: AgentSaveOptions) {
-  const existingAgent = await getAgentByName(userId, name);
+export async function getRecentAgents(userId: string) {
+  return db
+    .select()
+    .from(agents)
+    .where(eq(agents.userId, userId))
+    .orderBy(desc(agents.lastUsedAt))
+    .limit(5);
+}
 
-  if (existingAgent) {
-    return db
-      .update(agents)
-      .set({ name, description, instructions })
-      .where(eq(agents.id, existingAgent.id));
-  }
+export async function createAgent({ userId, name, description, instructions }: AgentCreateOptions) {
+  return db.insert(agents).values({ userId, name, description, instructions }).returning();
+}
 
-  return db.insert(agents).values({ userId, name, description, instructions });
+export async function updateAgent(agentId: string, data: Partial<AgentCreateOptions>) {
+  return db.update(agents).set(data).where(eq(agents.id, agentId)).returning();
+}
+
+export async function updateLastUsed(userId: string, agentId: string) {
+  return db
+    .update(agents)
+    .set({ lastUsedAt: new Date() })
+    .where(and(eq(agents.userId, userId), eq(agents.id, agentId)));
 }
 
 export async function deleteAgent(userId: string, agentId: string) {

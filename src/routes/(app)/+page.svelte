@@ -30,12 +30,6 @@
       <a href="/getting-started">Read the getting started guide</a>.
     </p>
   {:else}
-    <Chat
-      agents={data.agents}
-      apiKeys={data.keys}
-      models={data.models}
-      voices={data.voices}
-      userId={user?.id}
-    />
+    <Chat apiKeys={data.keys} models={data.models} voices={data.voices} />
   {/if}
 </SignedIn>

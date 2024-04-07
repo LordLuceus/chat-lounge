@@ -5,20 +5,18 @@ import type { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 export async function getOpenAIResponse(
   apiKey: string,
   messages: ChatCompletionMessageParam[],
-  model: {
-    id: string;
-    name: string;
-    createdAt: Date;
-    updatedAt: Date;
-    provider: string;
-    tokenLimit: number;
-  }
+  modelId: string,
+  prompt?: string
 ) {
   const client = new OpenAI({ apiKey });
 
+  if (prompt) {
+    messages.unshift({ role: "system", content: prompt });
+  }
+
   const response = await client.chat.completions.create({
     messages,
-    model: model.id,
+    model: modelId,
     temperature: 1.0,
     stream: true
   });

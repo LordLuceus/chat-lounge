@@ -1,38 +1,51 @@
 <script lang="ts">
   import { Button } from "$lib/components/ui/button";
   import * as Table from "$lib/components/ui/table";
-  import type { Voice } from "$lib/types/elevenlabs/voices";
   import { Render, Subscribe, createRender, createTable } from "svelte-headless-table";
   import { addPagination } from "svelte-headless-table/plugins";
   import { writable } from "svelte/store";
-  import DataTableActions from "./DataTableActions.svelte";
-  import VoicePreviewButton from "./VoicePreviewButton.svelte";
+  import AgentActions from "./AgentActions.svelte";
+  import AgentLink from "./AgentLink.svelte";
 
-  export let voices: Voice[];
+  export let agents: {
+    id: string;
+    name: string;
+    description: string | null;
+    instructions: string;
+    createdAt: Date;
+    updatedAt: Date;
+    lastUsedAt: Date | null;
+  }[];
 
-  const voicesStore = writable(voices);
+  const agentsStore = writable(agents);
 
-  $: voicesStore.set(voices);
+  $: agentsStore.set(agents);
 
-  const table = createTable(voicesStore, { page: addPagination({ initialPageSize: 20 }) });
+  const table = createTable(agentsStore, {
+    page: addPagination({ initialPageSize: 20 })
+  });
 
   const columns = table.createColumns([
     table.column({
-      accessor: ({ name, preview_url }) => ({ name, preview_url }),
+      accessor: ({ id, name }) => ({ id, name }),
       header: "Name",
       cell: ({ value }) => {
-        return createRender(VoicePreviewButton, {
-          name: value.name,
-          previewUrl: value.preview_url
-        });
+        return createRender(AgentLink, { agentId: value.id, agentName: value.name });
       }
     }),
-    table.column({ accessor: "category", header: "Category" }),
     table.column({
-      accessor: ({ voice_id, category }) => ({ voice_id, category }),
+      accessor: "description",
+      header: "Description",
+      cell: ({ value }) => (value ? value : "")
+    }),
+    table.column({
+      accessor: "id",
       header: "Actions",
       cell: ({ value }) => {
-        return createRender(DataTableActions, { id: value.voice_id, category: value.category });
+        return createRender(AgentActions, {
+          clickText: "Actions",
+          agentId: value
+        });
       }
     })
   ]);

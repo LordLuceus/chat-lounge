@@ -5,7 +5,7 @@
   import { Input } from "$lib/components/ui/input";
   import { Label } from "$lib/components/ui/label";
   import { AIProvider } from "$lib/drizzle/schema";
-  import type { ActionData } from "../../routes/settings/$types";
+  import type { ActionData } from "./$types";
 
   export let provider: AIProvider;
   export let openText: string;
@@ -31,7 +31,7 @@
     <section>
       <form
         method="POST"
-        action="/settings?/apiKey&provider={provider}"
+        action="?/apiKey&provider={provider}"
         use:enhance={() => {
           open = false;
         }}

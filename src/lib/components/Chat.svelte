@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { browser } from "$app/environment";
   import Message from "$lib/components/Message.svelte";
   import Recorder from "$lib/components/Recorder.svelte";
   import Toast from "$lib/components/Toast.svelte";
@@ -8,15 +9,14 @@
   import { audioFilename, currentAudioUrl, downloadUrl } from "$lib/stores/audio-store";
   import type { Voice } from "$lib/types/elevenlabs/voices";
   import { useChat } from "ai/svelte";
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import Select from "svelte-select";
   import { toast } from "svelte-sonner";
 
-  export let agents: { id: string; name: string; description: string | null }[] | undefined;
+  export let agentId: string | undefined = undefined;
   export let apiKeys: { mistral: boolean; openai: boolean; eleven: boolean } | undefined;
   export let models: { value: string; label: string }[] | undefined;
   export let voices: Voice[] | undefined;
-  export let userId: string | undefined;
 
   let chatForm: HTMLFormElement;
   let finishSound: HTMLAudioElement;
@@ -31,17 +31,13 @@
     }))
     .at(0);
 
-  let selectedAgent: { label: string; value: string } | null = null;
-
   $: voiceItems = voices?.map((voice) => ({
     label: `${voice.name} (${voice.category})`,
     value: voice.voice_id
   }));
 
-  $: agentItems = agents?.map((agent) => ({
-    label: agent.name,
-    value: agent.id
-  }));
+  let controller: AbortController;
+  let signal: AbortSignal;
 
   const { append, error, handleSubmit, input, isLoading, messages, reload, setMessages, stop } =
     useChat({
@@ -50,12 +46,12 @@
           // It's a voice message, don't play the sound. Get a TTS response instead.
           await generateTTS({
             text: message.content,
-            userId,
             voice: selectedVoice?.value,
             onPlayAudio: (audioUrl: string | null) => currentAudioUrl.set(audioUrl),
             onDownloadAudio: ({ downloadUrl, filename }) =>
               setDownloadUrlAndFilename(downloadUrl, filename),
-            onError: (error: string) => toast.error(error)
+            onError: (error: string) => toast.error(error),
+            signal
           });
           setVoiceMessage("");
         } else {
@@ -63,8 +59,8 @@
         }
       },
       body: {
-        model: selectedModel?.value,
-        agent: null
+        modelId: selectedModel?.value,
+        agentId
       }
     });
 
@@ -112,14 +108,19 @@
       }
     }
 
-    const storedAgent = localStorage.getItem("selectedAgent");
-    if (storedAgent) {
-      const parsedAgent: { label: string; value: string } = JSON.parse(storedAgent);
-      // Check if the stored agent is valid
-      if (agents?.find((agent) => agent.id === parsedAgent.value)) {
-        selectedAgent = parsedAgent;
-      }
+    controller = new AbortController();
+    signal = controller.signal;
+  });
+
+  onDestroy(() => {
+    if (browser) {
+      finishSound.pause();
+      finishSound.remove();
+
+      resetAudio();
     }
+
+    controller?.abort();
   });
 
   function setDownloadUrlAndFilename(url: string, filename: string) {
@@ -131,6 +132,13 @@
     voiceMessage = message;
   }
 
+  function resetAudio() {
+    currentAudioUrl.set(null);
+    downloadUrl.set("");
+    audioFilename.set("");
+    controller?.abort();
+  }
+
   $: {
     if (voiceMessage) {
       append(
@@ -138,8 +146,8 @@
         {
           options: {
             body: {
-              model: selectedModel?.value,
-              agent: selectedAgent?.value
+              modelId: selectedModel?.value,
+              agentId
             }
           }
         }
@@ -153,8 +161,11 @@
 
   function resetConversation() {
     setMessages([]);
+    resetAudio();
     (document.querySelector(".chat-input") as HTMLTextAreaElement)?.focus();
   }
+
+  $: if (agentId) resetConversation();
 </script>
 
 <svelte:window on:keydown={handleCopyLastMessage} />
@@ -168,23 +179,10 @@
     {ariaListOpen}
     clearable={false}
   />
-  {#if agents && agents.length > 0}
-    <Select
-      bind:value={selectedAgent}
-      items={agentItems}
-      placeholder="Select agent..."
-      on:change={(e) => localStorage.setItem("selectedAgent", JSON.stringify(selectedAgent))}
-      {ariaListOpen}
-    >
-      <svelte:fragment slot="clear-icon">Clear selection</svelte:fragment>
-    </Select>
-  {/if}
 {:else}
+  <Button on:click={resetConversation}>New conversation</Button>
   {#if selectedModel}
     <p>{selectedModel.label}</p>
-  {/if}
-  {#if selectedAgent}
-    <p>{selectedAgent.label}</p>
   {/if}
 {/if}
 
@@ -200,9 +198,6 @@
 {/if}
 
 <section>
-  {#if $messages.length > 0}
-    <Button on:click={resetConversation}>New conversation</Button>
-  {/if}
   <div class="chat-list">
     {#each $messages as message}
       <Message {message} voice={selectedVoice?.value} />
@@ -217,8 +212,8 @@
           reload({
             options: {
               body: {
-                model: selectedModel?.value,
-                agent: selectedAgent?.value
+                modelId: selectedModel?.value,
+                agentId
               }
             }
           })}>Regenerate</Button
@@ -232,8 +227,8 @@
         reload({
           options: {
             body: {
-              model: selectedModel?.value,
-              agent: selectedAgent?.value
+              modelId: selectedModel?.value,
+              agentId
             }
           }
         })}>Try again</Button
@@ -245,8 +240,8 @@
       handleSubmit(e, {
         options: {
           body: {
-            model: selectedModel?.value,
-            agent: selectedAgent?.value
+            modelId: selectedModel?.value,
+            agentId
           }
         }
       })}

@@ -40,7 +40,8 @@ export const POST = (async ({ locals, request }) => {
         "Content-Type": "application/json",
         "xi-api-key": apiKey.key
       },
-      body: JSON.stringify({ text, model_id: "eleven_turbo_v2" })
+      body: JSON.stringify({ text, model_id: "eleven_turbo_v2" }),
+      signal: request.signal
     }
   );
 

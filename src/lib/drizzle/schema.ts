@@ -75,3 +75,62 @@ export const models = sqliteTable("model", {
     .default(sql`(CURRENT_TIMESTAMP)`)
     .$onUpdate(() => new Date())
 });
+
+export const conversations = sqliteTable("conversation", {
+  id: text("id")
+    .notNull()
+    .primaryKey()
+    .$default(() => uuidv4()),
+  agentId: text("agentId").references(() => agents.id, { onDelete: "set null" }),
+  modelId: text("modelId").references(() => models.id, {
+    onDelete: "set null",
+    onUpdate: "cascade"
+  }),
+  name: text("name").notNull(),
+  createdAt: integer("createdAt", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(CURRENT_TIMESTAMP)`),
+  updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(CURRENT_TIMESTAMP)`)
+    .$onUpdate(() => new Date())
+});
+
+export const conversationUsers = sqliteTable("conversationUser", {
+  id: text("id")
+    .notNull()
+    .primaryKey()
+    .$default(() => uuidv4()),
+  conversationId: text("conversationId")
+    .notNull()
+    .references(() => conversations.id, { onDelete: "cascade" }),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  createdAt: integer("createdAt", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(CURRENT_TIMESTAMP)`),
+  updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(CURRENT_TIMESTAMP)`)
+    .$onUpdate(() => new Date())
+});
+
+export const messages = sqliteTable("message", {
+  id: text("id")
+    .notNull()
+    .primaryKey()
+    .$default(() => uuidv4()),
+  conversationId: text("conversationId")
+    .notNull()
+    .references(() => conversations.id, { onDelete: "cascade" }),
+  userId: text("userId").references(() => users.id, { onDelete: "set null" }),
+  text: text("text").notNull(),
+  createdAt: integer("createdAt", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(CURRENT_TIMESTAMP)`),
+  updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(CURRENT_TIMESTAMP)`)
+    .$onUpdate(() => new Date())
+});

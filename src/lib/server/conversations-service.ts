@@ -49,7 +49,11 @@ export async function createConversation({
   await addConversationUser(conversation.id, userId);
 
   for (const message of messages) {
-    await addConversationMessage(conversation.id, userId, message.content);
+    await addConversationMessage(
+      conversation.id,
+      message.content,
+      message.role === "user" ? userId : undefined
+    );
   }
 
   const title = await generateConversationName(messages);
@@ -95,7 +99,11 @@ export async function getConversationUsers(conversationId: string) {
     .where(eq(conversationUsers.conversationId, conversationId));
 }
 
-export async function addConversationMessage(conversationId: string, userId: string, text: string) {
+export async function addConversationMessage(
+  conversationId: string,
+  text: string,
+  userId?: string
+) {
   return db.insert(messages).values({ conversationId, userId, text }).returning();
 }
 

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/environment";
+  import { afterNavigate, pushState } from "$app/navigation";
   import Message from "$lib/components/Message.svelte";
   import Recorder from "$lib/components/Recorder.svelte";
   import Toast from "$lib/components/Toast.svelte";
@@ -8,23 +9,31 @@
   import { generateTTS } from "$lib/services/tts-service";
   import { audioFilename, currentAudioUrl, downloadUrl } from "$lib/stores/audio-store";
   import type { Voice } from "$lib/types/elevenlabs/voices";
+  import { createMutation, useQueryClient } from "@tanstack/svelte-query";
+  import type { Message as AIMessage } from "ai";
   import { useChat } from "ai/svelte";
   import { onDestroy, onMount } from "svelte";
   import Select from "svelte-select";
   import { toast } from "svelte-sonner";
 
+  interface SelectItem {
+    label: string;
+    value: string;
+  }
+
   export let agentId: string | undefined = undefined;
   export let apiKeys: { mistral: boolean; openai: boolean; eleven: boolean } | undefined;
-  export let models: { value: string; label: string }[] | undefined;
+  export let models: SelectItem[] | undefined;
   export let voices: Voice[] | undefined;
+  export let initialMessages: AIMessage[] | undefined = undefined;
+  export let conversationId: string | undefined = undefined;
+  export let selectedModel: SelectItem | undefined = undefined;
 
   let chatForm: HTMLFormElement;
   let finishSound: HTMLAudioElement;
   let voiceMessage: string;
 
-  let selectedModel = models?.at(0);
-
-  let selectedVoice: { label: string; value: string } | undefined = voices
+  let selectedVoice: SelectItem | undefined = voices
     ?.map((voice) => ({
       label: `${voice.name} (${voice.category})`,
       value: voice.voice_id
@@ -38,6 +47,19 @@
 
   let controller: AbortController;
   let signal: AbortSignal;
+
+  const client = useQueryClient();
+
+  const createConversationMutation = createMutation({
+    mutationFn: async () =>
+      (
+        await fetch("/api/conversations", {
+          method: "POST",
+          body: JSON.stringify({ agentId, modelId: selectedModel?.value, messages: $messages })
+        })
+      ).json(),
+    onSuccess: (data) => client.invalidateQueries({ queryKey: ["conversations"] })
+  });
 
   const { append, error, handleSubmit, input, isLoading, messages, reload, setMessages, stop } =
     useChat({
@@ -57,11 +79,22 @@
         } else {
           finishSound.play();
         }
+
+        if (!conversationId) {
+          $createConversationMutation.mutate(undefined, {
+            onSuccess: (data) => {
+              pushState(`/conversations/${data.id}`, {});
+              conversationId = data.id;
+            }
+          });
+        }
       },
       body: {
         modelId: selectedModel?.value,
-        agentId
-      }
+        agentId,
+        conversationId
+      },
+      initialMessages
     });
 
   function handleMessageSubmit(event: KeyboardEvent) {
@@ -87,22 +120,13 @@
   }
 
   onMount(() => {
-    (document.querySelector(".chat-input") as HTMLTextAreaElement)?.focus();
     finishSound = new Audio("/assets/typing.wav");
 
-    const storedModel = localStorage.getItem("selectedModel");
-    if (storedModel) {
-      const parsedModel: { label: string; value: string } = JSON.parse(storedModel);
-      // Check if the stored model is valid
-      if (models?.find((model) => model.value === parsedModel.value)) {
-        selectedModel = parsedModel;
-      }
-    }
+    handleModelSelection();
 
     const storedVoice = localStorage.getItem("selectedVoice");
     if (storedVoice) {
-      const parsedVoice: { label: string; value: string } = JSON.parse(storedVoice);
-      // Check if the stored voice is valid
+      const parsedVoice: SelectItem = JSON.parse(storedVoice);
       if (voices?.find((voice) => voice.voice_id === parsedVoice.value)) {
         selectedVoice = parsedVoice;
       }
@@ -122,6 +146,22 @@
 
     controller?.abort();
   });
+
+  function handleModelSelection() {
+    if (!selectedModel) {
+      const storedModel = localStorage.getItem("selectedModel");
+      if (storedModel) {
+        const parsedModel: SelectItem = JSON.parse(storedModel);
+        if (models?.find((model) => model.value === parsedModel.value)) {
+          selectedModel = parsedModel;
+        } else {
+          selectedModel = models?.at(0);
+        }
+      } else {
+        selectedModel = models?.at(0);
+      }
+    }
+  }
 
   function setDownloadUrlAndFilename(url: string, filename: string) {
     downloadUrl.set(url);
@@ -147,7 +187,8 @@
           options: {
             body: {
               modelId: selectedModel?.value,
-              agentId
+              agentId,
+              conversationId
             }
           }
         }
@@ -160,12 +201,14 @@
   };
 
   function resetConversation() {
-    setMessages([]);
+    setMessages(initialMessages || []);
     resetAudio();
-    (document.querySelector(".chat-input") as HTMLTextAreaElement)?.focus();
+    handleModelSelection();
   }
 
-  $: if (agentId) resetConversation();
+  afterNavigate(() => {
+    resetConversation();
+  });
 </script>
 
 <svelte:window on:keydown={handleCopyLastMessage} />
@@ -179,11 +222,8 @@
     {ariaListOpen}
     clearable={false}
   />
-{:else}
-  <Button on:click={resetConversation}>New conversation</Button>
-  {#if selectedModel}
-    <p>{selectedModel.label}</p>
-  {/if}
+{:else if selectedModel}
+  <p>{selectedModel.label}</p>
 {/if}
 
 {#if apiKeys?.eleven && voices}
@@ -213,7 +253,8 @@
             options: {
               body: {
                 modelId: selectedModel?.value,
-                agentId
+                agentId,
+                conversationId
               }
             }
           })}>Regenerate</Button
@@ -228,7 +269,8 @@
           options: {
             body: {
               modelId: selectedModel?.value,
-              agentId
+              agentId,
+              conversationId
             }
           }
         })}>Try again</Button
@@ -241,7 +283,8 @@
         options: {
           body: {
             modelId: selectedModel?.value,
-            agentId
+            agentId,
+            conversationId
           }
         }
       })}
@@ -254,6 +297,7 @@
       class="chat-input"
       rows={1}
       cols={200}
+      autofocus
     />
   </form>
   {#if apiKeys?.openai}

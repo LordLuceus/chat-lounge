@@ -5,6 +5,7 @@
   import * as Collapsible from "$lib/components/ui/collapsible";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Toaster } from "$lib/components/ui/sonner";
+  import { createQuery } from "@tanstack/svelte-query";
   import ClerkLoaded from "clerk-sveltekit/client/ClerkLoaded.svelte";
   import SignInButton from "clerk-sveltekit/client/SignInButton.svelte";
   import SignUpButton from "clerk-sveltekit/client/SignUpButton.svelte";
@@ -18,6 +19,13 @@
   export let data: LayoutData;
 
   let agentsExpanded = false;
+  let conversationsExpanded = false;
+
+  const conversationsQuery = createQuery({
+    queryKey: ["conversations"],
+    queryFn: async () => (await fetch("/api/conversations")).json(),
+    initialData: data.conversations
+  });
 </script>
 
 <header>
@@ -40,6 +48,25 @@
       </Collapsible.Root>
     {:else}
       <a href="/agents">Agents</a>
+    {/if}
+    {#if $conversationsQuery.data?.length > 0}
+      <Collapsible.Root bind:open={conversationsExpanded}>
+        <Collapsible.Trigger aria-expanded={conversationsExpanded}
+          >Conversations</Collapsible.Trigger
+        >
+        <Collapsible.Content>
+          <ul class="list-none">
+            {#each $conversationsQuery.data as conversation}
+              <li>
+                <a href="/conversations/{conversation.conversation.id}"
+                  >{conversation.conversation.name}</a
+                >
+              </li>
+            {/each}
+            <li><a href="/conversations">All conversations</a></li>
+          </ul>
+        </Collapsible.Content>
+      </Collapsible.Root>
     {/if}
     {#if data?.keys?.eleven}
       <a href="/voices">Voices</a>

@@ -6,7 +6,7 @@ import type { LayoutServerLoad } from "./$types";
 
 export const config: Config = { runtime: "edge" };
 
-export const load = (async ({ locals }) => {
+export const load = (async ({ locals, fetch }) => {
   const { userId } = locals.session!;
   const storedKeys = await getApiKeys(userId!);
 
@@ -16,5 +16,11 @@ export const load = (async ({ locals }) => {
     openai: storedKeys.some((key) => key.provider === AIProvider.OpenAI)
   };
 
-  return { keys, agents: await getRecentAgents(userId!) };
+  const conversationsResponse = await fetch("/api/conversations");
+
+  return {
+    keys,
+    agents: await getRecentAgents(userId!),
+    conversations: await conversationsResponse.json()
+  };
 }) satisfies LayoutServerLoad;

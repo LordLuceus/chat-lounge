@@ -1,15 +1,16 @@
 import { OPENAI_API_KEY } from "$env/static/private";
 import { db } from "$lib/drizzle/db";
 import { conversationUsers, conversations, messages } from "$lib/drizzle/schema";
-import { and, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { OpenAI } from "openai";
 
-interface ConversationCreateOptions {
+export interface ConversationCreateOptions {
   name?: string;
   agentId: string | null;
   modelId: string | null;
   userId: string;
   messages: { role: string; content: string }[];
+  updatedAt?: Date;
 }
 
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
@@ -24,10 +25,27 @@ export async function getConversations(userId: string) {
 }
 
 export async function getConversation(userId: string, conversationId: string) {
+  const users = await getConversationUsers(conversationId);
+
+  if (!users.find((user) => user.userId === userId)) {
+    throw new Error("User is not a member of the conversation");
+  }
+
   return db.query.conversations.findFirst({
-    where: and(eq(conversations.id, conversationId), eq(conversationUsers.userId, userId)),
-    with: { messages: true }
+    with: { messages: true },
+    where: eq(conversations.id, conversationId),
+    orderBy: [asc(messages.createdAt)]
   });
+}
+
+export async function getRecentConversations(userId: string) {
+  return db
+    .select()
+    .from(conversations)
+    .innerJoin(conversationUsers, eq(conversations.id, conversationUsers.conversationId))
+    .where(eq(conversationUsers.userId, userId))
+    .orderBy(desc(conversations.updatedAt))
+    .limit(5);
 }
 
 export async function createConversation({
@@ -52,6 +70,7 @@ export async function createConversation({
     await addConversationMessage(
       conversation.id,
       message.content,
+      message.role,
       message.role === "user" ? userId : undefined
     );
   }
@@ -101,10 +120,28 @@ export async function getConversationUsers(conversationId: string) {
 
 export async function addConversationMessage(
   conversationId: string,
-  text: string,
+  content: string,
+  role: string,
   userId?: string
 ) {
-  return db.insert(messages).values({ conversationId, userId, text }).returning();
+  await db.insert(messages).values({ conversationId, userId, content, role }).returning();
+
+  // Check if the user is already a member of the conversation
+  if (userId) {
+    const user = await db.query.conversationUsers.findFirst({
+      where: and(
+        eq(conversationUsers.conversationId, conversationId),
+        eq(conversationUsers.userId, userId)
+      )
+    });
+
+    // If the user is not a member of the conversation, add them
+    if (!user) {
+      await addConversationUser(conversationId, userId);
+    }
+  }
+
+  await updateConversation(conversationId, { updatedAt: new Date() });
 }
 
 export async function getConversationMessages(conversationId: string) {
@@ -124,7 +161,7 @@ export async function getConversationMessage(conversationId: string, messageId: 
 export async function updateConversationMessage(
   conversationId: string,
   messageId: string,
-  data: { text: string }
+  data: { content: string }
 ) {
   return db
     .update(messages)
@@ -143,12 +180,12 @@ async function generateConversationName(messages: { role: string; content: strin
   const context = messages.map(({ role, content }) => `${role}: ${content}`).join("\n");
 
   const response = await openai.chat.completions.create({
-    model: "gpt-3.5-turbo",
+    model: "gpt-4",
     messages: [
       {
         role: "user",
         content:
-          "Generate a brief title for the following conversation between a user and an AI assistant. Respond only with the title for the conversation and nothing else.\n\n---\n\n" +
+          "Generate a brief and impactful title for the following conversation between a user and an AI assistant. Respond only with the title for the conversation and nothing else. Do not wrap the text in quotation marks. I need only the title and nothing else.\n\n---\n\n" +
           context
       }
     ]

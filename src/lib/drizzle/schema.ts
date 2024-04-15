@@ -125,7 +125,8 @@ export const messages = sqliteTable("message", {
     .notNull()
     .references(() => conversations.id, { onDelete: "cascade" }),
   userId: text("userId").references(() => users.id, { onDelete: "set null" }),
-  text: text("text").notNull(),
+  content: text("text").notNull(),
+  role: text("role").notNull(),
   createdAt: integer("createdAt", { mode: "timestamp_ms" })
     .notNull()
     .default(sql`(CURRENT_TIMESTAMP)`),
@@ -135,18 +136,23 @@ export const messages = sqliteTable("message", {
     .$onUpdate(() => new Date())
 });
 
-export const conversationsRelations = relations(conversations, ({ many }) => ({
-  messages: many(messages)
+export const conversationsRelations = relations(conversations, ({ many, one }) => ({
+  messages: many(messages),
+  agent: one(agents, { fields: [conversations.agentId], references: [agents.id] }),
+  model: one(models, { fields: [conversations.modelId], references: [models.id] }),
+  conversationUsers: many(conversationUsers)
 }));
 
-export const agentsRelations = relations(agents, ({ many }) => ({
-  conversations: many(conversations)
+export const agentsRelations = relations(agents, ({ many, one }) => ({
+  conversations: many(conversations),
+  user: one(users, { fields: [agents.userId], references: [users.id] })
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
   apiKeys: many(apiKeys),
   conversationUsers: many(conversationUsers),
-  messages: many(messages)
+  messages: many(messages),
+  agents: many(agents)
 }));
 
 export const modelsRelations = relations(models, ({ many }) => ({
@@ -154,11 +160,21 @@ export const modelsRelations = relations(models, ({ many }) => ({
 }));
 
 export const conversationUsersRelations = relations(conversationUsers, ({ one }) => ({
-  conversation: one(conversations),
-  user: one(users)
+  conversation: one(conversations, {
+    fields: [conversationUsers.conversationId],
+    references: [conversations.id]
+  }),
+  user: one(users, { fields: [conversationUsers.userId], references: [users.id] })
 }));
 
 export const messagesRelations = relations(messages, ({ one }) => ({
-  conversation: one(conversations),
-  user: one(users)
+  conversation: one(conversations, {
+    fields: [messages.conversationId],
+    references: [conversations.id]
+  }),
+  user: one(users, { fields: [messages.userId], references: [users.id] })
+}));
+
+export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
+  user: one(users, { fields: [apiKeys.userId], references: [users.id] })
 }));

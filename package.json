@@ -47,6 +47,7 @@
     "@libsql/client": "^0.5.6",
     "@mistralai/mistralai": "latest",
     "@sveltejs/adapter-vercel": "^5.1.0",
+    "@tanstack/svelte-query": "^5.29.0",
     "@vercel/analytics": "^1.2.2",
     "ai": "^2.2.36",
     "bits-ui": "^0.19.7",

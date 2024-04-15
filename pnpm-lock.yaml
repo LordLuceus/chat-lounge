@@ -14,6 +14,9 @@ dependencies:
   '@sveltejs/adapter-vercel':
     specifier: ^5.1.0
     version: 5.1.1(@sveltejs/kit@2.5.3)
+  '@tanstack/svelte-query':
+    specifier: ^5.29.0
+    version: 5.29.0(svelte@4.2.12)
   '@vercel/analytics':
     specifier: ^1.2.2
     version: 1.2.2(react@18.2.0)
@@ -1436,6 +1439,19 @@ packages:
     resolution: {integrity: sha512-aYX01Ke9hunpoCexYAgQucEpARGQ5w/cqHFrIR+e9gdKb1QWTsVJuTJ2ozQzIAxLyRQe/m+2RqzkyOOGiMKRQA==}
     dependencies:
       tslib: 2.6.2
+    dev: false
+
+  /@tanstack/query-core@5.29.0:
+    resolution: {integrity: sha512-WgPTRs58hm9CMzEr5jpISe8HXa3qKQ8CxewdYZeVnA54JrPY9B1CZiwsCoLpLkf0dGRZq+LcX5OiJb0bEsOFww==}
+    dev: false
+
+  /@tanstack/svelte-query@5.29.0(svelte@4.2.12):
+    resolution: {integrity: sha512-PhcyCKyd7Q74bShyCdySYDAWbuH+RGK/GDYY9EgyEqsRfg78eFTRSlhNnGS38jFd/QrAFHj1iomqF7fRWc2nGg==}
+    peerDependencies:
+      svelte: ^3.54.0 || ^4.0.0 || ^5.0.0-next.0
+    dependencies:
+      '@tanstack/query-core': 5.29.0
+      svelte: 4.2.12
     dev: false
 
   /@types/cookie@0.6.0:

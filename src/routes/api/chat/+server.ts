@@ -14,7 +14,7 @@ export const POST = (async ({ locals, request }) => {
     return error(401, { message: "Unauthorized" });
   }
 
-  const { messages, modelId, agentId } = await request.json();
+  const { messages, modelId, agentId, conversationId } = await request.json();
   const { userId } = locals.session;
 
   const user = await getUser(userId);
@@ -47,11 +47,11 @@ export const POST = (async ({ locals, request }) => {
   }
 
   if (model.provider === "mistral") {
-    return getMistralResponse(apiKey.key, messages, model.id, agent?.instructions);
+    return getMistralResponse(apiKey.key, messages, model.id, userId, agent, conversationId);
   }
 
   if (model.provider === "openai") {
-    return getOpenAIResponse(apiKey.key, messages, model.id, agent?.instructions);
+    return getOpenAIResponse(apiKey.key, messages, model.id, userId, agent, conversationId);
   }
 
   return error(500, { message: "Invalid model provider" });

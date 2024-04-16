@@ -1,6 +1,7 @@
 <script lang="ts">
   import { browser } from "$app/environment";
   import { afterNavigate, pushState } from "$app/navigation";
+  import { page } from "$app/stores";
   import Message from "$lib/components/Message.svelte";
   import Recorder from "$lib/components/Recorder.svelte";
   import Toast from "$lib/components/Toast.svelte";
@@ -204,6 +205,10 @@
     setMessages(initialMessages || []);
     resetAudio();
     handleModelSelection();
+
+    if ($page.url.pathname === "/") {
+      conversationId = undefined;
+    }
   }
 
   afterNavigate(() => {

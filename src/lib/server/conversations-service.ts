@@ -177,19 +177,20 @@ export async function deleteConversationMessage(conversationId: string, messageI
 }
 
 async function generateConversationName(messages: { role: string; content: string }[]) {
+  const prompt =
+    "Summarise the following conversation in five words or fewer. Be as concise as possible without losing the context of the conversation. Your goal is to extract the key point of the conversation and turn it into a short and interesting title. Respond only with the title and nothing else.";
+
   const context = messages.map(({ role, content }) => `${role}: ${content}`).join("\n");
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4",
+    model: "gpt-3.5-turbo",
     messages: [
       {
         role: "user",
-        content:
-          "Generate a brief and impactful title for the following conversation between a user and an AI assistant. Respond only with the title for the conversation and nothing else. Do not wrap the text in quotation marks. I need only the title and nothing else.\n\n---\n\n" +
-          context
+        content: prompt + "\n\n---\n\n" + context
       }
     ]
   });
 
-  return response.choices[0].message.content;
+  return response.choices[0].message.content?.trim().replaceAll('"', "");
 }

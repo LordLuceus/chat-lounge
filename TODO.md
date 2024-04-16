@@ -1,7 +1,7 @@
 ## Conversations:
 
 - [x] Make it work with agents. Add a route /agents/:id/conversations/:id
-- [ ] Check what happens if we stop the generation before it finishes.
+- [x] Check what happens if we stop the generation before it finishes.
 - [ ] Make it work when there are multiple responses from the AI. Add parentId column to message and display a choices UI if there are multiple children.
 - [ ] Allow user to reset the thread at a certain point. Delete all messages after that point.
 - [ ] Add rename and delete conversation options.
@@ -10,10 +10,11 @@
 
 ## General
 
-- [ ] Refactor the Mistral and OpenAI services to use a common interface.
+- [x] Refactor the Mistral and OpenAI services to use a common interface.
 - [ ] Make the agents list at the top dynamic with Query just like the conversations list.
 - [ ] Add preferred model and voice to agents.
 - [ ] Add ability to pin agents and conversations to the top of the list.
+- [ ] Cache voices because they don't change often and there's no need to call the ElevenLabs API every time we change a page. This will also make the app faster. We can use Query.
 
 ## TTS
 

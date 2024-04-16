@@ -1,9 +1,8 @@
 import { AIProvider } from "$lib/drizzle/schema";
 import { getAgent, updateLastUsed } from "$lib/server/agents-service";
+import AIService from "$lib/server/ai-service";
 import { getApiKey } from "$lib/server/api-keys-service";
-import { getMistralResponse } from "$lib/server/mistral-service";
 import { getModel } from "$lib/server/models-service";
-import { getOpenAIResponse } from "$lib/server/openai-service";
 import { getUser } from "$lib/server/users-service";
 import { error, type RequestHandler } from "@sveltejs/kit";
 
@@ -46,13 +45,7 @@ export const POST = (async ({ locals, request }) => {
     updateLastUsed(userId, agent.id);
   }
 
-  if (model.provider === "mistral") {
-    return getMistralResponse(apiKey.key, messages, model.id, userId, agent, conversationId);
-  }
+  const aiService = new AIService(model.provider, apiKey.key);
 
-  if (model.provider === "openai") {
-    return getOpenAIResponse(apiKey.key, messages, model.id, userId, agent, conversationId);
-  }
-
-  return error(500, { message: "Invalid model provider" });
+  return aiService.getResponse(messages, model.id, userId, agent, conversationId);
 }) satisfies RequestHandler;

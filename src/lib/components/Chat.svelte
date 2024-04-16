@@ -58,7 +58,7 @@
           body: JSON.stringify({ agentId, modelId: selectedModel?.value, messages: $messages })
         })
       ).json(),
-    onSuccess: (data) => client.invalidateQueries({ queryKey: ["conversations"] })
+    onSuccess: () => client.invalidateQueries({ queryKey: ["conversations"] })
   });
 
   const { append, error, handleSubmit, input, isLoading, messages, reload, setMessages, stop } =
@@ -83,7 +83,7 @@
         if (!conversationId) {
           $createConversationMutation.mutate(undefined, {
             onSuccess: (data) => {
-              pushState(`/conversations/${data.id}`, {});
+              pushState(`${agentId ? "/agents/" + agentId : ""}/conversations/${data.id}`, {});
               conversationId = data.id;
             }
           });

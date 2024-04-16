@@ -34,6 +34,26 @@
   </a>
   <nav>
     <a href="/">Home</a>
+    {#if $conversationsQuery.data?.length > 0}
+      <Collapsible.Root bind:open={conversationsExpanded}>
+        <Collapsible.Trigger aria-expanded={conversationsExpanded}
+          >Conversations</Collapsible.Trigger
+        >
+        <Collapsible.Content>
+          <ul class="list-none">
+            {#each $conversationsQuery.data as conversation}
+              <li>
+                <a
+                  href={`${conversation.conversation.agentId ? "/agents/" + conversation.conversation.agentId : ""}/conversations/${conversation.conversation.id}`}
+                  >{conversation.conversation.name}</a
+                >
+              </li>
+            {/each}
+            <li><a href="/conversations">All conversations</a></li>
+          </ul>
+        </Collapsible.Content>
+      </Collapsible.Root>
+    {/if}
     {#if data.agents.length > 0}
       <Collapsible.Root bind:open={agentsExpanded}>
         <Collapsible.Trigger aria-expanded={agentsExpanded}>Agents</Collapsible.Trigger>
@@ -48,25 +68,6 @@
       </Collapsible.Root>
     {:else}
       <a href="/agents">Agents</a>
-    {/if}
-    {#if $conversationsQuery.data?.length > 0}
-      <Collapsible.Root bind:open={conversationsExpanded}>
-        <Collapsible.Trigger aria-expanded={conversationsExpanded}
-          >Conversations</Collapsible.Trigger
-        >
-        <Collapsible.Content>
-          <ul class="list-none">
-            {#each $conversationsQuery.data as conversation}
-              <li>
-                <a href="/conversations/{conversation.conversation.id}"
-                  >{conversation.conversation.name}</a
-                >
-              </li>
-            {/each}
-            <li><a href="/conversations">All conversations</a></li>
-          </ul>
-        </Collapsible.Content>
-      </Collapsible.Root>
     {/if}
     {#if data?.keys?.eleven}
       <a href="/voices">Voices</a>

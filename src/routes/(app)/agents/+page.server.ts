@@ -1,7 +1,7 @@
 import { createAgent, getAgents } from "$lib/server/agents-service";
 import type { Config } from "@sveltejs/adapter-vercel";
-import { fail, redirect } from "@sveltejs/kit";
-import { superValidate } from "sveltekit-superforms";
+import { fail } from "@sveltejs/kit";
+import { message, superValidate } from "sveltekit-superforms";
 import { zod } from "sveltekit-superforms/adapters";
 import type { Actions, PageServerLoad } from "./$types";
 import { agentSchema } from "./schema";
@@ -34,6 +34,6 @@ export const actions: Actions = {
     const { name, description, instructions } = form.data;
     const agent = await createAgent({ userId: userId!, name, description, instructions });
 
-    return redirect(303, `/agents/${agent.at(0)?.id}`);
+    return message(form, { agentId: agent.at(0)?.id, created: true });
   }
 };

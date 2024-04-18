@@ -90,7 +90,8 @@
           });
         }
 
-        client.invalidateQueries({ queryKey: ["conversation", $conversationStore?.id] });
+        if ($conversationStore)
+          client.invalidateQueries({ queryKey: ["conversation", $conversationStore.id] });
       },
       body: {
         modelId: selectedModel?.value,
@@ -145,6 +146,7 @@
       finishSound.remove();
 
       resetAudio();
+      conversationStore.set(null);
     }
 
     controller?.abort();

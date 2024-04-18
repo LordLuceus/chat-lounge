@@ -11,7 +11,8 @@
 ## General
 
 - [x] Refactor the Mistral and OpenAI services to use a common interface.
-- [ ] Make the agents list at the top dynamic with Query just like the conversations list.
+- [x] Make the agents list at the top dynamic with Query just like the conversations list.
+- [ ] Always show the current agent and conversation at the top of the page.
 - [ ] Add preferred model and voice to agents.
 - [ ] Add ability to pin agents and conversations to the top of the list.
 - [ ] Cache voices because they don't change often and there's no need to call the ElevenLabs API every time we change a page. This will also make the app faster. We can use Query.

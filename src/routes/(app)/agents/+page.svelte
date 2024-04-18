@@ -1,10 +1,22 @@
 <script lang="ts">
   import * as Dialog from "$lib/components/ui/dialog";
+  import { createQuery, useQueryClient } from "@tanstack/svelte-query";
   import type { PageData } from "./$types";
   import AgentForm from "./AgentForm.svelte";
   import DataTable from "./DataTable.svelte";
 
   export let data: PageData;
+
+  const client = useQueryClient();
+
+  const agentsQuery = createQuery({
+    queryKey: ["agents"],
+    queryFn: async () => {
+      const response = await fetch("/api/agents");
+      return response.json();
+    },
+    initialData: data.agents
+  });
 </script>
 
 <svelte:head>
@@ -23,8 +35,8 @@
   </Dialog.Content>
 </Dialog.Root>
 
-{#if data.agents.length > 0}
-  <DataTable agents={data.agents} />
+{#if $agentsQuery.data?.length > 0}
+  <DataTable agents={$agentsQuery.data} />
 {:else}
   <p>No agents to display. Try creating an agent.</p>
 {/if}

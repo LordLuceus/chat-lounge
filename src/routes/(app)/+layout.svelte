@@ -21,10 +21,16 @@
   let agentsExpanded = false;
   let conversationsExpanded = false;
 
-  const conversationsQuery = createQuery({
-    queryKey: ["conversations"],
-    queryFn: async () => (await fetch("/api/conversations")).json(),
+  const recentConversationsQuery = createQuery({
+    queryKey: ["conversations", "recent"],
+    queryFn: async () => (await fetch("/api/conversations?recent=true")).json(),
     initialData: data.conversations
+  });
+
+  const recentAgentsQuery = createQuery({
+    queryKey: ["agents", "recent"],
+    queryFn: async () => (await fetch("/api/agents?recent=true")).json(),
+    initialData: data.agents
   });
 </script>
 
@@ -34,14 +40,14 @@
   </a>
   <nav>
     <a href="/">Home</a>
-    {#if $conversationsQuery.data?.length > 0}
+    {#if $recentConversationsQuery.data?.length > 0}
       <Collapsible.Root bind:open={conversationsExpanded}>
         <Collapsible.Trigger aria-expanded={conversationsExpanded}
           >Conversations</Collapsible.Trigger
         >
         <Collapsible.Content>
           <ul class="list-none">
-            {#each $conversationsQuery.data as conversation}
+            {#each $recentConversationsQuery.data as conversation}
               <li>
                 <a
                   href={`${conversation.conversation.agentId ? "/agents/" + conversation.conversation.agentId : ""}/conversations/${conversation.conversation.id}`}
@@ -54,12 +60,12 @@
         </Collapsible.Content>
       </Collapsible.Root>
     {/if}
-    {#if data.agents.length > 0}
+    {#if $recentAgentsQuery.data?.length > 0}
       <Collapsible.Root bind:open={agentsExpanded}>
         <Collapsible.Trigger aria-expanded={agentsExpanded}>Agents</Collapsible.Trigger>
         <Collapsible.Content>
           <ul class="list-none">
-            {#each data.agents as agent}
+            {#each $recentAgentsQuery.data as agent}
               <li><a href="/agents/{agent.id}">{agent.name}</a></li>
             {/each}
             <li><a href="/agents">All agents</a></li>

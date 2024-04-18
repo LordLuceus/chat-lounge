@@ -1,5 +1,4 @@
 import { AIProvider } from "$lib/drizzle/schema";
-import { getRecentAgents } from "$lib/server/agents-service";
 import { getApiKeys } from "$lib/server/api-keys-service";
 import type { Config } from "@sveltejs/adapter-vercel";
 import type { LayoutServerLoad } from "./$types";
@@ -16,11 +15,12 @@ export const load = (async ({ locals, fetch }) => {
     openai: storedKeys.some((key) => key.provider === AIProvider.OpenAI)
   };
 
-  const conversationsResponse = await fetch("/api/conversations");
+  const recentConversationsResponse = await fetch("/api/conversations?recent=true");
+  const recentAgentsResponse = await fetch("/api/agents?recent=true");
 
   return {
     keys,
-    agents: await getRecentAgents(userId!),
-    conversations: await conversationsResponse.json()
+    agents: await recentAgentsResponse.json(),
+    conversations: await recentConversationsResponse.json()
   };
 }) satisfies LayoutServerLoad;

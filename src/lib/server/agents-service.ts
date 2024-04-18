@@ -2,7 +2,7 @@ import { db } from "$lib/drizzle/db";
 import { agents } from "$lib/drizzle/schema";
 import { and, desc, eq } from "drizzle-orm";
 
-interface AgentCreateOptions {
+export interface AgentCreateOptions {
   userId: string;
   name: string;
   description?: string;
@@ -38,7 +38,18 @@ export async function createAgent({ userId, name, description, instructions }: A
   return db.insert(agents).values({ userId, name, description, instructions }).returning();
 }
 
-export async function updateAgent(agentId: string, data: Partial<AgentCreateOptions>) {
+export async function updateAgent(
+  agentId: string,
+  data: Partial<AgentCreateOptions>,
+  userId?: string
+) {
+  if (userId) {
+    const agent = await getAgent(userId, agentId);
+
+    if (!agent) {
+      throw new Error("Agent not found");
+    }
+  }
   return db.update(agents).set(data).where(eq(agents.id, agentId)).returning();
 }
 

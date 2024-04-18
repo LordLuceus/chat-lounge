@@ -5,6 +5,8 @@
   import * as Avatar from "$lib/components/ui/avatar";
   import { Button } from "$lib/components/ui/button";
   import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
+  import { conversationStore } from "$lib/stores/conversation-store";
+  import { createMutation, useQueryClient } from "@tanstack/svelte-query";
   import type { Message } from "ai/svelte";
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
   import { BotMessageSquare } from "lucide-svelte";
@@ -17,10 +19,32 @@
 
   export let message: Message;
   export let voice: string | undefined;
+  export let siblings: Message[] = [];
 
   async function copyToClipboard() {
     await navigator.clipboard.writeText(message.content);
     toast.success(Toast, { componentProps: { text: "Message copied to clipboard" } });
+  }
+
+  $: currentSiblingIndex = siblings.findIndex((sibling) => sibling.id === message.id);
+
+  const client = useQueryClient();
+
+  const updateConversationMutation = createMutation({
+    mutationFn: async (value: string) =>
+      (
+        await fetch(`/api/conversations/${$conversationStore?.id}`, {
+          method: "PUT",
+          body: JSON.stringify({ currentNode: value })
+        })
+      ).json(),
+    onSuccess: () =>
+      client.invalidateQueries({ queryKey: ["conversation", $conversationStore?.id] })
+  });
+
+  function setCurrentNode(id?: string) {
+    if (!id) return;
+    $updateConversationMutation.mutate(id);
   }
 </script>
 
@@ -42,6 +66,21 @@
         {/if}
         {#if message.role === "assistant"}
           <Button on:click={copyToClipboard}>Copy</Button>
+        {/if}
+        {#if siblings.length > 1}
+          <div>
+            <Button
+              disabled={currentSiblingIndex < 1}
+              on:click={() => setCurrentNode(siblings.at(currentSiblingIndex - 1)?.id)}
+              >Previous message</Button
+            >
+            <span>{currentSiblingIndex + 1} / {siblings.length}</span>
+            <Button
+              disabled={currentSiblingIndex === siblings.length - 1}
+              on:click={() => setCurrentNode(siblings.at(currentSiblingIndex + 1)?.id)}
+              >Next message</Button
+            >
+          </div>
         {/if}
       </div>
     </section>

@@ -7,11 +7,13 @@
   import Toast from "$lib/components/Toast.svelte";
   import { Button } from "$lib/components/ui/button";
   import { Textarea } from "$lib/components/ui/textarea";
+  import type { Message as ExtendedMessage } from "$lib/helpers/conversation-helpers";
+  import { getMessageSiblings } from "$lib/helpers/conversation-helpers";
   import { generateTTS } from "$lib/services/tts-service";
   import { audioFilename, currentAudioUrl, downloadUrl } from "$lib/stores/audio-store";
+  import { conversationStore } from "$lib/stores/conversation-store";
   import type { Voice } from "$lib/types/elevenlabs/voices";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
-  import type { Message as AIMessage } from "ai";
   import { useChat } from "ai/svelte";
   import { onDestroy, onMount } from "svelte";
   import Select from "svelte-select";
@@ -26,9 +28,8 @@
   export let apiKeys: { mistral: boolean; openai: boolean; eleven: boolean } | undefined;
   export let models: SelectItem[] | undefined;
   export let voices: Voice[] | undefined;
-  export let initialMessages: AIMessage[] | undefined = undefined;
-  export let conversationId: string | undefined = undefined;
   export let selectedModel: SelectItem | undefined = undefined;
+  export let initialMessages: ExtendedMessage[] | undefined = undefined;
 
   let chatForm: HTMLFormElement;
   let finishSound: HTMLAudioElement;
@@ -66,7 +67,6 @@
     useChat({
       onFinish: async (message) => {
         if (voiceMessage) {
-          // It's a voice message, don't play the sound. Get a TTS response instead.
           await generateTTS({
             text: message.content,
             voice: selectedVoice?.value,
@@ -81,19 +81,21 @@
           finishSound.play();
         }
 
-        if (!conversationId) {
+        if (!$conversationStore) {
           $createConversationMutation.mutate(undefined, {
             onSuccess: (data) => {
               pushState(`${agentId ? "/agents/" + agentId : ""}/conversations/${data.id}`, {});
-              conversationId = data.id;
+              client.invalidateQueries({ queryKey: ["conversation", data.id] });
             }
           });
         }
+
+        client.invalidateQueries({ queryKey: ["conversation", $conversationStore?.id] });
       },
       body: {
         modelId: selectedModel?.value,
         agentId,
-        conversationId
+        conversationId: $conversationStore?.id
       },
       initialMessages
     });
@@ -189,7 +191,7 @@
             body: {
               modelId: selectedModel?.value,
               agentId,
-              conversationId
+              conversationId: $conversationStore?.id
             }
           }
         }
@@ -207,13 +209,17 @@
     handleModelSelection();
 
     if ($page.url.pathname === "/") {
-      conversationId = undefined;
+      conversationStore.set(null);
     }
   }
 
   afterNavigate(() => {
     resetConversation();
   });
+
+  $: if (initialMessages) {
+    setMessages(initialMessages);
+  }
 </script>
 
 <svelte:window on:keydown={handleCopyLastMessage} />
@@ -245,7 +251,11 @@
 <section>
   <div class="chat-list">
     {#each $messages as message}
-      <Message {message} voice={selectedVoice?.value} />
+      <Message
+        {message}
+        voice={selectedVoice?.value}
+        siblings={getMessageSiblings($conversationStore?.messages, message.id)}
+      />
     {/each}
   </div>
   {#if $messages.at(-1)?.role === "assistant"}
@@ -259,7 +269,8 @@
               body: {
                 modelId: selectedModel?.value,
                 agentId,
-                conversationId
+                conversationId: $conversationStore?.id,
+                regenerate: true
               }
             }
           })}>Regenerate</Button
@@ -275,7 +286,7 @@
             body: {
               modelId: selectedModel?.value,
               agentId,
-              conversationId
+              conversationId: $conversationStore?.id
             }
           }
         })}>Try again</Button
@@ -289,7 +300,7 @@
           body: {
             modelId: selectedModel?.value,
             agentId,
-            conversationId
+            conversationId: $conversationStore?.id
           }
         }
       })}

@@ -1,6 +1,11 @@
 import { OPENAI_API_KEY } from "$env/static/private";
 import { db } from "$lib/drizzle/db";
-import { conversationUsers, conversations, messages } from "$lib/drizzle/schema";
+import {
+  conversationUsers,
+  conversations,
+  messages,
+  type ConversationWithMessages
+} from "$lib/drizzle/schema";
 import { and, asc, desc, eq } from "drizzle-orm";
 import { OpenAI } from "openai";
 
@@ -9,9 +14,21 @@ export interface ConversationCreateOptions {
   agentId: string | null;
   modelId: string | null;
   userId: string;
-  messages: { role: string; content: string }[];
-  updatedAt?: Date;
+  messages: { role: "user" | "assistant"; content: string }[];
+  currentNode?: string;
 }
+
+interface Message {
+  id: string;
+  content: string;
+  role: "user" | "assistant";
+  parentId: string | null;
+  childIds: string[];
+}
+
+export type ConversationWithMessageMap = ConversationWithMessages & {
+  messageMap: Record<string, Message>;
+};
 
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
@@ -31,11 +48,30 @@ export async function getConversation(userId: string, conversationId: string) {
     throw new Error("User is not a member of the conversation");
   }
 
-  return db.query.conversations.findFirst({
-    with: { messages: true },
-    where: eq(conversations.id, conversationId),
-    orderBy: [asc(messages.createdAt)]
-  });
+  const conversation: ConversationWithMessages | undefined = await db.query.conversations.findFirst(
+    {
+      with: {
+        messages: true
+      },
+      where: eq(conversations.id, conversationId),
+      orderBy: [asc(messages.createdAt)]
+    }
+  );
+
+  if (!conversation) throw new Error("Conversation not found");
+
+  const messagesWithChildIds = conversation.messages.map((message) => ({
+    ...message,
+    childIds: conversation.messages.filter((m) => m.parentId === message.id).map((m) => m.id)
+  }));
+
+  conversation.messages = messagesWithChildIds;
+
+  const messageMap = createMessageMap(messagesWithChildIds);
+
+  (conversation as ConversationWithMessageMap).messageMap = messageMap;
+
+  return conversation as ConversationWithMessageMap;
 }
 
 export async function getRecentConversations(userId: string) {
@@ -58,7 +94,7 @@ export async function createConversation({
   let conversation = (
     await db
       .insert(conversations)
-      .values({ name: name ? name : "Untitled", agentId, modelId })
+      .values({ name: name ? name : "New Chat", agentId, modelId })
       .returning()
   ).at(0);
 
@@ -83,17 +119,30 @@ export async function createConversation({
 
 export async function updateConversation(
   conversationId: string,
-  data: Partial<ConversationCreateOptions>
+  data: Partial<ConversationCreateOptions>,
+  userId?: string
 ) {
+  if (userId) {
+    const users = await getConversationUsers(conversationId);
+
+    if (!users.find((user) => user.userId === userId)) {
+      throw new Error("User is not a member of the conversation");
+    }
+  }
+
   return (
     await db.update(conversations).set(data).where(eq(conversations.id, conversationId)).returning()
   ).at(0);
 }
 
 export async function deleteConversation(userId: string, conversationId: string) {
-  return db
-    .delete(conversations)
-    .where(and(eq(conversations.id, conversationId), eq(conversationUsers.userId, userId)));
+  const users = await getConversationUsers(conversationId);
+
+  if (!users.find((user) => user.userId === userId)) {
+    throw new Error("User is not a member of the conversation");
+  }
+
+  await db.delete(conversations).where(eq(conversations.id, conversationId));
 }
 
 export async function addConversationUser(conversationId: string, userId: string) {
@@ -121,12 +170,72 @@ export async function getConversationUsers(conversationId: string) {
 export async function addConversationMessage(
   conversationId: string,
   content: string,
-  role: string,
+  role: "user" | "assistant",
   userId?: string
 ) {
-  await db.insert(messages).values({ conversationId, userId, content, role }).returning();
+  const message = (
+    await db.insert(messages).values({ conversationId, userId, content, role }).returning()
+  ).at(0);
 
-  // Check if the user is already a member of the conversation
+  if (!message) throw new Error("Failed to add message");
+
+  let parent;
+  if (role === "user") {
+    parent = (
+      await db
+        .select()
+        .from(messages)
+        .innerJoin(conversations, eq(messages.conversationId, conversations.id))
+        .where(
+          and(
+            eq(messages.conversationId, conversationId),
+            eq(messages.id, conversations.currentNode)
+          )
+        )
+    ).at(0);
+  } else {
+    const currentNode = (
+      await db
+        .select()
+        .from(messages)
+        .innerJoin(conversations, eq(messages.conversationId, conversations.id))
+        .where(
+          and(
+            eq(messages.conversationId, conversationId),
+            eq(messages.id, conversations.currentNode)
+          )
+        )
+    ).at(0);
+
+    if (currentNode) {
+      if (currentNode?.message.role === "user") {
+        parent = currentNode;
+      } else if (currentNode.message.parentId) {
+        const userMessage = (
+          await db
+            .select()
+            .from(messages)
+            .innerJoin(conversations, eq(messages.conversationId, conversations.id))
+            .where(
+              and(
+                eq(messages.conversationId, conversationId),
+                eq(messages.role, "user"),
+                eq(messages.id, currentNode.message.parentId)
+              )
+            )
+        ).at(0);
+
+        if (userMessage) {
+          parent = userMessage;
+        }
+      }
+    }
+  }
+
+  if (parent) {
+    await updateConversationMessage(conversationId, message.id, { parentId: parent.message.id });
+  }
+
   if (userId) {
     const user = await db.query.conversationUsers.findFirst({
       where: and(
@@ -135,13 +244,12 @@ export async function addConversationMessage(
       )
     });
 
-    // If the user is not a member of the conversation, add them
     if (!user) {
       await addConversationUser(conversationId, userId);
     }
   }
 
-  await updateConversation(conversationId, { updatedAt: new Date() });
+  await updateConversation(conversationId, { currentNode: message.id });
 }
 
 export async function getConversationMessages(conversationId: string) {
@@ -161,7 +269,7 @@ export async function getConversationMessage(conversationId: string, messageId: 
 export async function updateConversationMessage(
   conversationId: string,
   messageId: string,
-  data: { content: string }
+  data: { content?: string; parentId?: string }
 ) {
   return db
     .update(messages)
@@ -193,4 +301,11 @@ async function generateConversationName(messages: { role: string; content: strin
   });
 
   return response.choices[0].message.content?.trim().replaceAll('"', "");
+}
+
+function createMessageMap(messages: Message[]): Record<string, Message> {
+  return messages.reduce<Record<string, Message>>((obj, message) => {
+    obj[message.id] = message;
+    return obj;
+  }, {});
 }

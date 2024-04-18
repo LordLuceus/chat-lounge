@@ -2,7 +2,7 @@
 
 - [x] Make it work with agents. Add a route /agents/:id/conversations/:id
 - [x] Check what happens if we stop the generation before it finishes.
-- [ ] Make it work when there are multiple responses from the AI. Add parentId column to message and display a choices UI if there are multiple children.
+- [x] Make it work when there are multiple responses from the AI. Add parentId column to message and display a choices UI if there are multiple children.
 - [ ] Allow user to reset the thread at a certain point. Delete all messages after that point.
 - [ ] Add rename and delete conversation options.
 - [ ] Make a proper conversation list page.

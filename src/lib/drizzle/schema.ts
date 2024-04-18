@@ -1,5 +1,5 @@
-import { relations, sql } from "drizzle-orm";
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { relations, sql, type InferSelectModel } from "drizzle-orm";
+import { integer, sqliteTable, text, type AnySQLiteColumn } from "drizzle-orm/sqlite-core";
 import { v4 as uuidv4 } from "uuid";
 
 export enum AIProvider {
@@ -87,6 +87,9 @@ export const conversations = sqliteTable("conversation", {
     onUpdate: "cascade"
   }),
   name: text("name").notNull(),
+  currentNode: text("currentNode").references((): AnySQLiteColumn => messages.id, {
+    onDelete: "set null"
+  }),
   createdAt: integer("createdAt", { mode: "timestamp_ms" })
     .notNull()
     .default(sql`(CURRENT_TIMESTAMP)`),
@@ -125,8 +128,11 @@ export const messages = sqliteTable("message", {
     .notNull()
     .references(() => conversations.id, { onDelete: "cascade" }),
   userId: text("userId").references(() => users.id, { onDelete: "set null" }),
-  content: text("text").notNull(),
-  role: text("role").notNull(),
+  content: text("content").notNull(),
+  role: text("role").notNull().$type<"user" | "assistant">(),
+  parentId: text("parentId").references((): AnySQLiteColumn => messages.id, {
+    onDelete: "cascade"
+  }),
   createdAt: integer("createdAt", { mode: "timestamp_ms" })
     .notNull()
     .default(sql`(CURRENT_TIMESTAMP)`),
@@ -140,7 +146,11 @@ export const conversationsRelations = relations(conversations, ({ many, one }) =
   messages: many(messages),
   agent: one(agents, { fields: [conversations.agentId], references: [agents.id] }),
   model: one(models, { fields: [conversations.modelId], references: [models.id] }),
-  conversationUsers: many(conversationUsers)
+  conversationUsers: many(conversationUsers),
+  currentNode: one(messages, {
+    fields: [conversations.currentNode],
+    references: [messages.id]
+  })
 }));
 
 export const agentsRelations = relations(agents, ({ many, one }) => ({
@@ -170,11 +180,24 @@ export const conversationUsersRelations = relations(conversationUsers, ({ one })
 export const messagesRelations = relations(messages, ({ one }) => ({
   conversation: one(conversations, {
     fields: [messages.conversationId],
-    references: [conversations.id]
+    references: [conversations.id],
+    relationName: "conversation"
   }),
-  user: one(users, { fields: [messages.userId], references: [users.id] })
+  user: one(users, { fields: [messages.userId], references: [users.id] }),
+  parent: one(messages, {
+    fields: [messages.parentId],
+    references: [messages.id],
+    relationName: "parent"
+  })
 }));
 
 export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
   user: one(users, { fields: [apiKeys.userId], references: [users.id] })
 }));
+
+export type Conversation = InferSelectModel<typeof conversations>;
+export type ConversationWithMessages = Conversation & {
+  messages: Array<InferSelectModel<typeof messages> & { childIds?: string[] }>;
+};
+
+export type Model = InferSelectModel<typeof models>;

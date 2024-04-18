@@ -71,7 +71,8 @@ class AIService {
     modelId: string,
     userId: string,
     agent?: { id: string; instructions: string },
-    conversationId?: string
+    conversationId?: string,
+    regenerate?: boolean
   ) {
     if (agent) {
       messages.unshift({ role: "system", content: agent.instructions });
@@ -79,13 +80,15 @@ class AIService {
 
     const onCompletion = async (completion: string) => {
       if (conversationId) {
-        await addConversationMessage(
-          conversationId,
-          messages.at(-1)?.content as string,
-          "user",
-          userId
-        );
-        addConversationMessage(conversationId, completion, "assistant");
+        if (!regenerate) {
+          await addConversationMessage(
+            conversationId,
+            messages.at(-1)?.content as string,
+            "user",
+            userId
+          );
+        }
+        await addConversationMessage(conversationId, completion, "assistant");
       }
     };
 

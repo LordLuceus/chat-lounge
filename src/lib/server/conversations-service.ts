@@ -171,7 +171,8 @@ export async function addConversationMessage(
   conversationId: string,
   content: string,
   role: "user" | "assistant",
-  userId?: string
+  userId?: string,
+  messageId?: string
 ) {
   const message = (
     await db.insert(messages).values({ conversationId, userId, content, role }).returning()
@@ -179,58 +180,7 @@ export async function addConversationMessage(
 
   if (!message) throw new Error("Failed to add message");
 
-  let parent;
-  if (role === "user") {
-    parent = (
-      await db
-        .select()
-        .from(messages)
-        .innerJoin(conversations, eq(messages.conversationId, conversations.id))
-        .where(
-          and(
-            eq(messages.conversationId, conversationId),
-            eq(messages.id, conversations.currentNode)
-          )
-        )
-    ).at(0);
-  } else {
-    const currentNode = (
-      await db
-        .select()
-        .from(messages)
-        .innerJoin(conversations, eq(messages.conversationId, conversations.id))
-        .where(
-          and(
-            eq(messages.conversationId, conversationId),
-            eq(messages.id, conversations.currentNode)
-          )
-        )
-    ).at(0);
-
-    if (currentNode) {
-      if (currentNode?.message.role === "user") {
-        parent = currentNode;
-      } else if (currentNode.message.parentId) {
-        const userMessage = (
-          await db
-            .select()
-            .from(messages)
-            .innerJoin(conversations, eq(messages.conversationId, conversations.id))
-            .where(
-              and(
-                eq(messages.conversationId, conversationId),
-                eq(messages.role, "user"),
-                eq(messages.id, currentNode.message.parentId)
-              )
-            )
-        ).at(0);
-
-        if (userMessage) {
-          parent = userMessage;
-        }
-      }
-    }
-  }
+  const parent = await findParent(role, messageId, conversationId);
 
   if (parent) {
     await updateConversationMessage(conversationId, message.id, { parentId: parent.message.id });
@@ -250,6 +200,82 @@ export async function addConversationMessage(
   }
 
   await updateConversation(conversationId, { currentNode: message.id });
+}
+
+async function findParent(role: string, messageId: string | undefined, conversationId: string) {
+  if (role === "user") {
+    if (messageId) {
+      const currentMessage = await getConversationMessage(conversationId, messageId);
+
+      if (currentMessage?.parentId) {
+        const parent = (
+          await db
+            .select()
+            .from(messages)
+            .innerJoin(conversations, eq(messages.conversationId, conversations.id))
+            .where(
+              and(
+                eq(messages.id, currentMessage.parentId),
+                eq(messages.conversationId, conversationId)
+              )
+            )
+        ).at(0);
+
+        return parent;
+      }
+      return null;
+    }
+
+    const parent = (
+      await db
+        .select()
+        .from(messages)
+        .innerJoin(conversations, eq(messages.conversationId, conversations.id))
+        .where(
+          and(
+            eq(messages.conversationId, conversationId),
+            eq(messages.id, conversations.currentNode)
+          )
+        )
+    ).at(0);
+
+    return parent;
+  }
+
+  const currentNode = (
+    await db
+      .select()
+      .from(messages)
+      .innerJoin(conversations, eq(messages.conversationId, conversations.id))
+      .where(
+        and(eq(messages.conversationId, conversationId), eq(messages.id, conversations.currentNode))
+      )
+  ).at(0);
+
+  if (currentNode) {
+    if (currentNode?.message.role === "user") {
+      return currentNode;
+    } else if (currentNode.message.parentId) {
+      const userMessage = (
+        await db
+          .select()
+          .from(messages)
+          .innerJoin(conversations, eq(messages.conversationId, conversations.id))
+          .where(
+            and(
+              eq(messages.conversationId, conversationId),
+              eq(messages.role, "user"),
+              eq(messages.id, currentNode.message.parentId)
+            )
+          )
+      ).at(0);
+
+      if (userMessage) {
+        return userMessage;
+      }
+    }
+  }
+  return null;
 }
 
 export async function getConversationMessages(conversationId: string) {

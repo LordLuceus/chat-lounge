@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import { copyCodeBlocks } from "$lib/actions/copy-code";
+  import EditMessage from "$lib/components/EditMessage.svelte";
   import Toast from "$lib/components/Toast.svelte";
   import * as Avatar from "$lib/components/ui/avatar";
   import { Button } from "$lib/components/ui/button";
@@ -20,6 +21,8 @@
   export let message: Message;
   export let voice: string | undefined;
   export let siblings: Message[] = [];
+  export let onEdit: (id: string, content: string) => void;
+  export let isLoading: boolean | undefined;
 
   async function copyToClipboard() {
     await navigator.clipboard.writeText(message.content);
@@ -61,6 +64,9 @@
           <BotMessageSquare />
         {/if}
         <Markdown md={message.content} {plugins} />
+        {#if message.role === "user" && !isLoading}
+          <EditMessage id={message.id} content={message.content} onSubmit={onEdit} />
+        {/if}
         {#if $page.data.keys.eleven && message.role === "assistant"}
           <Tts text={message.content} {voice} />
         {/if}
@@ -70,13 +76,13 @@
         {#if siblings.length > 1}
           <div>
             <Button
-              disabled={currentSiblingIndex < 1}
+              disabled={currentSiblingIndex < 1 || isLoading}
               on:click={() => setCurrentNode(siblings.at(currentSiblingIndex - 1)?.id)}
               >Previous message</Button
             >
             <span>{currentSiblingIndex + 1} / {siblings.length}</span>
             <Button
-              disabled={currentSiblingIndex === siblings.length - 1}
+              disabled={currentSiblingIndex === siblings.length - 1 || isLoading}
               on:click={() => setCurrentNode(siblings.at(currentSiblingIndex + 1)?.id)}
               >Next message</Button
             >

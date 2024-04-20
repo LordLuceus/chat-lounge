@@ -6,13 +6,16 @@
   import { conversationStore } from "$lib/stores/conversation-store";
   import { createQuery } from "@tanstack/svelte-query";
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
+  import { derived } from "svelte/store";
   import AgentActions from "../../routes/(app)/agents/AgentActions.svelte";
 
-  const conversationQuery = createQuery<ConversationWithMessageMap>({
-    queryKey: ["conversation", $page.data.conversation.id],
-    queryFn: async () => (await fetch(`/api/conversations/${$page.data.conversation.id}`)).json(),
-    initialData: $page.data.conversation
-  });
+  const conversationQuery = createQuery<ConversationWithMessageMap>(
+    derived(page, ($page) => ({
+      queryKey: ["conversation", $page.data.conversation.id],
+      queryFn: async () => (await fetch(`/api/conversations/${$page.data.conversation.id}`)).json(),
+      initialData: $page.data.conversation
+    }))
+  );
 
   $: conversationStore.set($conversationQuery.data);
 

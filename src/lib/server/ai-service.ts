@@ -72,7 +72,8 @@ class AIService {
     userId: string,
     agent?: { id: string; instructions: string },
     conversationId?: string,
-    regenerate?: boolean
+    regenerate?: boolean,
+    messageId?: string
   ) {
     if (agent) {
       messages.unshift({ role: "system", content: agent.instructions });
@@ -85,7 +86,8 @@ class AIService {
             conversationId,
             messages.at(-1)?.content as string,
             "user",
-            userId
+            userId,
+            messageId
           );
         }
         await addConversationMessage(conversationId, completion, "assistant");

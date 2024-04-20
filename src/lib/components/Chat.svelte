@@ -84,8 +84,10 @@
         if (!$conversationStore) {
           $createConversationMutation.mutate(undefined, {
             onSuccess: (data) => {
-              pushState(`${agentId ? "/agents/" + agentId : ""}/conversations/${data.id}`, {});
-              client.invalidateQueries({ queryKey: ["conversation", data.id] });
+              if (data.id) {
+                pushState(`${agentId ? "/agents/" + agentId : ""}/conversations/${data.id}`, {});
+                client.invalidateQueries({ queryKey: ["conversation", data.id] });
+              }
             }
           });
         }
@@ -223,6 +225,28 @@
   $: if (initialMessages) {
     setMessages(initialMessages);
   }
+
+  function handleEdit(id: string, content: string) {
+    const messageIndex = $messages.findIndex((message) => message.id === id);
+
+    if (messageIndex === -1) return;
+
+    const updatedMessages = [...$messages];
+    updatedMessages[messageIndex].content = content;
+
+    setMessages(updatedMessages);
+
+    reload({
+      options: {
+        body: {
+          modelId: selectedModel?.value,
+          agentId,
+          conversationId: $conversationStore?.id,
+          messageId: id
+        }
+      }
+    });
+  }
 </script>
 
 <svelte:window on:keydown={handleCopyLastMessage} />
@@ -258,6 +282,8 @@
         {message}
         voice={selectedVoice?.value}
         siblings={getMessageSiblings($conversationStore?.messages, message.id)}
+        onEdit={handleEdit}
+        isLoading={$isLoading}
       />
     {/each}
   </div>

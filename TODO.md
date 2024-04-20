@@ -3,7 +3,7 @@
 - [x] Make it work with agents. Add a route /agents/:id/conversations/:id
 - [x] Check what happens if we stop the generation before it finishes.
 - [x] Make it work when there are multiple responses from the AI. Add parentId column to message and display a choices UI if there are multiple children.
-- [ ] Allow user to reset the thread at a certain point. Delete all messages after that point.
+- [x] Allow user to reset the thread at a certain point. Delete all messages after that point. (In fact, we do not need to delete all the messages; setting the parent id of the new message to the same as the parent id of the message we are resetting to will be enough. This way, we can keep the history of the conversation.)
 - [ ] Add rename and delete conversation options.
 - [ ] Make a proper conversation list page.
 - [ ] If the thread is too long for the token limit (90%?), generate a summary to send to the AI. We still save the full thread in the database and display it to the user.

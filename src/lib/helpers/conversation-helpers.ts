@@ -42,7 +42,7 @@ export function getConversationMessages(conversation: ConversationWithMessageMap
     }
   }
 
-  if (node) {
+  if (node && node.id !== conversation.currentNode) {
     // Update the current node to the last child node
     if (browser) {
       fetch(`/api/conversations/${conversation.id}`, {

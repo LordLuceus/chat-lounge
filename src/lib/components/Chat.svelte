@@ -148,8 +148,6 @@
       resetAudio();
       conversationStore.set(null);
     }
-
-    controller?.abort();
   });
 
   function handleModelSelection() {
@@ -182,6 +180,9 @@
     downloadUrl.set("");
     audioFilename.set("");
     controller?.abort();
+
+    controller = new AbortController();
+    signal = controller.signal;
   }
 
   $: {

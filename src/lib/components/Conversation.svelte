@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import Chat from "$lib/components/Chat.svelte";
-  import { getConversationMessages } from "$lib/helpers/conversation-helpers";
+  import { getConversationMessages, type Message } from "$lib/helpers/conversation-helpers";
   import type { ConversationWithMessageMap } from "$lib/server/conversations-service";
   import { conversationStore } from "$lib/stores/conversation-store";
   import { createQuery } from "@tanstack/svelte-query";
@@ -11,7 +11,7 @@
 
   const conversationQuery = createQuery<ConversationWithMessageMap>(
     derived(page, ($page) => ({
-      queryKey: ["conversation", $page.data.conversation.id],
+      queryKey: ["conversation", $page.data?.conversation?.id],
       queryFn: async () => (await fetch(`/api/conversations/${$page.data.conversation.id}`)).json(),
       initialData: $page.data.conversation
     }))
@@ -19,7 +19,8 @@
 
   $: conversationStore.set($conversationQuery.data);
 
-  $: messages = getConversationMessages($conversationStore!);
+  let messages: Message[] = [];
+  $: if ($conversationStore) messages = getConversationMessages($conversationStore);
 
   $: selectedModel = $page.data.models?.find(
     (m: { label: string; value: string }) => m.value === $page.data.conversation.modelId
@@ -43,7 +44,6 @@
   <Chat
     apiKeys={$page.data.keys}
     models={$page.data.models}
-    voices={$page.data.voices}
     initialMessages={messages}
     {selectedModel}
     agentId={$page.data?.agent?.id}

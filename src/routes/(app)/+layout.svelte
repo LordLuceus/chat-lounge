@@ -5,6 +5,8 @@
   import * as Collapsible from "$lib/components/ui/collapsible";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Toaster } from "$lib/components/ui/sonner";
+  import { voices } from "$lib/stores/voices-store";
+  import type { Voice } from "$lib/types/elevenlabs/voices";
   import { createQuery } from "@tanstack/svelte-query";
   import ClerkLoaded from "clerk-sveltekit/client/ClerkLoaded.svelte";
   import SignInButton from "clerk-sveltekit/client/SignInButton.svelte";
@@ -32,6 +34,14 @@
     queryFn: async () => (await fetch("/api/agents?recent=true")).json(),
     initialData: data.agents
   });
+
+  const voicesQuery = createQuery<Voice[]>({
+    queryKey: ["voices"],
+    queryFn: async () => (await fetch("/api/voices")).json(),
+    refetchInterval: 60000
+  });
+
+  $: voices.set($voicesQuery.data);
 </script>
 
 <header>

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { invalidateAll } from "$app/navigation";
   import Toast from "$lib/components/Toast.svelte";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { Button } from "$lib/components/ui/button";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+  import { useQueryClient } from "@tanstack/svelte-query";
   import MoreHorizontal from "lucide-svelte/icons/more-horizontal";
   import { toast } from "svelte-sonner";
 
@@ -14,6 +14,8 @@
   let deleteSuccess = false;
   let deleteError = false;
   let deleteDialogOpen = false;
+
+  const client = useQueryClient();
 
   async function copyId() {
     await navigator.clipboard.writeText(id);
@@ -31,7 +33,7 @@
       }
 
       deleteSuccess = true;
-      await invalidateAll();
+      client.invalidateQueries({ queryKey: ["voices"] });
     } catch (error) {
       deleteError = true;
     }

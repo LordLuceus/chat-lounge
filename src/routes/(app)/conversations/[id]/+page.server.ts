@@ -1,5 +1,5 @@
-import { loadUserData } from "$lib/helpers/load-user-data";
 import { getConversation } from "$lib/server/conversations-service";
+import { getUserModels } from "$lib/server/models-service";
 import type { Config } from "@sveltejs/adapter-vercel";
 import { error, redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
@@ -20,7 +20,5 @@ export const load = (async (event) => {
     redirect(302, `/agents/${conversation.agentId}/conversations/${id}`);
   }
 
-  const { models, voices } = await loadUserData(event);
-
-  return { conversation, models, voices };
+  return { conversation, models: await getUserModels(userId!) };
 }) satisfies PageServerLoad;

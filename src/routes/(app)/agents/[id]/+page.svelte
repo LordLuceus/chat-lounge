@@ -17,5 +17,5 @@
 </h1>
 
 <SignedIn let:user>
-  <Chat agentId={data.agent.id} apiKeys={data.keys} models={data.models} voices={data.voices} />
+  <Chat agentId={data.agent.id} apiKeys={data.keys} models={data.models} />
 </SignedIn>

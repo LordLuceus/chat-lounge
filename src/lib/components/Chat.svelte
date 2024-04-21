@@ -12,7 +12,7 @@
   import { generateTTS } from "$lib/services/tts-service";
   import { audioFilename, currentAudioUrl, downloadUrl } from "$lib/stores/audio-store";
   import { conversationStore } from "$lib/stores/conversation-store";
-  import type { Voice } from "$lib/types/elevenlabs/voices";
+  import { voices } from "$lib/stores/voices-store";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
   import { useChat } from "ai/svelte";
   import { onDestroy, onMount } from "svelte";
@@ -27,7 +27,6 @@
   export let agentId: string | undefined = undefined;
   export let apiKeys: { mistral: boolean; openai: boolean; eleven: boolean } | undefined;
   export let models: SelectItem[] | undefined;
-  export let voices: Voice[] | undefined;
   export let selectedModel: SelectItem | undefined = undefined;
   export let initialMessages: ExtendedMessage[] | undefined = undefined;
 
@@ -35,14 +34,9 @@
   let finishSound: HTMLAudioElement;
   let voiceMessage: string;
 
-  let selectedVoice: SelectItem | undefined = voices
-    ?.map((voice) => ({
-      label: `${voice.name} (${voice.category})`,
-      value: voice.voice_id
-    }))
-    .at(0);
+  let selectedVoice: SelectItem | undefined = undefined;
 
-  $: voiceItems = voices?.map((voice) => ({
+  $: voiceItems = $voices?.map((voice) => ({
     label: `${voice.name} (${voice.category})`,
     value: voice.voice_id
   }));
@@ -129,14 +123,7 @@
     finishSound = new Audio("/assets/typing.wav");
 
     handleModelSelection();
-
-    const storedVoice = localStorage.getItem("selectedVoice");
-    if (storedVoice) {
-      const parsedVoice: SelectItem = JSON.parse(storedVoice);
-      if (voices?.find((voice) => voice.voice_id === parsedVoice.value)) {
-        selectedVoice = parsedVoice;
-      }
-    }
+    handleVoiceSelection();
 
     controller = new AbortController();
     signal = controller.signal;
@@ -164,6 +151,22 @@
         }
       } else {
         selectedModel = models?.at(0);
+      }
+    }
+  }
+
+  function handleVoiceSelection() {
+    if (!selectedVoice) {
+      const storedVoice = localStorage.getItem("selectedVoice");
+      if (storedVoice) {
+        const parsedVoice: SelectItem = JSON.parse(storedVoice);
+        if ($voices?.find((voice) => voice.voice_id === parsedVoice.value)) {
+          selectedVoice = parsedVoice;
+        } else {
+          selectedVoice = voiceItems?.at(0);
+        }
+      } else {
+        selectedVoice = voiceItems?.at(0);
       }
     }
   }
@@ -202,6 +205,10 @@
         }
       );
     }
+  }
+
+  $: if ($voices) {
+    handleVoiceSelection();
   }
 
   const ariaListOpen = (label: string, count: number) => {
@@ -264,7 +271,7 @@
   <p>{selectedModel.label}</p>
 {/if}
 
-{#if apiKeys?.eleven && voices}
+{#if apiKeys?.eleven && $voices}
   <Select
     bind:value={selectedVoice}
     items={voiceItems}

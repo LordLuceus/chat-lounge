@@ -80,9 +80,9 @@
     <Dialog.Header>
       <Dialog.Title>Rename conversation</Dialog.Title>
     </Dialog.Header>
-    <Input bind:value={newName} required />
+    <Input bind:value={newName} />
     <Dialog.Footer>
-      <Button on:click={handleRename}>Rename</Button>
+      <Button disabled={!newName} on:click={handleRename}>Rename</Button>
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>

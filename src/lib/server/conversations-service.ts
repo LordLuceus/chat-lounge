@@ -71,12 +71,6 @@ export async function getConversations(
 }
 
 export async function getConversation(userId: string, conversationId: string) {
-  const users = await getConversationUsers(conversationId);
-
-  if (!users.find((user) => user.userId === userId)) {
-    throw new Error("User is not a member of the conversation");
-  }
-
   const conversation: ConversationWithMessages | undefined = await db.query.conversations.findFirst(
     {
       with: {
@@ -87,7 +81,13 @@ export async function getConversation(userId: string, conversationId: string) {
     }
   );
 
-  if (!conversation) throw new Error("Conversation not found");
+  if (!conversation) return undefined;
+
+  const users = await getConversationUsers(conversationId);
+
+  if (!users.find((user) => user.userId === userId)) {
+    throw new Error("User is not a member of the conversation");
+  }
 
   const messagesWithChildIds = conversation.messages.map((message) => ({
     ...message,

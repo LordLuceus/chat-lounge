@@ -50,7 +50,7 @@ export function getConversationMessages(conversation: ConversationWithMessageMap
         body: JSON.stringify({ currentNode: node.id })
       });
       const client = useQueryClient();
-      client.invalidateQueries({ queryKey: ["conversation", conversation.id] });
+      client.invalidateQueries({ queryKey: ["conversations"] });
     }
   }
 

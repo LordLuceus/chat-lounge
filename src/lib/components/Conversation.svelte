@@ -11,7 +11,7 @@
 
   const conversationQuery = createQuery<ConversationWithMessageMap>(
     derived(page, ($page) => ({
-      queryKey: ["conversation", $page.data?.conversation?.id],
+      queryKey: ["conversations", $page.data?.conversation?.id],
       queryFn: async () => (await fetch(`/api/conversations/${$page.data.conversation.id}`)).json(),
       initialData: $page.data.conversation
     }))

@@ -5,9 +5,11 @@
   import * as Collapsible from "$lib/components/ui/collapsible";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Toaster } from "$lib/components/ui/sonner";
+  import type { Conversation } from "$lib/drizzle/schema";
   import { voices } from "$lib/stores/voices-store";
+  import type { PagedResponse } from "$lib/types/api/paged-response";
   import type { Voice } from "$lib/types/elevenlabs/voices";
-  import { createQuery } from "@tanstack/svelte-query";
+  import { createInfiniteQuery, createQuery } from "@tanstack/svelte-query";
   import ClerkLoaded from "clerk-sveltekit/client/ClerkLoaded.svelte";
   import SignInButton from "clerk-sveltekit/client/SignInButton.svelte";
   import SignUpButton from "clerk-sveltekit/client/SignUpButton.svelte";
@@ -15,18 +17,30 @@
   import SignedOut from "clerk-sveltekit/client/SignedOut.svelte";
   import { SunMoon } from "lucide-svelte";
   import { ModeWatcher, resetMode, setMode } from "mode-watcher";
+  import InfiniteScroll from "svelte-infinite-scroll";
   import "../../app.pcss";
   import type { LayoutData } from "./$types";
+  import ConversationActions from "./conversations/ConversationActions.svelte";
 
   export let data: LayoutData;
 
   let agentsExpanded = false;
   let conversationsExpanded = false;
 
-  const recentConversationsQuery = createQuery({
-    queryKey: ["conversations", "recent"],
-    queryFn: async () => (await fetch("/api/conversations?recent=true")).json(),
-    initialData: data.conversations
+  const fetchConversations = async ({ pageParam = 1 }) =>
+    await fetch(`/api/conversations?page=${pageParam}`).then((res) => res.json());
+
+  const conversationsQuery = createInfiniteQuery<PagedResponse<Conversation>>({
+    queryKey: ["conversations"],
+    queryFn: ({ pageParam }) => fetchConversations({ pageParam: pageParam as number }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.meta.page < lastPage.meta.totalPages) {
+        return lastPage.meta.page + 1;
+      }
+
+      return undefined;
+    }
   });
 
   const recentAgentsQuery = createQuery({
@@ -44,29 +58,40 @@
   $: voices.set($voicesQuery.data);
 </script>
 
-<header>
+<header class="flex items-center justify-between p-4">
   <a href="/">
     <img src="/assets/chatlounge_logo.webp" alt="ChatLounge" />
   </a>
-  <nav>
+  <nav class="flex">
     <a href="/">Home</a>
-    {#if $recentConversationsQuery.data?.length > 0}
+    {#if $conversationsQuery.isSuccess}
       <Collapsible.Root bind:open={conversationsExpanded}>
         <Collapsible.Trigger aria-expanded={conversationsExpanded}
           >Conversations</Collapsible.Trigger
         >
         <Collapsible.Content>
           <ul class="list-none">
-            {#each $recentConversationsQuery.data as conversation}
-              <li>
-                <a
-                  href={`${conversation.conversation.agentId ? "/agents/" + conversation.conversation.agentId : ""}/conversations/${conversation.conversation.id}`}
-                  >{conversation.conversation.name}</a
-                >
-              </li>
+            {#each $conversationsQuery.data.pages as { data }}
+              {#each data as conversation}
+                <li>
+                  <a
+                    href={`${conversation.agentId ? "/agents/" + conversation.agentId : ""}/conversations/${conversation.id}`}
+                    >{conversation.name}</a
+                  >
+                  <ConversationActions
+                    conversationId={conversation.id}
+                    conversationName={conversation.name}
+                  />
+                </li>
+              {/each}
             {/each}
-            <li><a href="/conversations">All conversations</a></li>
+            <InfiniteScroll
+              threshold={100}
+              on:loadMore={() =>
+                !$conversationsQuery.isFetching && $conversationsQuery.fetchNextPage()}
+            />
           </ul>
+          <a href="/conversations">All conversations</a>
         </Collapsible.Content>
       </Collapsible.Root>
     {/if}
@@ -132,7 +157,7 @@
 
 <ModeWatcher />
 
-<main>
+<main class="flex flex-col items-center">
   <slot />
 </main>
 
@@ -141,37 +166,3 @@
 </footer>
 
 <Toaster />
-
-<style>
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1rem;
-    background-color: var(--color-primary);
-  }
-
-  nav {
-    display: flex;
-    gap: 1rem;
-  }
-
-  a {
-    color: var(--color-text);
-    text-decoration: none;
-  }
-
-  img {
-    width: 2rem;
-    height: 2rem;
-    border-radius: 50%;
-  }
-
-  main {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex: 0.6;
-  }
-</style>

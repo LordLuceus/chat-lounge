@@ -1,4 +1,4 @@
-import { relations, sql, type InferSelectModel } from "drizzle-orm";
+import { relations, type InferSelectModel } from "drizzle-orm";
 import { integer, sqliteTable, text, type AnySQLiteColumn } from "drizzle-orm/sqlite-core";
 import { v4 as uuidv4 } from "uuid";
 
@@ -15,10 +15,9 @@ export const users = sqliteTable("user", {
   image: text("image"),
   createdAt: integer("createdAt", { mode: "timestamp_ms" })
     .notNull()
-    .default(sql`(CURRENT_TIMESTAMP)`),
+    .$default(() => new Date()),
   updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
     .notNull()
-    .default(sql`(CURRENT_TIMESTAMP)`)
     .$onUpdate(() => new Date())
 });
 
@@ -34,10 +33,9 @@ export const apiKeys = sqliteTable("apiKey", {
   key: text("key").notNull().unique(),
   createdAt: integer("createdAt", { mode: "timestamp_ms" })
     .notNull()
-    .default(sql`(CURRENT_TIMESTAMP)`),
+    .$default(() => new Date()),
   updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
     .notNull()
-    .default(sql`(CURRENT_TIMESTAMP)`)
     .$onUpdate(() => new Date())
 });
 
@@ -55,10 +53,9 @@ export const agents = sqliteTable("agent", {
   lastUsedAt: integer("lastUsedAt", { mode: "timestamp_ms" }),
   createdAt: integer("createdAt", { mode: "timestamp_ms" })
     .notNull()
-    .default(sql`(CURRENT_TIMESTAMP)`),
+    .$default(() => new Date()),
   updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
     .notNull()
-    .default(sql`(CURRENT_TIMESTAMP)`)
     .$onUpdate(() => new Date())
 });
 
@@ -69,10 +66,9 @@ export const models = sqliteTable("model", {
   tokenLimit: integer("tokenLimit").notNull(),
   createdAt: integer("createdAt", { mode: "timestamp_ms" })
     .notNull()
-    .default(sql`(CURRENT_TIMESTAMP)`),
+    .$default(() => new Date()),
   updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
     .notNull()
-    .default(sql`(CURRENT_TIMESTAMP)`)
     .$onUpdate(() => new Date())
 });
 
@@ -92,10 +88,9 @@ export const conversations = sqliteTable("conversation", {
   }),
   createdAt: integer("createdAt", { mode: "timestamp_ms" })
     .notNull()
-    .default(sql`(CURRENT_TIMESTAMP)`),
+    .$default(() => new Date()),
   updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
     .notNull()
-    .default(sql`(CURRENT_TIMESTAMP)`)
     .$onUpdate(() => new Date())
 });
 
@@ -112,10 +107,9 @@ export const conversationUsers = sqliteTable("conversationUser", {
     .references(() => users.id, { onDelete: "cascade" }),
   createdAt: integer("createdAt", { mode: "timestamp_ms" })
     .notNull()
-    .default(sql`(CURRENT_TIMESTAMP)`),
+    .$default(() => new Date()),
   updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
     .notNull()
-    .default(sql`(CURRENT_TIMESTAMP)`)
     .$onUpdate(() => new Date())
 });
 
@@ -135,10 +129,9 @@ export const messages = sqliteTable("message", {
   }),
   createdAt: integer("createdAt", { mode: "timestamp_ms" })
     .notNull()
-    .default(sql`(CURRENT_TIMESTAMP)`),
+    .$default(() => new Date()),
   updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
     .notNull()
-    .default(sql`(CURRENT_TIMESTAMP)`)
     .$onUpdate(() => new Date())
 });
 
@@ -201,3 +194,5 @@ export type ConversationWithMessages = Conversation & {
 };
 
 export type Model = InferSelectModel<typeof models>;
+
+export type Agent = InferSelectModel<typeof agents>;

@@ -1,10 +1,11 @@
 ## Conversations:
 
+- [x] CRITICAL: Fix the bug where continuing a conversation with a new message does not work in the case when we have just navigated to a newly saved conversation (using pushState). This is likely a store sync issue.
 - [x] Make it work with agents. Add a route /agents/:id/conversations/:id
 - [x] Check what happens if we stop the generation before it finishes.
 - [x] Make it work when there are multiple responses from the AI. Add parentId column to message and display a choices UI if there are multiple children.
 - [x] Allow user to reset the thread at a certain point. Delete all messages after that point. (In fact, we do not need to delete all the messages; setting the parent id of the new message to the same as the parent id of the message we are resetting to will be enough. This way, we can keep the history of the conversation.)
-- [ ] Add rename and delete conversation options.
+- [x] Add rename and delete conversation options.
 - [ ] Make a proper conversation list page.
 - [ ] If the thread is too long for the token limit (90%?), generate a summary to send to the AI. We still save the full thread in the database and display it to the user.
 
@@ -12,7 +13,7 @@
 
 - [x] Refactor the Mistral and OpenAI services to use a common interface.
 - [x] Make the agents list at the top dynamic with Query just like the conversations list.
-- [ ] Always show the current agent and conversation at the top of the page.
+- [x] Always show the current agent and conversation at the top of the page. (Done with infiniteQuery.)
 - [ ] Add preferred model and voice to agents.
 - [ ] Add ability to pin agents and conversations to the top of the list.
 - [x] Cache voices because they don't change often and there's no need to call the ElevenLabs API every time we change a page. This will also make the app faster. We can use Query.

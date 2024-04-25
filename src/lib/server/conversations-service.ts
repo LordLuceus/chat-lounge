@@ -6,7 +6,7 @@ import {
   messages,
   type ConversationWithMessages
 } from "$lib/drizzle/schema";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { OpenAI } from "openai";
 
 export interface ConversationCreateOptions {
@@ -32,13 +32,42 @@ export type ConversationWithMessageMap = ConversationWithMessages & {
 
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
-export async function getConversations(userId: string) {
-  return db
-    .select()
+export async function getConversations(
+  userId: string,
+  limit: number = 10,
+  offset: number = 0,
+  sortBy: string = "conversation.updatedAt DESC",
+  search?: string
+) {
+  const result = await db
+    .select({
+      id: conversations.id,
+      name: conversations.name,
+      modelId: conversations.modelId,
+      agentId: conversations.agentId,
+      createdAt: conversations.createdAt,
+      updatedAt: conversations.updatedAt,
+      currentNode: conversations.currentNode
+    })
     .from(conversations)
     .innerJoin(conversationUsers, eq(conversations.id, conversationUsers.conversationId))
-    .where(eq(conversationUsers.userId, userId))
-    .orderBy(desc(conversations.updatedAt));
+    .where(
+      sql`(${conversationUsers.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
+    )
+    .orderBy(sql`${sql.raw(sortBy)}`)
+    .limit(limit)
+    .offset(offset);
+
+  const total = (
+    await db
+      .select({
+        count: sql`COUNT(*)`.mapWith(Number)
+      })
+      .from(conversations)
+      .where(search ? sql`${sql.raw(search)}` : undefined)
+  ).at(0);
+
+  return { conversations: result, total: total?.count };
 }
 
 export async function getConversation(userId: string, conversationId: string) {
@@ -74,16 +103,6 @@ export async function getConversation(userId: string, conversationId: string) {
   return conversation as ConversationWithMessageMap;
 }
 
-export async function getRecentConversations(userId: string) {
-  return db
-    .select()
-    .from(conversations)
-    .innerJoin(conversationUsers, eq(conversations.id, conversationUsers.conversationId))
-    .where(eq(conversationUsers.userId, userId))
-    .orderBy(desc(conversations.updatedAt))
-    .limit(5);
-}
-
 export async function createConversation({
   name,
   agentId,
@@ -91,7 +110,7 @@ export async function createConversation({
   userId,
   messages
 }: ConversationCreateOptions) {
-  let conversation = (
+  const conversation = (
     await db
       .insert(conversations)
       .values({ name: name ? name : "New Chat", agentId, modelId })
@@ -112,9 +131,9 @@ export async function createConversation({
   }
 
   const title = await generateConversationName(messages);
-  if (title) conversation = await updateConversation(conversation.id, { name: title });
+  if (title) await updateConversation(conversation.id, { name: title });
 
-  return conversation;
+  return getConversation(userId, conversation.id);
 }
 
 export async function updateConversation(
@@ -143,6 +162,8 @@ export async function deleteConversation(userId: string, conversationId: string)
   }
 
   await db.delete(conversations).where(eq(conversations.id, conversationId));
+
+  return { id: conversationId, deleted: true };
 }
 
 export async function addConversationUser(conversationId: string, userId: string) {

@@ -59,6 +59,9 @@ importers:
       svelte-exmarkdown:
         specifier: ^3.0.3
         version: 3.0.3(svelte@4.2.12)
+      svelte-infinite-scroll:
+        specifier: ^2.0.1
+        version: 2.0.1
       svelte-select:
         specifier: ^5.8.3
         version: 5.8.3
@@ -112,8 +115,8 @@ importers:
         specifier: ^10.4.16
         version: 10.4.18(postcss@8.4.35)
       drizzle-kit:
-        specifier: ^0.20.16
-        version: 0.20.16
+        specifier: ^0.20.17
+        version: 0.20.17
       eslint:
         specifier: ^8.56.0
         version: 8.57.0
@@ -1512,8 +1515,8 @@ packages:
     resolution: {integrity: sha512-vyJTp8+mC+G+5dfgsY+r3ckxlz+QMX40VjPQsZc5gxVAxLmi64TBoVkP54A/pRAXMXsbu2GMMBrZPxNv23waMg==}
     engines: {node: '>=0.4.0'}
 
-  drizzle-kit@0.20.16:
-    resolution: {integrity: sha512-WoqV0XDny8mHnVoLYcUs6H3Ae1HBxeV0zi3VXG/mTahIQYfadZmIc3eRqzXjD3yxemj+GdHI1nThddmsoabdIA==}
+  drizzle-kit@0.20.17:
+    resolution: {integrity: sha512-mLVDS4nXmO09wFVlzGrdshWnAL+U9eQGC5zRs6hTN6Q9arwQGWU2XnZ17I8BM8Quau8CQRx3Ms6VPgRWJFVp7Q==}
     hasBin: true
 
   drizzle-orm@0.30.6:
@@ -3017,6 +3020,9 @@ packages:
     engines: {node: ^12.20 || ^14.13.1 || >= 16}
     peerDependencies:
       svelte: ^3.19.0 || ^4.0.0
+
+  svelte-infinite-scroll@2.0.1:
+    resolution: {integrity: sha512-goTHCfOHRDCs8C5MeSuIc6LlAQ8zVQ+M4Y3LyvrDjx5rqSSxSrdCuQwIyWYNcO6j6/mnqRro3QB64ClBzfn+Wg==}
 
   svelte-keyed@2.0.0:
     resolution: {integrity: sha512-7TeEn+QbJC2OJrHiuM0T8vMBkms3DNpTE+Ir+NtnVBnBMA78aL4f1ft9t0Hn/pBbD/TnIXi4YfjFRAgtN+DZ5g==}
@@ -4767,7 +4773,7 @@ snapshots:
     dependencies:
       wordwrap: 1.0.0
 
-  drizzle-kit@0.20.16:
+  drizzle-kit@0.20.17:
     dependencies:
       '@esbuild-kit/esm-loader': 2.6.5
       '@hono/node-server': 1.11.0
@@ -6442,6 +6448,8 @@ snapshots:
   svelte-hmr@0.15.3(svelte@4.2.12):
     dependencies:
       svelte: 4.2.12
+
+  svelte-infinite-scroll@2.0.1: {}
 
   svelte-keyed@2.0.0(svelte@4.2.12):
     dependencies:

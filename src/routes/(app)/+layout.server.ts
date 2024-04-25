@@ -15,12 +15,10 @@ export const load = (async ({ locals, fetch }) => {
     openai: storedKeys.some((key) => key.provider === AIProvider.OpenAI)
   };
 
-  const recentConversationsResponse = await fetch("/api/conversations?recent=true");
   const recentAgentsResponse = await fetch("/api/agents?recent=true");
 
   return {
     keys,
-    agents: await recentAgentsResponse.json(),
-    conversations: await recentConversationsResponse.json()
+    agents: await recentAgentsResponse.json()
   };
 }) satisfies LayoutServerLoad;

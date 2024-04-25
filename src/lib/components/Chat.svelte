@@ -1,6 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/environment";
-  import { afterNavigate, pushState } from "$app/navigation";
+  import { afterNavigate, goto } from "$app/navigation";
   import { page } from "$app/stores";
   import Message from "$lib/components/Message.svelte";
   import Recorder from "$lib/components/Recorder.svelte";
@@ -9,6 +9,7 @@
   import { Textarea } from "$lib/components/ui/textarea";
   import type { Message as ExtendedMessage } from "$lib/helpers/conversation-helpers";
   import { getMessageSiblings } from "$lib/helpers/conversation-helpers";
+  import type { ConversationWithMessageMap } from "$lib/server/conversations-service";
   import { generateTTS } from "$lib/services/tts-service";
   import { audioFilename, currentAudioUrl, downloadUrl } from "$lib/stores/audio-store";
   import { conversationStore } from "$lib/stores/conversation-store";
@@ -46,7 +47,7 @@
 
   const client = useQueryClient();
 
-  const createConversationMutation = createMutation({
+  const createConversationMutation = createMutation<ConversationWithMessageMap>({
     mutationFn: async () =>
       (
         await fetch("/api/conversations", {
@@ -79,15 +80,14 @@
           $createConversationMutation.mutate(undefined, {
             onSuccess: (data) => {
               if (data.id) {
-                pushState(`${agentId ? "/agents/" + agentId : ""}/conversations/${data.id}`, {});
-                client.invalidateQueries({ queryKey: ["conversation", data.id] });
+                goto(`${agentId ? "/agents/" + agentId : ""}/conversations/${data.id}`);
+                client.invalidateQueries({ queryKey: ["conversations"] });
               }
             }
           });
         }
 
-        if ($conversationStore)
-          client.invalidateQueries({ queryKey: ["conversation", $conversationStore.id] });
+        if ($conversationStore) client.invalidateQueries({ queryKey: ["conversations"] });
       },
       body: {
         modelId: selectedModel?.value,
@@ -101,6 +101,14 @@
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       chatForm.requestSubmit();
+    }
+  }
+
+  function focusChatInput(event: KeyboardEvent) {
+    if (event.key === "Escape" && event.shiftKey) {
+      event.preventDefault();
+      const chatInput = document.querySelector(".chat-input") as HTMLTextAreaElement;
+      chatInput.focus();
     }
   }
 
@@ -256,7 +264,7 @@
   }
 </script>
 
-<svelte:window on:keydown={handleCopyLastMessage} />
+<svelte:window on:keydown={handleCopyLastMessage} on:keydown={focusChatInput} />
 
 {#if $messages.length === 0}
   <Select

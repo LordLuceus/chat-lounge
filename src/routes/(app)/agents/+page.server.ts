@@ -1,4 +1,4 @@
-import { createAgent, getAgents } from "$lib/server/agents-service";
+import { createAgent } from "$lib/server/agents-service";
 import type { Config } from "@sveltejs/adapter-vercel";
 import { fail } from "@sveltejs/kit";
 import { message, superValidate } from "sveltekit-superforms";
@@ -12,8 +12,7 @@ export const load = (async ({ locals }) => {
   const { userId } = locals.session!;
 
   return {
-    form: await superValidate(zod(agentSchema)),
-    agents: await getAgents(userId!)
+    form: await superValidate(zod(agentSchema))
   };
 }) satisfies PageServerLoad;
 

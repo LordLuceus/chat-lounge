@@ -8,8 +8,8 @@
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
   import { toast } from "svelte-sonner";
-  import type { PageData as EditData } from "./[id]/edit/$types";
-  import EditPage from "./[id]/edit/+page.svelte";
+  import type { PageData as EditData } from "../../routes/(app)/agents/[id]/edit/$types";
+  import EditPage from "../../routes/(app)/agents/[id]/edit/+page.svelte";
 
   const client = useQueryClient();
 
@@ -23,14 +23,14 @@
     }
   });
 
-  export let clickText: string;
-  export let agentId: string;
+  export let id: string;
+  export let name: string;
 
   let editDialogOpen = false;
   let deleteDialogOpen = false;
   let editData: EditData;
 
-  $: editUrl = `/agents/${agentId}/edit`;
+  $: editUrl = `/agents/${id}/edit`;
 
   async function editClick() {
     const result = await preloadData(editUrl);
@@ -46,7 +46,7 @@
   }
 
   function handleDelete() {
-    $deleteAgentMutation.mutate(agentId, {
+    $deleteAgentMutation.mutate(id, {
       onSuccess: () => {
         toast.success(Toast, { componentProps: { text: "Agent deleted." } });
         deleteDialogOpen = false;
@@ -74,7 +74,7 @@
   <AlertDialog.Content>
     <AlertDialog.Header>
       <AlertDialog.Title>Delete agent?</AlertDialog.Title>
-      <AlertDialog.Description>Are you sure you want to delete this agent?</AlertDialog.Description>
+      <AlertDialog.Description>Are you sure you want to delete {name}?</AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
@@ -85,7 +85,7 @@
 
 <DropdownMenu.Root>
   <DropdownMenu.Trigger asChild let:builder>
-    <Button builders={[builder]}>{clickText}</Button>
+    <Button builders={[builder]}>Actions</Button>
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
     <DropdownMenu.Item on:click={async () => await editClick()}>Edit</DropdownMenu.Item>

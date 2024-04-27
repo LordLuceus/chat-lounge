@@ -62,12 +62,18 @@ importers:
       svelte-infinite-scroll:
         specifier: ^2.0.1
         version: 2.0.1
+      svelte-search:
+        specifier: ^2.0.2
+        version: 2.0.2
       svelte-select:
         specifier: ^5.8.3
         version: 5.8.3
       svelte-sonner:
         specifier: ^0.3.19
         version: 0.3.19(svelte@4.2.12)
+      svelte-time:
+        specifier: ^0.9.0
+        version: 0.9.0
       sveltekit-superforms:
         specifier: ^2.12.2
         version: 2.12.2(@sveltejs/kit@2.5.3(@sveltejs/vite-plugin-svelte@3.0.2(svelte@4.2.12)(vite@5.1.6(@types/node@18.19.23)))(svelte@4.2.12)(vite@5.1.6(@types/node@18.19.23)))(@types/json-schema@7.0.15)(esbuild-runner@2.2.2(esbuild@0.19.12))(esbuild@0.19.12)(svelte@4.2.12)
@@ -3071,6 +3077,9 @@ packages:
     peerDependencies:
       svelte: ^4.0.0
 
+  svelte-search@2.0.2:
+    resolution: {integrity: sha512-r5uo9VdumhonddVBXHpi+MvQUz8Bble6RlLWehpz+ZuAm1jyxJiZaFvFxcPZKrbrT6GmeZlmbFbep3HbEg4OOQ==}
+
   svelte-select@5.8.3:
     resolution: {integrity: sha512-nQsvflWmTCOZjssdrNptzfD1Ok45hHVMTL5IHay5DINk7dfu5Er+8KsVJnZMJdSircqtR0YlT4YkCFlxOUhVPA==}
 
@@ -3083,6 +3092,9 @@ packages:
     resolution: {integrity: sha512-eKXIjLxB4C7eQWPqKEdxcGfNXm2g/qJ67zmEZK/GigCZMfrTR3m7DPY93R6MX+5uoqM1FRYxl8LZ1oy4URWi2A==}
     peerDependencies:
       svelte: ^4.0.0
+
+  svelte-time@0.9.0:
+    resolution: {integrity: sha512-XLEflTNZCjJM2ltCJL0NTpN9J2KBZXxupfl9S2sRFx+utSuQXbs3YIM14DIuENsjG1Qn5NtzRb0gviIB7lCMxQ==}
 
   svelte@4.2.12:
     resolution: {integrity: sha512-d8+wsh5TfPwqVzbm4/HCXC783/KPHV60NvwitJnyTA5lWn1elhXMNWhXGCJ7PwPa8qFUnyJNIyuIRt2mT0WMug==}
@@ -4700,8 +4712,7 @@ snapshots:
 
   data-uri-to-buffer@4.0.1: {}
 
-  dayjs@1.11.10:
-    optional: true
+  dayjs@1.11.10: {}
 
   debug@4.3.4:
     dependencies:
@@ -6473,6 +6484,8 @@ snapshots:
       svelte: 4.2.12
       svelte-subscribe: 2.0.1(svelte@4.2.12)
 
+  svelte-search@2.0.2: {}
+
   svelte-select@5.8.3:
     dependencies:
       svelte-floating-ui: 1.5.8
@@ -6484,6 +6497,10 @@ snapshots:
   svelte-subscribe@2.0.1(svelte@4.2.12):
     dependencies:
       svelte: 4.2.12
+
+  svelte-time@0.9.0:
+    dependencies:
+      dayjs: 1.11.10
 
   svelte@4.2.12:
     dependencies:

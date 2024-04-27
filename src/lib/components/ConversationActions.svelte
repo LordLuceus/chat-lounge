@@ -10,15 +10,15 @@
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
   import { toast } from "svelte-sonner";
 
-  export let conversationId: string;
-  export let conversationName: string;
+  export let id: string;
+  export let name: string;
 
   const client = useQueryClient();
 
   const renameConversationMutation = createMutation({
     mutationFn: async (newName: string) =>
       (
-        await fetch(`/api/conversations/${conversationId}`, {
+        await fetch(`/api/conversations/${id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json"
@@ -43,7 +43,7 @@
   let deleteDialogOpen = false;
   let newName = "";
 
-  $: newName = conversationName;
+  $: newName = name;
 
   function renameClick() {
     renameDialogOpen = true;
@@ -62,12 +62,12 @@
   }
 
   function handleDelete() {
-    $deleteConversationMutation.mutate(conversationId, {
+    $deleteConversationMutation.mutate(id, {
       onSuccess: () => {
         toast.success(Toast, { componentProps: { text: "Conversation deleted." } });
         deleteDialogOpen = false;
 
-        if ($page.url.pathname.includes(conversationId)) {
+        if ($page.url.pathname.includes(id)) {
           goto("/");
         }
       }
@@ -91,9 +91,7 @@
   <AlertDialog.Content>
     <AlertDialog.Header>
       <AlertDialog.Title>Delete conversation</AlertDialog.Title>
-      <AlertDialog.Description
-        >Are you sure you want to delete {conversationName}?</AlertDialog.Description
-      >
+      <AlertDialog.Description>Are you sure you want to delete {name}?</AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
@@ -102,12 +100,10 @@
   </AlertDialog.Content>
 </AlertDialog.Root>
 
-<div class="flex items-center justify-between p-4">
-  <DropdownMenu.Root>
-    <DropdownMenu.Trigger>Menu</DropdownMenu.Trigger>
-    <DropdownMenu.Content>
-      <DropdownMenu.Item on:click={renameClick}>Rename</DropdownMenu.Item>
-      <DropdownMenu.Item on:click={deleteClick}>Delete</DropdownMenu.Item>
-    </DropdownMenu.Content>
-  </DropdownMenu.Root>
-</div>
+<DropdownMenu.Root>
+  <DropdownMenu.Trigger>Actions</DropdownMenu.Trigger>
+  <DropdownMenu.Content>
+    <DropdownMenu.Item on:click={renameClick}>Rename</DropdownMenu.Item>
+    <DropdownMenu.Item on:click={deleteClick}>Delete</DropdownMenu.Item>
+  </DropdownMenu.Content>
+</DropdownMenu.Root>

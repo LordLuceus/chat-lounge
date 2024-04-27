@@ -7,7 +7,6 @@
   import { createQuery } from "@tanstack/svelte-query";
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
   import { derived } from "svelte/store";
-  import AgentActions from "../../routes/(app)/agents/AgentActions.svelte";
 
   const conversationQuery = createQuery<ConversationWithMessageMap>(
     derived(page, ($page) => ({
@@ -35,10 +34,6 @@
 <h1>
   {$conversationStore?.name}
 </h1>
-
-{#if $page.data.agent}
-  <AgentActions agentId={$page.data.agent.id} clickText={$page.data.agent.name} />
-{/if}
 
 <SignedIn let:user>
   <Chat

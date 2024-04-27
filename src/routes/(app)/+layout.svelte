@@ -1,34 +1,31 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
+  import AgentActions from "$lib/components/AgentActions.svelte";
+  import ConversationActions from "$lib/components/ConversationActions.svelte";
   import * as Avatar from "$lib/components/ui/avatar";
   import { Button } from "$lib/components/ui/button";
-  import * as Collapsible from "$lib/components/ui/collapsible";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Toaster } from "$lib/components/ui/sonner";
-  import type { Conversation } from "$lib/drizzle/schema";
+  import type { Agent, Conversation } from "$lib/drizzle/schema";
   import { voices } from "$lib/stores/voices-store";
   import type { PagedResponse } from "$lib/types/api/paged-response";
   import type { Voice } from "$lib/types/elevenlabs/voices";
   import { createInfiniteQuery, createQuery } from "@tanstack/svelte-query";
   import ClerkLoaded from "clerk-sveltekit/client/ClerkLoaded.svelte";
-  import SignInButton from "clerk-sveltekit/client/SignInButton.svelte";
-  import SignUpButton from "clerk-sveltekit/client/SignUpButton.svelte";
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
-  import SignedOut from "clerk-sveltekit/client/SignedOut.svelte";
   import { SunMoon } from "lucide-svelte";
   import { ModeWatcher, resetMode, setMode } from "mode-watcher";
-  import InfiniteScroll from "svelte-infinite-scroll";
   import "../../app.pcss";
   import type { LayoutData } from "./$types";
-  import ConversationActions from "./conversations/ConversationActions.svelte";
+  import NavList from "./NavList.svelte";
 
   export let data: LayoutData;
 
-  let agentsExpanded = false;
-  let conversationsExpanded = false;
-
   const fetchConversations = async ({ pageParam = 1 }) =>
     await fetch(`/api/conversations?page=${pageParam}`).then((res) => res.json());
+
+  const fetchAgents = async ({ pageParam = 1 }) =>
+    await fetch(`/api/agents?page=${pageParam}`).then((res) => res.json());
 
   const conversationsQuery = createInfiniteQuery<PagedResponse<Conversation>>({
     queryKey: ["conversations"],
@@ -43,10 +40,17 @@
     }
   });
 
-  const recentAgentsQuery = createQuery({
-    queryKey: ["agents", "recent"],
-    queryFn: async () => (await fetch("/api/agents?recent=true")).json(),
-    initialData: data.agents
+  const agentsQuery = createInfiniteQuery<PagedResponse<Agent>>({
+    queryKey: ["agents"],
+    queryFn: ({ pageParam }) => fetchAgents({ pageParam: pageParam as number }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.meta.page < lastPage.meta.totalPages) {
+        return lastPage.meta.page + 1;
+      }
+
+      return undefined;
+    }
   });
 
   const voicesQuery = createQuery<Voice[]>({
@@ -65,48 +69,34 @@
   <nav class="flex">
     <a href="/">Home</a>
     {#if $conversationsQuery.isSuccess}
-      <Collapsible.Root bind:open={conversationsExpanded}>
-        <Collapsible.Trigger aria-expanded={conversationsExpanded}
-          >Conversations</Collapsible.Trigger
-        >
-        <Collapsible.Content>
-          <ul class="list-none">
-            {#each $conversationsQuery.data.pages as { data }}
-              {#each data as conversation}
-                <li>
-                  <a
-                    href={`${conversation.agentId ? "/agents/" + conversation.agentId : ""}/conversations/${conversation.id}`}
-                    >{conversation.name}</a
-                  >
-                  <ConversationActions
-                    conversationId={conversation.id}
-                    conversationName={conversation.name}
-                  />
-                </li>
-              {/each}
-            {/each}
-            <InfiniteScroll
-              threshold={100}
-              on:loadMore={() =>
-                !$conversationsQuery.isFetching && $conversationsQuery.fetchNextPage()}
-            />
-          </ul>
-          <a href="/conversations">All conversations</a>
-        </Collapsible.Content>
-      </Collapsible.Root>
+      <NavList
+        pages={$conversationsQuery.data.pages}
+        loadMore={() => !$conversationsQuery.isFetching && $conversationsQuery.fetchNextPage()}
+        itemType="Conversations"
+      >
+        <div slot="link" let:item>
+          <a href={`${item.agentId ? "/agents/" + item.agentId : ""}/conversations/${item.id}`}
+            >{item.name}</a
+          >
+        </div>
+        <div slot="menu" let:item>
+          <ConversationActions id={item.id} name={item.name} />
+        </div>
+      </NavList>
     {/if}
-    {#if $recentAgentsQuery.data?.length > 0}
-      <Collapsible.Root bind:open={agentsExpanded}>
-        <Collapsible.Trigger aria-expanded={agentsExpanded}>Agents</Collapsible.Trigger>
-        <Collapsible.Content>
-          <ul class="list-none">
-            {#each $recentAgentsQuery.data as agent}
-              <li><a href="/agents/{agent.id}">{agent.name}</a></li>
-            {/each}
-            <li><a href="/agents">All agents</a></li>
-          </ul>
-        </Collapsible.Content>
-      </Collapsible.Root>
+    {#if $agentsQuery.isSuccess}
+      <NavList
+        pages={$agentsQuery.data.pages}
+        loadMore={() => !$agentsQuery.isFetching && $agentsQuery.fetchNextPage()}
+        itemType="Agents"
+      >
+        <div slot="link" let:item>
+          <a href={`/agents/${item.id}`}>{item.name}</a>
+        </div>
+        <div slot="menu" let:item>
+          <AgentActions id={item.id} name={item.name} />
+        </div>
+      </NavList>
     {:else}
       <a href="/agents">Agents</a>
     {/if}
@@ -136,10 +126,6 @@
       </DropdownMenu.Root>
     </ClerkLoaded>
   </SignedIn>
-  <SignedOut>
-    <SignInButton />
-    <SignUpButton />
-  </SignedOut>
   <DropdownMenu.Root>
     <DropdownMenu.Trigger asChild let:builder>
       <Button builders={[builder]} variant="outline" size="icon">

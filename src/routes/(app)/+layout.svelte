@@ -22,10 +22,10 @@
   export let data: LayoutData;
 
   const fetchConversations = async ({ pageParam = 1 }) =>
-    await fetch(`/api/conversations?page=${pageParam}`).then((res) => res.json());
+    await fetch(`/api/conversations?page=${pageParam}&limit=20`).then((res) => res.json());
 
   const fetchAgents = async ({ pageParam = 1 }) =>
-    await fetch(`/api/agents?page=${pageParam}`).then((res) => res.json());
+    await fetch(`/api/agents?page=${pageParam}&limit=20`).then((res) => res.json());
 
   const conversationsQuery = createInfiniteQuery<PagedResponse<Conversation>>({
     queryKey: ["conversations"],
@@ -69,11 +69,7 @@
   <nav class="flex">
     <a href="/">Home</a>
     {#if $conversationsQuery.isSuccess}
-      <NavList
-        pages={$conversationsQuery.data.pages}
-        loadMore={() => !$conversationsQuery.isFetching && $conversationsQuery.fetchNextPage()}
-        itemType="Conversations"
-      >
+      <NavList query={conversationsQuery} itemType="Conversations">
         <div slot="link" let:item>
           <a href={`${item.agentId ? "/agents/" + item.agentId : ""}/conversations/${item.id}`}
             >{item.name}</a
@@ -85,11 +81,7 @@
       </NavList>
     {/if}
     {#if $agentsQuery.isSuccess}
-      <NavList
-        pages={$agentsQuery.data.pages}
-        loadMore={() => !$agentsQuery.isFetching && $agentsQuery.fetchNextPage()}
-        itemType="Agents"
-      >
+      <NavList query={agentsQuery} itemType="Agents">
         <div slot="link" let:item>
           <a href={`/agents/${item.id}`}>{item.name}</a>
         </div>

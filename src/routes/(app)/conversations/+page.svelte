@@ -60,12 +60,7 @@
 
 <h1>Conversations</h1>
 
-<DataList
-  query={conversationsQuery}
-  loadMore={() => !$conversationsQuery.isFetching && $conversationsQuery.fetchNextPage()}
-  let:item
-  searchLabel="Search conversations"
->
+<DataList query={conversationsQuery} let:item searchLabel="Search conversations">
   <Card.Root>
     <Card.Header>
       <Card.Title tag="h2">

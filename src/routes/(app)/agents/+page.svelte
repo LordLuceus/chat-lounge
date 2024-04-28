@@ -71,12 +71,7 @@
   </Dialog.Content>
 </Dialog.Root>
 
-<DataList
-  query={agentsQuery}
-  loadMore={() => !$agentsQuery.isFetching && $agentsQuery.fetchNextPage()}
-  let:item
-  searchLabel="Search agents"
->
+<DataList query={agentsQuery} let:item searchLabel="Search agents">
   <Card.Root>
     <Card.Header>
       <Card.Title tag="h2">

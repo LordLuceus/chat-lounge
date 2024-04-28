@@ -59,9 +59,6 @@ importers:
       svelte-exmarkdown:
         specifier: ^3.0.3
         version: 3.0.3(svelte@4.2.12)
-      svelte-infinite-scroll:
-        specifier: ^2.0.1
-        version: 2.0.1
       svelte-search:
         specifier: ^2.0.2
         version: 2.0.2
@@ -3026,9 +3023,6 @@ packages:
     engines: {node: ^12.20 || ^14.13.1 || >= 16}
     peerDependencies:
       svelte: ^3.19.0 || ^4.0.0
-
-  svelte-infinite-scroll@2.0.1:
-    resolution: {integrity: sha512-goTHCfOHRDCs8C5MeSuIc6LlAQ8zVQ+M4Y3LyvrDjx5rqSSxSrdCuQwIyWYNcO6j6/mnqRro3QB64ClBzfn+Wg==}
 
   svelte-keyed@2.0.0:
     resolution: {integrity: sha512-7TeEn+QbJC2OJrHiuM0T8vMBkms3DNpTE+Ir+NtnVBnBMA78aL4f1ft9t0Hn/pBbD/TnIXi4YfjFRAgtN+DZ5g==}
@@ -6459,8 +6453,6 @@ snapshots:
   svelte-hmr@0.15.3(svelte@4.2.12):
     dependencies:
       svelte: 4.2.12
-
-  svelte-infinite-scroll@2.0.1: {}
 
   svelte-keyed@2.0.0(svelte@4.2.12):
     dependencies:

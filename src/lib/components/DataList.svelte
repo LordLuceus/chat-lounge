@@ -1,16 +1,15 @@
 <script lang="ts">
+  import InfiniteScroll from "$lib/components/InfiniteScroll.svelte";
   import { Button } from "$lib/components/ui/button";
   import { searchParams } from "$lib/stores/search-params";
   import type { PagedResponse } from "$lib/types/api/paged-response";
   import type { CreateInfiniteQueryResult, InfiniteData } from "@tanstack/svelte-query";
-  import InfiniteScroll from "svelte-infinite-scroll";
   import Search from "svelte-search";
 
   export let query: CreateInfiniteQueryResult<InfiniteData<PagedResponse<any>, unknown>, Error>;
-  export let loadMore;
   export let searchLabel: string;
 
-  $: search = $searchParams.search;
+  let value = "";
 
   function setSearch(value: string) {
     searchParams.update((params) => ({ ...params, search: value }));
@@ -39,11 +38,12 @@
 <Search
   debounce={800}
   label={searchLabel}
-  value={search}
+  bind:value
   on:type={({ detail }) => setSearch(detail)}
+  on:clear={() => setSearch("")}
 />
-{#if $searchParams.search}
-  <Button on:click={() => setSearch("")}>Clear search</Button>
+{#if value}
+  <Button on:click={() => (value = "")}>Clear search</Button>
 {/if}
 
 {#if $query.isSuccess}
@@ -51,16 +51,20 @@
     <p>No results found</p>
   {/if}
 
-  <ul class="list-none">
-    {#each $query.data.pages as { data }}
-      {#each data as item (item.id)}
-        <li class="flex items-center">
-          <slot {item} />
-        </li>
+  <InfiniteScroll
+    hasMore={$query.hasNextPage}
+    fetchMore={() => !$query.isFetching && $query.fetchNextPage()}
+  >
+    <ul class="list-none">
+      {#each $query.data.pages as { data }}
+        {#each data as item (item.id)}
+          <li class="flex items-center">
+            <slot {item} />
+          </li>
+        {/each}
       {/each}
-    {/each}
-    <InfiniteScroll threshold={100} on:loadMore={loadMore} />
-  </ul>
+    </ul>
+  </InfiniteScroll>
 {/if}
 
 {#if $query.isFetching}

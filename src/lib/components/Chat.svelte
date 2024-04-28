@@ -13,6 +13,7 @@
   import { generateTTS } from "$lib/services/tts-service";
   import { audioFilename, currentAudioUrl, downloadUrl } from "$lib/stores/audio-store";
   import { conversationStore } from "$lib/stores/conversation-store";
+  import { focusStore } from "$lib/stores/focus-store";
   import { voices } from "$lib/stores/voices-store";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
   import { useChat } from "ai/svelte";
@@ -78,10 +79,15 @@
 
         if (!$conversationStore) {
           $createConversationMutation.mutate(undefined, {
-            onSuccess: (data) => {
+            onSuccess: async (data) => {
               if (data.id) {
-                goto(`${agentId ? "/agents/" + agentId : ""}/conversations/${data.id}`);
+                focusStore.set(false);
+                await goto(`${agentId ? "/agents/" + agentId : ""}/conversations/${data.id}`, {
+                  keepFocus: true,
+                  noScroll: true
+                });
                 client.invalidateQueries({ queryKey: ["conversations"] });
+                focusStore.set(true);
               }
             }
           });
@@ -104,12 +110,16 @@
     }
   }
 
-  function focusChatInput(event: KeyboardEvent) {
+  function handleFocusChatInput(event: KeyboardEvent) {
     if (event.key === "Escape" && event.shiftKey) {
       event.preventDefault();
-      const chatInput = document.querySelector(".chat-input") as HTMLTextAreaElement;
-      chatInput.focus();
+      focusChatInput();
     }
+  }
+
+  function focusChatInput() {
+    const chatInput = document.querySelector(".chat-input") as HTMLTextAreaElement;
+    chatInput.focus();
   }
 
   async function copyLastMessage() {
@@ -128,6 +138,9 @@
   }
 
   onMount(() => {
+    if ($focusStore) {
+      focusChatInput();
+    }
     finishSound = new Audio("/assets/typing.wav");
 
     handleModelSelection();
@@ -235,6 +248,9 @@
 
   afterNavigate(() => {
     resetConversation();
+    if ($focusStore) {
+      focusChatInput();
+    }
   });
 
   $: if (initialMessages) {
@@ -264,7 +280,7 @@
   }
 </script>
 
-<svelte:window on:keydown={handleCopyLastMessage} on:keydown={focusChatInput} />
+<svelte:window on:keydown={handleCopyLastMessage} on:keydown={handleFocusChatInput} />
 
 {#if $messages.length === 0}
   <Select
@@ -357,7 +373,6 @@
       class="chat-input"
       rows={1}
       cols={200}
-      autofocus
     />
   </form>
   {#if apiKeys?.openai}

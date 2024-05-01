@@ -4,7 +4,6 @@ import {
   getInternalMessages
 } from "$lib/server/conversations-service";
 import { getModel } from "$lib/server/models-service";
-import { MistralTokenizer } from "@lordluceus/mistral-tokenizer";
 import MistralClient from "@mistralai/mistralai";
 import { MistralStream, OpenAIStream, StreamingTextResponse } from "ai";
 import type { ChatMessage } from "gpt-tokenizer/GptEncoding";
@@ -59,12 +58,10 @@ class MistralHandler implements AIProvider {
   }
 
   isWithinLimit(messages: Message[], limit: number): boolean {
-    const tokenizer = new MistralTokenizer();
+    // Using the GPT tokenizer even for Mistral because there's no good mistral tokenizer available, this will do for now
+    const isWithinLimit = isWithinTokenLimit(messages as ChatMessage[], limit);
 
-    const tokens = tokenizer.encode(messages.map((message) => message.content).join(" "));
-    const isWithinLimit = tokens.length <= limit;
-
-    return isWithinLimit;
+    return !!isWithinLimit;
   }
 }
 

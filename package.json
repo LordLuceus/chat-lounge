@@ -46,7 +46,6 @@
   "type": "module",
   "dependencies": {
     "@libsql/client": "^0.5.6",
-    "@lordluceus/mistral-tokenizer": "^1.2.2",
     "@mistralai/mistralai": "latest",
     "@sveltejs/adapter-vercel": "^5.1.0",
     "@tanstack/svelte-query": "^5.29.0",

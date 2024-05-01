@@ -1,43 +1,96 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
+  import AgentActions from "$lib/components/AgentActions.svelte";
+  import ConversationActions from "$lib/components/ConversationActions.svelte";
   import * as Avatar from "$lib/components/ui/avatar";
   import { Button } from "$lib/components/ui/button";
-  import * as Collapsible from "$lib/components/ui/collapsible";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Toaster } from "$lib/components/ui/sonner";
+  import type { Agent, Conversation } from "$lib/drizzle/schema";
+  import { voices } from "$lib/stores/voices-store";
+  import type { PagedResponse } from "$lib/types/api/paged-response";
+  import type { Voice } from "$lib/types/elevenlabs/voices";
+  import { createInfiniteQuery, createQuery, type CreateQueryResult } from "@tanstack/svelte-query";
   import ClerkLoaded from "clerk-sveltekit/client/ClerkLoaded.svelte";
-  import SignInButton from "clerk-sveltekit/client/SignInButton.svelte";
-  import SignUpButton from "clerk-sveltekit/client/SignUpButton.svelte";
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
-  import SignedOut from "clerk-sveltekit/client/SignedOut.svelte";
   import { SunMoon } from "lucide-svelte";
   import { ModeWatcher, resetMode, setMode } from "mode-watcher";
   import "../../app.pcss";
   import type { LayoutData } from "./$types";
+  import NavList from "./NavList.svelte";
 
   export let data: LayoutData;
 
-  let agentsExpanded = false;
+  const fetchConversations = async ({ pageParam = 1 }) =>
+    await fetch(`/api/conversations?page=${pageParam}&limit=20`).then((res) => res.json());
+
+  const fetchAgents = async ({ pageParam = 1 }) =>
+    await fetch(`/api/agents?page=${pageParam}&limit=20`).then((res) => res.json());
+
+  const conversationsQuery = createInfiniteQuery<PagedResponse<Conversation>>({
+    queryKey: ["conversations"],
+    queryFn: ({ pageParam }) => fetchConversations({ pageParam: pageParam as number }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.meta.page < lastPage.meta.totalPages) {
+        return lastPage.meta.page + 1;
+      }
+
+      return undefined;
+    }
+  });
+
+  const agentsQuery = createInfiniteQuery<PagedResponse<Agent>>({
+    queryKey: ["agents"],
+    queryFn: ({ pageParam }) => fetchAgents({ pageParam: pageParam as number }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.meta.page < lastPage.meta.totalPages) {
+        return lastPage.meta.page + 1;
+      }
+
+      return undefined;
+    }
+  });
+
+  let voicesQuery: CreateQueryResult<Voice[], Error>;
+  $: if (data.keys.eleven)
+    voicesQuery = createQuery<Voice[]>({
+      queryKey: ["voices"],
+      queryFn: async () => (await fetch("/api/voices")).json(),
+      refetchInterval: 60000
+    });
+
+  $: if ($voicesQuery) voices.set($voicesQuery.data);
 </script>
 
-<header>
+<header class="flex items-center justify-between p-4">
   <a href="/">
     <img src="/assets/chatlounge_logo.webp" alt="ChatLounge" />
   </a>
-  <nav>
+  <nav class="flex">
     <a href="/">Home</a>
-    {#if data.agents.length > 0}
-      <Collapsible.Root bind:open={agentsExpanded}>
-        <Collapsible.Trigger aria-expanded={agentsExpanded}>Agents</Collapsible.Trigger>
-        <Collapsible.Content>
-          <ul class="list-none">
-            {#each data.agents as agent}
-              <li><a href="/agents/{agent.id}">{agent.name}</a></li>
-            {/each}
-            <li><a href="/agents">All agents</a></li>
-          </ul>
-        </Collapsible.Content>
-      </Collapsible.Root>
+    {#if $conversationsQuery.isSuccess && $conversationsQuery.data.pages[0].meta.total > 0}
+      <NavList query={conversationsQuery} itemType="Conversations">
+        <div slot="link" let:item>
+          <a href={`${item.agentId ? "/agents/" + item.agentId : ""}/conversations/${item.id}`}
+            >{item.name}</a
+          >
+        </div>
+        <div slot="menu" let:item>
+          <ConversationActions id={item.id} name={item.name} />
+        </div>
+      </NavList>
+    {/if}
+    {#if $agentsQuery.isSuccess && $agentsQuery.data.pages[0].meta.total > 0}
+      <NavList query={agentsQuery} itemType="Agents">
+        <div slot="link" let:item>
+          <a href={`/agents/${item.id}`}>{item.name}</a>
+        </div>
+        <div slot="menu" let:item>
+          <AgentActions id={item.id} name={item.name} />
+        </div>
+      </NavList>
     {:else}
       <a href="/agents">Agents</a>
     {/if}
@@ -67,10 +120,6 @@
       </DropdownMenu.Root>
     </ClerkLoaded>
   </SignedIn>
-  <SignedOut>
-    <SignInButton />
-    <SignUpButton />
-  </SignedOut>
   <DropdownMenu.Root>
     <DropdownMenu.Trigger asChild let:builder>
       <Button builders={[builder]} variant="outline" size="icon">
@@ -88,7 +137,7 @@
 
 <ModeWatcher />
 
-<main>
+<main class="flex flex-col items-center">
   <slot />
 </main>
 
@@ -97,37 +146,3 @@
 </footer>
 
 <Toaster />
-
-<style>
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1rem;
-    background-color: var(--color-primary);
-  }
-
-  nav {
-    display: flex;
-    gap: 1rem;
-  }
-
-  a {
-    color: var(--color-text);
-    text-decoration: none;
-  }
-
-  img {
-    width: 2rem;
-    height: 2rem;
-    border-radius: 50%;
-  }
-
-  main {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex: 0.6;
-  }
-</style>

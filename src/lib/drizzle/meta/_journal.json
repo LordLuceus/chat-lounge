@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1711902667512,
-      "tag": "0000_magenta_boomerang",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1712167342479,
-      "tag": "0001_flaky_alex_wilder",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1712493672250,
-      "tag": "0002_brown_wild_child",
+      "when": 1714560611248,
+      "tag": "0000_unusual_zarek",
       "breakpoints": true
     }
   ]

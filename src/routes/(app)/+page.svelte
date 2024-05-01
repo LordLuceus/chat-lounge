@@ -30,6 +30,6 @@
       <a href="/getting-started">Read the getting started guide</a>.
     </p>
   {:else}
-    <Chat apiKeys={data.keys} models={data.models} voices={data.voices} />
+    <Chat apiKeys={data.keys} models={data.models} />
   {/if}
 </SignedIn>

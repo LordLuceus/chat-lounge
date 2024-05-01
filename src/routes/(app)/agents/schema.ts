@@ -6,9 +6,4 @@ export const agentSchema = z.object({
   instructions: z.string().min(2)
 });
 
-export const deleteSchema = z.object({
-  id: z.string()
-});
-
 export type AgentSchema = typeof agentSchema;
-export type DeleteSchema = typeof deleteSchema;

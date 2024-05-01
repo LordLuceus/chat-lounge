@@ -1,10 +1,6 @@
 import { AIProvider } from "$lib/drizzle/schema";
-import { getRecentAgents } from "$lib/server/agents-service";
 import { getApiKeys } from "$lib/server/api-keys-service";
-import type { Config } from "@sveltejs/adapter-vercel";
 import type { LayoutServerLoad } from "./$types";
-
-export const config: Config = { runtime: "edge" };
 
 export const load = (async ({ locals }) => {
   const { userId } = locals.session!;
@@ -16,5 +12,7 @@ export const load = (async ({ locals }) => {
     openai: storedKeys.some((key) => key.provider === AIProvider.OpenAI)
   };
 
-  return { keys, agents: await getRecentAgents(userId!) };
+  return {
+    keys
+  };
 }) satisfies LayoutServerLoad;

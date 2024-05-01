@@ -1,7 +1,9 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
   import * as Form from "$lib/components/ui/form";
   import { Input } from "$lib/components/ui/input";
   import { Textarea } from "$lib/components/ui/textarea";
+  import { useQueryClient } from "@tanstack/svelte-query";
   import { superForm, type Infer, type SuperValidated } from "sveltekit-superforms";
   import { zodClient } from "sveltekit-superforms/adapters";
   import { agentSchema, type AgentSchema } from "./schema";
@@ -10,11 +12,18 @@
   export let closeDialog: () => void = () => {};
   export let action: string = "";
 
+  const client = useQueryClient();
+
   const form = superForm(data, {
     validators: zodClient(agentSchema),
     onUpdated: ({ form }) => {
       if (form.valid) {
         closeDialog();
+        client.invalidateQueries({ queryKey: ["agents"] });
+
+        if (form.message.created && form.message.agentId) {
+          goto(`/agents/${form.message.agentId}`);
+        }
       }
     }
   });

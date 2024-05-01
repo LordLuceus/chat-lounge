@@ -74,7 +74,7 @@ export async function getConversation(userId: string, conversationId: string) {
   const conversation: ConversationWithMessages | undefined = await db.query.conversations.findFirst(
     {
       with: {
-        messages: true
+        messages: { where: eq(messages.isInternal, false) }
       },
       where: eq(conversations.id, conversationId),
       orderBy: [asc(messages.createdAt)]
@@ -193,10 +193,14 @@ export async function addConversationMessage(
   content: string,
   role: "user" | "assistant",
   userId?: string,
-  messageId?: string
+  messageId?: string,
+  isInternal: boolean = false
 ) {
   const message = (
-    await db.insert(messages).values({ conversationId, userId, content, role }).returning()
+    await db
+      .insert(messages)
+      .values({ conversationId, userId, content, role, isInternal })
+      .returning()
   ).at(0);
 
   if (!message) throw new Error("Failed to add message");
@@ -220,7 +224,7 @@ export async function addConversationMessage(
     }
   }
 
-  await updateConversation(conversationId, { currentNode: message.id });
+  if (!isInternal) await updateConversation(conversationId, { currentNode: message.id });
 }
 
 async function findParent(role: string, messageId: string | undefined, conversationId: string) {
@@ -311,6 +315,13 @@ export async function getConversationMessage(conversationId: string, messageId: 
   return db.query.messages.findFirst({
     where: and(eq(messages.id, messageId), eq(messages.conversationId, conversationId))
   });
+}
+
+export async function getInternalMessages(conversationId: string) {
+  return db
+    .select()
+    .from(messages)
+    .where(and(eq(messages.conversationId, conversationId), eq(messages.isInternal, true)));
 }
 
 export async function updateConversationMessage(

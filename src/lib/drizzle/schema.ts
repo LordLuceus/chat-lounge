@@ -1,4 +1,4 @@
-import { relations, type InferSelectModel } from "drizzle-orm";
+import { relations, sql, type InferSelectModel } from "drizzle-orm";
 import { integer, sqliteTable, text, type AnySQLiteColumn } from "drizzle-orm/sqlite-core";
 import { v4 as uuidv4 } from "uuid";
 
@@ -127,6 +127,9 @@ export const messages = sqliteTable("message", {
   parentId: text("parentId").references((): AnySQLiteColumn => messages.id, {
     onDelete: "cascade"
   }),
+  isInternal: integer("isInternal", { mode: "boolean" })
+    .notNull()
+    .default(sql`false`),
   createdAt: integer("createdAt", { mode: "timestamp_ms" })
     .notNull()
     .$default(() => new Date()),

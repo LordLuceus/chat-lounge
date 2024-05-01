@@ -81,12 +81,14 @@
         <Card.Description>{item.description}</Card.Description>
       {/if}
     </Card.Header>
-    <Card.Content>
-      <p>
-        <strong>Last updated:</strong>
-        <Time timestamp={item.updatedAt} relative />
-      </p>
-    </Card.Content>
+    {#if item.lastUsedAt}
+      <Card.Content>
+        <p>
+          <strong>Last chatted with</strong>
+          <Time timestamp={item.lastUsedAt} relative />
+        </p>
+      </Card.Content>
+    {/if}
     <Card.Footer>
       <AgentActions id={item.id} name={item.name} />
     </Card.Footer>

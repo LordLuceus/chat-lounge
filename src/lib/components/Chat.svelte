@@ -318,24 +318,23 @@
       />
     {/each}
   </div>
-  {#if $messages.at(-1)?.role === "assistant"}
-    {#if $isLoading}
-      <Button on:click={stop}>Stop generating</Button>
-    {:else}
-      <Button
-        on:click={() =>
-          reload({
-            options: {
-              body: {
-                modelId: selectedModel?.value,
-                agentId,
-                conversationId: $conversationStore?.id,
-                regenerate: true
-              }
+  {#if $isLoading}
+    <Button on:click={stop}>Stop generating</Button>
+  {/if}
+  {#if $messages.at(-1)?.role === "assistant" && !$isLoading}
+    <Button
+      on:click={() =>
+        reload({
+          options: {
+            body: {
+              modelId: selectedModel?.value,
+              agentId,
+              conversationId: $conversationStore?.id,
+              regenerate: true
             }
-          })}>Regenerate</Button
-      >
-    {/if}
+          }
+        })}>Regenerate</Button
+    >
   {/if}
   {#if $error}
     <p class="error">There was an error while getting a response from the AI.</p>

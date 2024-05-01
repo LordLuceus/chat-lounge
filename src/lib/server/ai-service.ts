@@ -1,6 +1,14 @@
-import { addConversationMessage } from "$lib/server/conversations-service";
+import {
+  addConversationMessage,
+  getConversationMessage,
+  getInternalMessages
+} from "$lib/server/conversations-service";
+import { getModel } from "$lib/server/models-service";
+import { MistralTokenizer } from "@lordluceus/mistral-tokenizer";
 import MistralClient from "@mistralai/mistralai";
 import { MistralStream, OpenAIStream, StreamingTextResponse } from "ai";
+import type { ChatMessage } from "gpt-tokenizer/GptEncoding";
+import { isWithinTokenLimit } from "gpt-tokenizer/model/gpt-4";
 import { OpenAI } from "openai";
 import type { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 
@@ -15,6 +23,10 @@ interface AIProvider {
     modelId: string,
     onCompletion: (completion: string) => void
   ): Promise<unknown>;
+
+  generateSummary(messages: Message[], modelId: string): Promise<string>;
+
+  isWithinLimit(messages: Message[], limit: number): boolean;
 }
 
 class MistralHandler implements AIProvider {
@@ -30,6 +42,29 @@ class MistralHandler implements AIProvider {
     const response = await client.chatStream({ messages, model: modelId, temperature: 1.0 });
 
     return MistralStream(response, { onCompletion });
+  }
+
+  async generateSummary(messages: Message[], modelId: string) {
+    const client = new MistralClient(this.apiKey);
+    const prompt =
+      "Summarise this conversation. Keep it concise, but retain as much information as possible.";
+
+    const response = await client.chat({
+      messages: [...messages.slice(0, -1), { role: "user", content: prompt }],
+      model: modelId,
+      temperature: 0.5
+    });
+
+    return response.choices[0].message.content;
+  }
+
+  isWithinLimit(messages: Message[], limit: number): boolean {
+    const tokenizer = new MistralTokenizer();
+
+    const tokens = tokenizer.encode(messages.map((message) => message.content).join(" "));
+    const isWithinLimit = tokens.length <= limit;
+
+    return isWithinLimit;
   }
 }
 
@@ -51,10 +86,34 @@ class OpenAIHandler implements AIProvider {
 
     return OpenAIStream(response, { onCompletion });
   }
+
+  async generateSummary(messages: Message[], modelId: string) {
+    const client = new OpenAI({ apiKey: this.apiKey });
+    const prompt =
+      "Summarise this conversation. Keep it concise, but retain as much information as possible.";
+
+    const response = await client.chat.completions.create({
+      messages: [
+        ...messages.slice(0, -1),
+        { role: "user", content: prompt }
+      ] as ChatCompletionMessageParam[],
+      model: modelId,
+      temperature: 0.5
+    });
+
+    return response.choices[0].message.content!;
+  }
+
+  isWithinLimit(messages: Message[], limit: number): boolean {
+    const isWithinLimit = isWithinTokenLimit(messages as ChatMessage[], limit);
+
+    return !!isWithinLimit;
+  }
 }
 
 class AIService {
   private handler: AIProvider;
+  private readonly LIMIT_MULTIPLIER = 0.9; // We use 90% of the token limit to give us some headroom
 
   constructor(provider: string, apiKey: string) {
     if (provider === "mistral") {
@@ -75,9 +134,23 @@ class AIService {
     regenerate?: boolean,
     messageId?: string
   ) {
+    const model = await getModel(modelId);
+
+    if (!model) {
+      throw new Error("Model not found");
+    }
+
     if (agent) {
       messages.unshift({ role: "system", content: agent.instructions });
     }
+
+    const processedMessages = await this.ensureWithinLimit(
+      messages,
+      model,
+      conversationId,
+      userId,
+      messageId
+    );
 
     const onCompletion = async (completion: string) => {
       if (conversationId) {
@@ -94,9 +167,77 @@ class AIService {
       }
     };
 
-    const stream = await this.handler.getResponse(messages, modelId, onCompletion);
+    const stream = await this.handler.getResponse(processedMessages, modelId, onCompletion);
 
     return new StreamingTextResponse(stream as ReadableStream);
+  }
+
+  private async ensureWithinLimit(
+    messages: Message[],
+    model: {
+      id: string;
+      provider: string;
+      tokenLimit: number;
+    },
+    conversationId: string | undefined,
+    userId: string,
+    messageId: string | undefined
+  ) {
+    let processedMessages = messages;
+    if (!this.handler.isWithinLimit(messages, model.tokenLimit * this.LIMIT_MULTIPLIER)) {
+      if (conversationId) {
+        const internalMessages = await getInternalMessages(conversationId);
+
+        if (internalMessages.length > 0) {
+          const parentId = internalMessages.at(-1)?.parentId;
+          if (parentId) {
+            const parentMessage = await getConversationMessage(conversationId, parentId);
+            if (parentMessage) {
+              const index = messages.findLastIndex(
+                (message) =>
+                  message.content === parentMessage.content && message.role === parentMessage.role
+              );
+              if (index !== -1) {
+                const summaries = internalMessages.map((message) => ({
+                  role: message.role,
+                  content: message.content
+                }));
+                processedMessages = [...summaries, ...messages.slice(index + 1)];
+
+                if (
+                  !this.handler.isWithinLimit(
+                    processedMessages,
+                    model.tokenLimit * this.LIMIT_MULTIPLIER
+                  )
+                ) {
+                  const summary = await this.handler.generateSummary(processedMessages, model.id);
+                  await addConversationMessage(
+                    conversationId,
+                    summary,
+                    "user",
+                    userId,
+                    messageId,
+                    true
+                  );
+                  processedMessages = [...summaries, { role: "user", content: summary }];
+                  processedMessages.push(messages[messages.length - 1]);
+                }
+              }
+            }
+          }
+        } else {
+          const summary = await this.handler.generateSummary(messages, model.id);
+          await addConversationMessage(conversationId, summary, "user", userId, messageId, true);
+          processedMessages = [{ role: "user", content: summary }, messages[messages.length - 1]];
+        }
+      }
+    }
+
+    if (messages[0].role === "system" && processedMessages[0].role !== "system") {
+      processedMessages.unshift(messages[0]);
+    }
+
+    return processedMessages;
   }
 }
 

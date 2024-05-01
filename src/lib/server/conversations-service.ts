@@ -64,7 +64,10 @@ export async function getConversations(
         count: sql`COUNT(*)`.mapWith(Number)
       })
       .from(conversations)
-      .where(search ? sql`${sql.raw(search)}` : undefined)
+      .innerJoin(conversationUsers, eq(conversations.id, conversationUsers.conversationId))
+      .where(
+        sql`(${conversationUsers.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
+      )
   ).at(0);
 
   return { conversations: result, total: total?.count };

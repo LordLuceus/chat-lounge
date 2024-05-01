@@ -39,7 +39,9 @@ export async function getAgents(
         count: sql`COUNT(*)`.mapWith(Number)
       })
       .from(agents)
-      .where(search ? sql`${sql.raw(search)}` : undefined)
+      .where(
+        sql`(${agents.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
+      )
   ).at(0);
 
   return { agents: result, total: total?.count };

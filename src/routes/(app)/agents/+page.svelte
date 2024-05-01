@@ -84,7 +84,7 @@
     {#if item.lastUsedAt}
       <Card.Content>
         <p>
-          <strong>Last chatted with</strong>
+          <strong>Last chat </strong>
           <Time timestamp={item.lastUsedAt} relative />
         </p>
       </Card.Content>

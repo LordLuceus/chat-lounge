@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 1 May, 2024
+
+This release brings the long-awaited conversation history feature. You can now view and search your past conversations with the AI. The agents page has also received a facelift, making it easier to manage your agents. We've also added a new keyboard shortcut, Shift + Escape, to focus the chat input. In addition, we've made several improvements and bug fixes to enhance your ChatLounge experience, including a general performance boost. Happy chatting! 🚀
+
 ## 7 Apr, 2024
 
 - Added agents. You can now create custom AI agents with specific personalities and characteristics. Support for agent sharing is coming soon.

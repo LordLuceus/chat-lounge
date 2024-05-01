@@ -10,7 +10,7 @@
   import { voices } from "$lib/stores/voices-store";
   import type { PagedResponse } from "$lib/types/api/paged-response";
   import type { Voice } from "$lib/types/elevenlabs/voices";
-  import { createInfiniteQuery, createQuery } from "@tanstack/svelte-query";
+  import { createInfiniteQuery, createQuery, type CreateQueryResult } from "@tanstack/svelte-query";
   import ClerkLoaded from "clerk-sveltekit/client/ClerkLoaded.svelte";
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
   import { SunMoon } from "lucide-svelte";
@@ -53,13 +53,15 @@
     }
   });
 
-  const voicesQuery = createQuery<Voice[]>({
-    queryKey: ["voices"],
-    queryFn: async () => (await fetch("/api/voices")).json(),
-    refetchInterval: 60000
-  });
+  let voicesQuery: CreateQueryResult<Voice[], Error>;
+  $: if (data.keys.eleven)
+    voicesQuery = createQuery<Voice[]>({
+      queryKey: ["voices"],
+      queryFn: async () => (await fetch("/api/voices")).json(),
+      refetchInterval: 60000
+    });
 
-  $: voices.set($voicesQuery.data);
+  $: if ($voicesQuery) voices.set($voicesQuery.data);
 </script>
 
 <header class="flex items-center justify-between p-4">
@@ -68,7 +70,7 @@
   </a>
   <nav class="flex">
     <a href="/">Home</a>
-    {#if $conversationsQuery.isSuccess}
+    {#if $conversationsQuery.isSuccess && $conversationsQuery.data.pages[0].meta.total > 0}
       <NavList query={conversationsQuery} itemType="Conversations">
         <div slot="link" let:item>
           <a href={`${item.agentId ? "/agents/" + item.agentId : ""}/conversations/${item.id}`}
@@ -80,7 +82,7 @@
         </div>
       </NavList>
     {/if}
-    {#if $agentsQuery.isSuccess}
+    {#if $agentsQuery.isSuccess && $agentsQuery.data.pages[0].meta.total > 0}
       <NavList query={agentsQuery} itemType="Agents">
         <div slot="link" let:item>
           <a href={`/agents/${item.id}`}>{item.name}</a>

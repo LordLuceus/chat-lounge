@@ -1,6 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/environment";
-  import { afterNavigate, goto } from "$app/navigation";
+  import { afterNavigate, pushState } from "$app/navigation";
   import { page } from "$app/stores";
   import Message from "$lib/components/Message.svelte";
   import Recorder from "$lib/components/Recorder.svelte";
@@ -13,7 +13,6 @@
   import { generateTTS } from "$lib/services/tts-service";
   import { audioFilename, currentAudioUrl, downloadUrl } from "$lib/stores/audio-store";
   import { conversationStore } from "$lib/stores/conversation-store";
-  import { focusStore } from "$lib/stores/focus-store";
   import { voices } from "$lib/stores/voices-store";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
   import { useChat } from "ai/svelte";
@@ -63,7 +62,7 @@
     useChat({
       onFinish: async (message) => {
         if (voiceMessage) {
-          await generateTTS({
+          generateTTS({
             text: message.content,
             voice: selectedVoice?.value,
             onPlayAudio: (audioUrl: string | null) => currentAudioUrl.set(audioUrl),
@@ -81,19 +80,13 @@
           $createConversationMutation.mutate(undefined, {
             onSuccess: async (data) => {
               if (data.id) {
-                focusStore.set(false);
-                await goto(`${agentId ? "/agents/" + agentId : ""}/conversations/${data.id}`, {
-                  keepFocus: true,
-                  noScroll: true
-                });
+                pushState(`${agentId ? "/agents/" + agentId : ""}/conversations/${data.id}`, {});
                 client.invalidateQueries({ queryKey: ["conversations"] });
-                focusStore.set(true);
+                conversationStore.set(data);
               }
             }
           });
-        }
-
-        if ($conversationStore) client.invalidateQueries({ queryKey: ["conversations"] });
+        } else if ($conversationStore) client.invalidateQueries({ queryKey: ["conversations"] });
       },
       body: {
         modelId: selectedModel?.value,
@@ -138,9 +131,7 @@
   }
 
   onMount(() => {
-    if ($focusStore) {
-      focusChatInput();
-    }
+    focusChatInput();
     finishSound = new Audio("/assets/typing.wav");
 
     handleModelSelection();
@@ -248,9 +239,7 @@
 
   afterNavigate(() => {
     resetConversation();
-    if ($focusStore) {
-      focusChatInput();
-    }
+    focusChatInput();
   });
 
   $: if (initialMessages) {

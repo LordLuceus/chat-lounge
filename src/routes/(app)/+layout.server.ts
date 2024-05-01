@@ -1,11 +1,8 @@
 import { AIProvider } from "$lib/drizzle/schema";
 import { getApiKeys } from "$lib/server/api-keys-service";
-import type { Config } from "@sveltejs/adapter-vercel";
 import type { LayoutServerLoad } from "./$types";
 
-export const config: Config = { runtime: "edge" };
-
-export const load = (async ({ locals, fetch }) => {
+export const load = (async ({ locals }) => {
   const { userId } = locals.session!;
   const storedKeys = await getApiKeys(userId!);
 

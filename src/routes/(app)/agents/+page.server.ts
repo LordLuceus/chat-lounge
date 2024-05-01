@@ -8,9 +8,7 @@ import { agentSchema } from "./schema";
 
 export const config: Config = { runtime: "edge" };
 
-export const load = (async ({ locals }) => {
-  const { userId } = locals.session!;
-
+export const load = (async () => {
   return {
     form: await superValidate(zod(agentSchema))
   };

@@ -28,7 +28,7 @@ export async function getAgents(
       lastUsedAt: agents.lastUsedAt
     })
     .from(agents)
-    .where(search ? sql`${sql.raw(search)}` : undefined)
+    .where(sql`(${agents.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`)
     .orderBy(sql`${sql.raw(sortBy)}`)
     .limit(limit)
     .offset(offset);

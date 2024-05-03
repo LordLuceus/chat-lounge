@@ -6,7 +6,7 @@ import {
   messages,
   type ConversationWithMessages
 } from "$lib/drizzle/schema";
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { OpenAI } from "openai";
 
 export interface ConversationCreateOptions {
@@ -327,6 +327,12 @@ export async function getInternalMessages(conversationId: string) {
     .where(and(eq(messages.conversationId, conversationId), eq(messages.isInternal, true)));
 }
 
+export async function getLastSummary(conversationId: string) {
+  return db.query.messages.findFirst({
+    where: and(eq(messages.conversationId, conversationId), eq(messages.isInternal, true)),
+    orderBy: [desc(messages.createdAt)]
+  });
+}
 export async function updateConversationMessage(
   conversationId: string,
   messageId: string,

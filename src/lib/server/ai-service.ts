@@ -1,153 +1,47 @@
+import type { AIProvider, Agent, Model } from "$lib/drizzle/schema";
 import {
   addConversationMessage,
   getConversationMessage,
-  getInternalMessages
+  getLastSummary
 } from "$lib/server/conversations-service";
-import { getModel } from "$lib/server/models-service";
-import MistralClient from "@mistralai/mistralai";
-import { MistralStream, OpenAIStream, StreamingTextResponse } from "ai";
+import { createMistral, type MistralProvider } from "@ai-sdk/mistral";
+import { createOpenAI, type OpenAIProvider } from "@ai-sdk/openai";
+import { StreamingTextResponse, generateText, streamText } from "ai";
 import type { ChatMessage } from "gpt-tokenizer/GptEncoding";
 import { isWithinTokenLimit } from "gpt-tokenizer/model/gpt-4";
-import { OpenAI } from "openai";
-import type { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 
 interface Message {
-  role: string;
+  role: "user" | "assistant";
   content: string;
 }
 
-interface AIProvider {
-  getResponse(
-    messages: Message[],
-    modelId: string,
-    onCompletion: (completion: string) => void
-  ): Promise<unknown>;
-
-  generateSummary(messages: Message[], modelId: string): Promise<string>;
-
-  isWithinLimit(messages: Message[], limit: number): boolean;
-}
-
-class MistralHandler implements AIProvider {
-  constructor(private apiKey: string) {}
-
-  async getResponse(
-    messages: Message[],
-    modelId: string,
-    onCompletion: (completion: string) => void
-  ) {
-    const client = new MistralClient(this.apiKey);
-
-    const response = await client.chatStream({ messages, model: modelId, temperature: 1.0 });
-
-    return MistralStream(response, { onCompletion });
-  }
-
-  async generateSummary(messages: Message[], modelId: string) {
-    const client = new MistralClient(this.apiKey);
-    const prompt =
-      "Summarise this conversation. Keep it concise, but retain as much information as possible.";
-
-    const response = await client.chat({
-      messages: [...messages.slice(0, -1), { role: "user", content: prompt }],
-      model: modelId,
-      temperature: 0.5
-    });
-
-    return response.choices[0].message.content;
-  }
-
-  isWithinLimit(messages: Message[], limit: number): boolean {
-    // Using the GPT tokenizer even for Mistral because there's no good mistral tokenizer available, this will do for now
-    const isWithinLimit = isWithinTokenLimit(messages as ChatMessage[], limit);
-
-    return !!isWithinLimit;
-  }
-}
-
-class OpenAIHandler implements AIProvider {
-  constructor(private apiKey: string) {}
-
-  async getResponse(
-    messages: Message[],
-    modelId: string,
-    onCompletion: (completion: string) => void
-  ) {
-    const client = new OpenAI({ apiKey: this.apiKey });
-    const response = await client.chat.completions.create({
-      messages: messages as ChatCompletionMessageParam[],
-      model: modelId,
-      temperature: 1.0,
-      stream: true
-    });
-
-    return OpenAIStream(response, { onCompletion });
-  }
-
-  async generateSummary(messages: Message[], modelId: string) {
-    const client = new OpenAI({ apiKey: this.apiKey });
-    const prompt =
-      "Summarise this conversation. Keep it concise, but retain as much information as possible.";
-
-    const response = await client.chat.completions.create({
-      messages: [
-        ...messages.slice(0, -1),
-        { role: "user", content: prompt }
-      ] as ChatCompletionMessageParam[],
-      model: modelId,
-      temperature: 0.5
-    });
-
-    return response.choices[0].message.content!;
-  }
-
-  isWithinLimit(messages: Message[], limit: number): boolean {
-    const isWithinLimit = isWithinTokenLimit(messages as ChatMessage[], limit);
-
-    return !!isWithinLimit;
-  }
-}
-
 class AIService {
-  private handler: AIProvider;
+  private client: MistralProvider | OpenAIProvider;
   private readonly LIMIT_MULTIPLIER = 0.9; // We use 90% of the token limit to give us some headroom
 
-  constructor(provider: string, apiKey: string) {
+  constructor(
+    private provider: AIProvider,
+    private apiKey: string
+  ) {
     if (provider === "mistral") {
-      this.handler = new MistralHandler(apiKey);
+      this.client = createMistral({ apiKey: apiKey });
     } else if (provider === "openai") {
-      this.handler = new OpenAIHandler(apiKey);
+      this.client = createOpenAI({ apiKey: apiKey });
     } else {
       throw new Error("Unsupported AI provider");
     }
   }
 
-  async getResponse(
+  async run(
     messages: Message[],
-    modelId: string,
+    model: Model,
     userId: string,
-    agent?: { id: string; instructions: string },
+    agent?: Agent,
     conversationId?: string,
     regenerate?: boolean,
     messageId?: string
   ) {
-    const model = await getModel(modelId);
-
-    if (!model) {
-      throw new Error("Model not found");
-    }
-
-    if (agent) {
-      messages.unshift({ role: "system", content: agent.instructions });
-    }
-
-    const processedMessages = await this.ensureWithinLimit(
-      messages,
-      model,
-      conversationId,
-      userId,
-      messageId
-    );
+    const processedMessages = await this.preProcess(messages, model, userId, agent, conversationId);
 
     const onCompletion = async (completion: string) => {
       if (conversationId) {
@@ -161,80 +55,143 @@ class AIService {
           );
         }
         await addConversationMessage(conversationId, completion, "assistant");
+        this.postProcess(processedMessages as Message[], model, userId, agent, conversationId);
       }
     };
 
-    const stream = await this.handler.getResponse(processedMessages, modelId, onCompletion);
+    console.log("We are sending the following messages to the AI");
+    console.log(processedMessages);
+    const response = await this.getResponse(
+      processedMessages as Message[],
+      model.id,
+      agent?.instructions
+    );
 
-    return new StreamingTextResponse(stream as ReadableStream);
+    const stream = response.toAIStream({
+      onFinal: onCompletion
+    });
+
+    return new StreamingTextResponse(stream);
   }
 
-  private async ensureWithinLimit(
+  private async getResponse(messages: Message[], modelId: string, system?: string) {
+    const result = await streamText({
+      model: this.client(modelId),
+      messages,
+      system,
+      temperature: 1.0
+    });
+
+    return result;
+  }
+
+  private async generateSummary(messages: Message[], modelId: string, system?: string) {
+    const prompt =
+      "Summarise this conversation. Keep it concise, but retain as much information as possible.";
+
+    const { text } = await generateText({
+      model: this.client(modelId),
+      messages: [...messages.slice(0, -1), { role: "user", content: prompt }],
+      system,
+      temperature: 0.5
+    });
+
+    return text;
+  }
+
+  private isWithinLimit(messages: { role: string; content: string }[], limit: number): boolean {
+    const isWithinLimit = isWithinTokenLimit(messages as ChatMessage[], limit);
+
+    return !!isWithinLimit;
+  }
+
+  private async preProcess(
     messages: Message[],
-    model: {
-      id: string;
-      provider: string;
-      tokenLimit: number;
-    },
-    conversationId: string | undefined,
+    model: Model,
     userId: string,
-    messageId: string | undefined
+    agent?: Agent,
+    conversationId?: string
   ) {
-    let processedMessages = messages;
-    if (!this.handler.isWithinLimit(messages, model.tokenLimit * this.LIMIT_MULTIPLIER)) {
-      if (conversationId) {
-        const internalMessages = await getInternalMessages(conversationId);
-
-        if (internalMessages.length > 0) {
-          const parentId = internalMessages.at(-1)?.parentId;
-          if (parentId) {
-            const parentMessage = await getConversationMessage(conversationId, parentId);
-            if (parentMessage) {
-              const index = messages.findLastIndex(
-                (message) =>
-                  message.content === parentMessage.content && message.role === parentMessage.role
-              );
-              if (index !== -1) {
-                const summaries = internalMessages.map((message) => ({
-                  role: message.role,
-                  content: message.content
-                }));
-                processedMessages = [...summaries, ...messages.slice(index + 1)];
-
-                if (
-                  !this.handler.isWithinLimit(
-                    processedMessages,
-                    model.tokenLimit * this.LIMIT_MULTIPLIER
-                  )
-                ) {
-                  const summary = await this.handler.generateSummary(processedMessages, model.id);
-                  await addConversationMessage(
-                    conversationId,
-                    summary,
-                    "user",
-                    userId,
-                    messageId,
-                    true
-                  );
-                  processedMessages = [...summaries, { role: "user", content: summary }];
-                  processedMessages.push(messages[messages.length - 1]);
-                }
-              }
-            }
-          }
-        } else {
-          const summary = await this.handler.generateSummary(messages, model.id);
-          await addConversationMessage(conversationId, summary, "user", userId, messageId, true);
-          processedMessages = [{ role: "user", content: summary }, messages[messages.length - 1]];
-        }
-      }
+    console.log("Pre-processing messages");
+    if (!conversationId) {
+      console.log("No conversation ID, returning messages");
+      return messages;
     }
 
-    if (messages[0].role === "system" && processedMessages[0].role !== "system") {
-      processedMessages.unshift(messages[0]);
+    let processedMessages = agent?.instructions
+      ? [{ role: "system", content: agent.instructions }, ...messages]
+      : messages;
+
+    if (this.isWithinLimit(processedMessages, model.tokenLimit * this.LIMIT_MULTIPLIER)) {
+      console.log("Within limit, returning messages");
+      return messages;
     }
+
+    const summary = await getLastSummary(conversationId);
+
+    if (!summary) {
+      console.log("No summary found, returning messages");
+      return messages;
+    }
+
+    if (!summary.parentId) {
+      console.log("No parent message found, returning messages");
+      return [{ role: summary.role, content: summary.content }, messages.at(-1)];
+    }
+
+    const parentMessage = await getConversationMessage(conversationId, summary.parentId);
+
+    if (!parentMessage) {
+      console.log("Parent message not found, throwing error");
+      throw new Error("Parent message not found");
+    }
+
+    const index = messages.findLastIndex(
+      (message) => message.content === parentMessage.content && message.role === parentMessage.role
+    );
+
+    if (index === -1) {
+      console.log("Message not found, throwing error");
+      throw new Error("Message not found");
+    }
+
+    processedMessages = [
+      { role: summary.role, content: summary.content },
+      ...messages.slice(index + 1)
+    ];
 
     return processedMessages;
+  }
+
+  private async postProcess(
+    messages: Message[],
+    model: Model,
+    userId: string,
+    agent?: Agent,
+    conversationId?: string,
+    messageId?: string
+  ) {
+    if (!conversationId) {
+      return messages;
+    }
+
+    const messagesWithSystemPrompt = agent?.instructions
+      ? [{ role: "system", content: agent.instructions }, ...messages]
+      : messages;
+
+    console.log("Checking if within limit");
+    if (this.isWithinLimit(messagesWithSystemPrompt, model.tokenLimit * this.LIMIT_MULTIPLIER)) {
+      console.log("Within limit");
+      return messages;
+    }
+
+    console.log("Exceeded limit, generating summary");
+
+    const summary = await this.generateSummary(messages, model.id, agent?.instructions);
+    console.log("Generated summary, saving to database");
+    await addConversationMessage(conversationId, summary, "user", userId, messageId, true);
+
+    return messages;
   }
 }
 

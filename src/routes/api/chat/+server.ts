@@ -46,15 +46,7 @@ export const POST = (async ({ locals, request }) => {
     updateLastUsed(userId, agent.id);
   }
 
-  const aiService = new AIService(model.provider, apiKey.key);
+  const aiService = new AIService(model.provider as AIProvider, apiKey.key);
 
-  return aiService.getResponse(
-    messages,
-    model.id,
-    userId,
-    agent,
-    conversationId,
-    regenerate,
-    messageId
-  );
+  return aiService.run(messages, model, userId, agent, conversationId, regenerate, messageId);
 }) satisfies RequestHandler;

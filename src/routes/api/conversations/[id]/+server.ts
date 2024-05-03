@@ -3,10 +3,7 @@ import {
   getConversation,
   updateConversation
 } from "$lib/server/conversations-service";
-import type { Config } from "@sveltejs/adapter-vercel";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
-
-export const config: Config = { runtime: "edge" };
 
 export const GET = (async ({ locals, params }) => {
   if (!locals.session?.userId) return error(401, "Unauthorized");

@@ -6,10 +6,7 @@ import {
   type ConversationCreateOptions
 } from "$lib/server/conversations-service";
 import type { PagedResponse } from "$lib/types/api/paged-response";
-import type { Config } from "@sveltejs/adapter-vercel";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
-
-export const config: Config = { runtime: "edge" };
 
 export const GET = (async ({ locals, url }) => {
   if (!locals.session?.userId) return error(401, "Unauthorized");

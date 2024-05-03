@@ -1,12 +1,9 @@
 import { getAgent, updateAgent } from "$lib/server/agents-service.js";
-import type { Config } from "@sveltejs/adapter-vercel";
 import { error, fail } from "@sveltejs/kit";
 import { message, superValidate } from "sveltekit-superforms";
 import { zod } from "sveltekit-superforms/adapters";
 import { agentSchema } from "../../schema";
 import type { Actions, PageServerLoad } from "./$types";
-
-export const config: Config = { runtime: "edge" };
 
 export const load = (async (event) => {
   const { id } = event.params;

@@ -1,12 +1,9 @@
 import { createAgent } from "$lib/server/agents-service";
-import type { Config } from "@sveltejs/adapter-vercel";
 import { fail } from "@sveltejs/kit";
 import { message, superValidate } from "sveltekit-superforms";
 import { zod } from "sveltekit-superforms/adapters";
 import type { Actions, PageServerLoad } from "./$types";
 import { agentSchema } from "./schema";
-
-export const config: Config = { runtime: "edge" };
 
 export const load = (async () => {
   return {

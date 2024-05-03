@@ -59,8 +59,6 @@ class AIService {
       }
     };
 
-    console.log("We are sending the following messages to the AI");
-    console.log(processedMessages);
     const response = await this.getResponse(
       processedMessages as Message[],
       model.id,
@@ -112,9 +110,7 @@ class AIService {
     agent?: Agent,
     conversationId?: string
   ) {
-    console.log("Pre-processing messages");
     if (!conversationId) {
-      console.log("No conversation ID, returning messages");
       return messages;
     }
 
@@ -123,26 +119,22 @@ class AIService {
       : messages;
 
     if (this.isWithinLimit(processedMessages, model.tokenLimit * this.LIMIT_MULTIPLIER)) {
-      console.log("Within limit, returning messages");
       return messages;
     }
 
     const summary = await getLastSummary(conversationId);
 
     if (!summary) {
-      console.log("No summary found, returning messages");
       return messages;
     }
 
     if (!summary.parentId) {
-      console.log("No parent message found, returning messages");
       return [{ role: summary.role, content: summary.content }, messages.at(-1)];
     }
 
     const parentMessage = await getConversationMessage(conversationId, summary.parentId);
 
     if (!parentMessage) {
-      console.log("Parent message not found, throwing error");
       throw new Error("Parent message not found");
     }
 
@@ -151,7 +143,6 @@ class AIService {
     );
 
     if (index === -1) {
-      console.log("Message not found, throwing error");
       throw new Error("Message not found");
     }
 
@@ -179,16 +170,11 @@ class AIService {
       ? [{ role: "system", content: agent.instructions }, ...messages]
       : messages;
 
-    console.log("Checking if within limit");
     if (this.isWithinLimit(messagesWithSystemPrompt, model.tokenLimit * this.LIMIT_MULTIPLIER)) {
-      console.log("Within limit");
       return messages;
     }
 
-    console.log("Exceeded limit, generating summary");
-
     const summary = await this.generateSummary(messages, model.id, agent?.instructions);
-    console.log("Generated summary, saving to database");
     await addConversationMessage(conversationId, summary, "user", userId, messageId, true);
 
     return messages;

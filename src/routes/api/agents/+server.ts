@@ -2,10 +2,7 @@ import type { Agent } from "$lib/drizzle/schema";
 import { QueryParamsProcessor } from "$lib/query-params-processor";
 import { createAgent, getAgents, type AgentCreateOptions } from "$lib/server/agents-service";
 import type { PagedResponse } from "$lib/types/api/paged-response";
-import type { Config } from "@sveltejs/adapter-vercel";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
-
-export const config: Config = { runtime: "edge" };
 
 export const GET = (async ({ locals, url }) => {
   if (!locals.session?.userId) return error(401, "Unauthorized");

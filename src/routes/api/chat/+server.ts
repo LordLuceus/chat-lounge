@@ -6,8 +6,6 @@ import { getModel } from "$lib/server/models-service";
 import { getUser } from "$lib/server/users-service";
 import { error, type RequestHandler } from "@sveltejs/kit";
 
-export const config = { runtime: "edge" };
-
 export const POST = (async ({ locals, request }) => {
   if (!locals.session?.userId) {
     return error(401, { message: "Unauthorized" });

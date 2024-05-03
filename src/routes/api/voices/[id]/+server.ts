@@ -3,10 +3,7 @@ import { AIProvider } from "$lib/drizzle/schema";
 import { getApiKey } from "$lib/server/api-keys-service";
 import { getUser } from "$lib/server/users-service";
 import type { ElevenLabsError } from "$lib/types/elevenlabs/elevenlabs-error";
-import type { Config } from "@sveltejs/adapter-vercel";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
-
-export const config: Config = { runtime: "edge" };
 
 export const DELETE: RequestHandler = async ({ locals, params }) => {
   if (!locals.session?.userId) {

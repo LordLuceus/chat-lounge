@@ -1,11 +1,8 @@
 import { AIProvider } from "$lib/drizzle/schema";
 import { getApiKey } from "$lib/server/api-keys-service";
 import { getUser } from "$lib/server/users-service";
-import type { Config } from "@sveltejs/adapter-vercel";
 import { error, text, type RequestHandler } from "@sveltejs/kit";
 import { OpenAI } from "openai";
-
-export const config: Config = { runtime: "edge" };
 
 export const POST = (async ({ locals, request }) => {
   if (!locals.session?.userId) return error(401, "Unauthorized");

@@ -1,11 +1,8 @@
 import { WEBHOOK_SECRET } from "$env/static/private";
 import { createUser, deleteUser, updateUser } from "$lib/server/users-service";
 import type { WebhookEvent } from "@clerk/backend";
-import type { Config } from "@sveltejs/adapter-vercel";
 import { error, type RequestHandler } from "@sveltejs/kit";
 import { Webhook } from "svix";
-
-export const config: Config = { runtime: "edge" };
 
 export const POST = (async ({ request }) => {
   const svixId = request.headers.get("Svix-Id");

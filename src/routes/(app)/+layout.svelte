@@ -15,7 +15,6 @@
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
   import { SunMoon } from "lucide-svelte";
   import { ModeWatcher, resetMode, setMode } from "mode-watcher";
-  import "../../app.pcss";
   import type { LayoutData } from "./$types";
   import NavList from "./NavList.svelte";
 

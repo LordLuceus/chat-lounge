@@ -1,10 +1,7 @@
 import { getAgent } from "$lib/server/agents-service.js";
 import { getUserModels } from "$lib/server/models-service";
-import type { Config } from "@sveltejs/adapter-vercel";
 import { error } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
-
-export const config: Config = { runtime: "edge" };
 
 export const load = (async (event) => {
   const { id } = event.params;

@@ -25,7 +25,7 @@
     value: string;
   }
 
-  export let agentId: string | undefined = undefined;
+  export let agent: { id: string; name: string } | undefined = undefined;
   export let apiKeys: { mistral: boolean; openai: boolean; eleven: boolean } | undefined;
   export let models: SelectItem[] | undefined;
   export let selectedModel: SelectItem | undefined = undefined;
@@ -52,7 +52,11 @@
       (
         await fetch("/api/conversations", {
           method: "POST",
-          body: JSON.stringify({ agentId, modelId: selectedModel?.value, messages: $messages })
+          body: JSON.stringify({
+            agentId: agent?.id,
+            modelId: selectedModel?.value,
+            messages: $messages
+          })
         })
       ).json(),
     onSuccess: () => client.invalidateQueries({ queryKey: ["conversations"] })
@@ -80,7 +84,7 @@
           $createConversationMutation.mutate(undefined, {
             onSuccess: async (data) => {
               if (data.id) {
-                pushState(`${agentId ? "/agents/" + agentId : ""}/conversations/${data.id}`, {});
+                pushState(`${agent?.id ? "/agents/" + agent.id : ""}/conversations/${data.id}`, {});
                 client.invalidateQueries({ queryKey: ["conversations"] });
                 conversationStore.set(data);
               }
@@ -90,7 +94,7 @@
       },
       body: {
         modelId: selectedModel?.value,
-        agentId,
+        agentId: agent?.id,
         conversationId: $conversationStore?.id
       },
       initialMessages
@@ -210,7 +214,7 @@
           options: {
             body: {
               modelId: selectedModel?.value,
-              agentId,
+              agentId: agent?.id,
               conversationId: $conversationStore?.id
             }
           }
@@ -260,7 +264,7 @@
       options: {
         body: {
           modelId: selectedModel?.value,
-          agentId,
+          agentId: agent?.id,
           conversationId: $conversationStore?.id,
           messageId: id
         }
@@ -281,7 +285,7 @@
     clearable={false}
   />
 {:else if selectedModel}
-  <p>{selectedModel.label}</p>
+  <p>{agent?.name ? `${agent.name} (${selectedModel.label})` : selectedModel.label}</p>
 {/if}
 
 {#if apiKeys?.eleven && $voices}
@@ -317,7 +321,7 @@
           options: {
             body: {
               modelId: selectedModel?.value,
-              agentId,
+              agentId: agent?.id,
               conversationId: $conversationStore?.id,
               regenerate: true
             }
@@ -333,7 +337,7 @@
           options: {
             body: {
               modelId: selectedModel?.value,
-              agentId,
+              agentId: agent?.id,
               conversationId: $conversationStore?.id
             }
           }
@@ -347,7 +351,7 @@
         options: {
           body: {
             modelId: selectedModel?.value,
-            agentId,
+            agentId: agent?.id,
             conversationId: $conversationStore?.id
           }
         }

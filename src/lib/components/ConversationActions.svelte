@@ -36,7 +36,7 @@
           method: "DELETE"
         })
       ).json(),
-    onSuccess: () => client.invalidateQueries({ queryKey: ["conversations"] })
+    onSuccess: () => client.invalidateQueries({ queryKey: ["conversations"], exact: true })
   });
 
   let renameDialogOpen = false;
@@ -61,13 +61,13 @@
     });
   }
 
-  function handleDelete() {
-    $deleteConversationMutation.mutate(id, {
+  function handleDelete(conversationId: string) {
+    $deleteConversationMutation.mutate(conversationId, {
       onSuccess: () => {
-        toast.success(Toast, { componentProps: { text: "Conversation deleted." } });
         deleteDialogOpen = false;
+        toast.success(Toast, { componentProps: { text: "Conversation deleted." } });
 
-        if ($page.url.pathname.includes(id)) {
+        if ($page.url.pathname.includes(conversationId)) {
           goto("/");
         }
       }
@@ -95,7 +95,7 @@
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-      <AlertDialog.Action on:click={handleDelete}>Delete</AlertDialog.Action>
+      <AlertDialog.Action on:click={() => handleDelete(id)}>Delete</AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>

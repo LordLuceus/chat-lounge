@@ -41,6 +41,6 @@
     models={$page.data.models}
     initialMessages={messages}
     {selectedModel}
-    agentId={$page.data?.agent?.id}
+    agent={$page.data?.agent}
   />
 </SignedIn>

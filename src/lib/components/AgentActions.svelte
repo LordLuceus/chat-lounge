@@ -18,8 +18,8 @@
       await fetch(`/api/agents/${id}`, { method: "DELETE" });
     },
     onSuccess: () => {
-      client.invalidateQueries({ queryKey: ["agents"] });
-      client.invalidateQueries({ queryKey: ["conversations"] });
+      client.invalidateQueries({ queryKey: ["agents"], exact: true });
+      client.invalidateQueries({ queryKey: ["conversations"], exact: true });
     }
   });
 
@@ -45,14 +45,14 @@
     deleteDialogOpen = true;
   }
 
-  function handleDelete() {
-    $deleteAgentMutation.mutate(id, {
+  function handleDelete(agentId: string) {
+    $deleteAgentMutation.mutate(agentId, {
       onSuccess: () => {
-        toast.success(Toast, { componentProps: { text: "Agent deleted." } });
         deleteDialogOpen = false;
+        toast.success(Toast, { componentProps: { text: "Agent deleted." } });
 
-        if ($page.url.pathname.includes("/agents/")) {
-          goto("/agents");
+        if ($page.url.pathname.includes(agentId)) {
+          goto("/");
         }
       }
     });
@@ -78,7 +78,7 @@
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-      <AlertDialog.Action on:click={handleDelete}>Delete</AlertDialog.Action>
+      <AlertDialog.Action on:click={() => handleDelete(id)}>Delete</AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>

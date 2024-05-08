@@ -1,4 +1,5 @@
 import { generateAudioFilename } from "$lib/helpers/filename";
+import { ttsCleanup } from "$lib/helpers/tts-cleanup";
 import { ttsGenerating } from "$lib/stores/tts-generating-store";
 
 interface TTSOptions {
@@ -18,6 +19,7 @@ export async function generateTTS({
   onError,
   signal
 }: TTSOptions): Promise<void> {
+  text = ttsCleanup(text);
   let streamSupported = true;
 
   if (!window.MediaSource) {

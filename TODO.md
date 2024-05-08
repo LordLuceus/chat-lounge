@@ -20,6 +20,7 @@
 
 ## TTS
 
+- [x] Strip special characters from the text before sending it to the TTS service.
 - [ ] Add a TTS history page.
 - [ ] Add advanced TTS options.
 - [ ] Add a way to create and edit voices.

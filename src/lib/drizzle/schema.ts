@@ -8,6 +8,12 @@ export enum AIProvider {
   ElevenLabs = "elevenlabs"
 }
 
+export enum Visibility {
+  Public = "public",
+  Private = "private",
+  Hidden = "hidden"
+}
+
 export const users = sqliteTable("user", {
   id: text("id").notNull().primaryKey(),
   username: text("username").notNull().unique(),
@@ -50,6 +56,10 @@ export const agents = sqliteTable("agent", {
   name: text("name").notNull(),
   description: text("description"),
   instructions: text("instructions").notNull(),
+  visibility: text("visibility")
+    .notNull()
+    .$type<Visibility>()
+    .default(sql`'private'`),
   lastUsedAt: integer("lastUsedAt", { mode: "timestamp_ms" }),
   createdAt: integer("createdAt", { mode: "timestamp_ms" })
     .notNull()

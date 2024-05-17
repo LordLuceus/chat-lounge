@@ -3,7 +3,7 @@
   import Chat from "$lib/components/Chat.svelte";
   import { getConversationMessages, type Message } from "$lib/helpers/conversation-helpers";
   import type { ConversationWithMessageMap } from "$lib/server/conversations-service";
-  import { conversationStore } from "$lib/stores/conversation-store";
+  import { conversationStore } from "$lib/stores";
   import { createQuery } from "@tanstack/svelte-query";
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
   import { derived } from "svelte/store";

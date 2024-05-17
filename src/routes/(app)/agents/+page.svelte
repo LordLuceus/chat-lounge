@@ -6,7 +6,7 @@
   import * as Card from "$lib/components/ui/card";
   import * as Dialog from "$lib/components/ui/dialog";
   import type { Agent } from "$lib/drizzle/schema";
-  import { searchParams, type SearchParams } from "$lib/stores/search-params";
+  import { searchParams, type SearchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api/paged-response";
   import { createInfiniteQuery } from "@tanstack/svelte-query";
   import { onDestroy } from "svelte";

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Button } from "$lib/components/ui/button";
-  import { playingAudio } from "$lib/stores/audio-store";
+  import { playingAudio } from "$lib/stores";
 
   export let name: string;
   export let previewUrl: string | null;

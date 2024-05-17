@@ -1,8 +1,6 @@
 {
-  "version": "5",
+  "version": "6",
   "dialect": "sqlite",
-  "id": "78720edd-d3ed-4bca-8ea5-f1c8bb9750f1",
-  "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "agent": {
       "name": "agent",
@@ -69,15 +67,15 @@
         "agent_userId_user_id_fk": {
           "name": "agent_userId_user_id_fk",
           "tableFrom": "agent",
-          "tableTo": "user",
           "columnsFrom": [
             "userId"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -142,15 +140,15 @@
         "apiKey_userId_user_id_fk": {
           "name": "apiKey_userId_user_id_fk",
           "tableFrom": "apiKey",
-          "tableTo": "user",
           "columnsFrom": [
             "userId"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -200,28 +198,28 @@
         "conversationUser_conversationId_conversation_id_fk": {
           "name": "conversationUser_conversationId_conversation_id_fk",
           "tableFrom": "conversationUser",
-          "tableTo": "conversation",
           "columnsFrom": [
             "conversationId"
           ],
+          "tableTo": "conversation",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "conversationUser_userId_user_id_fk": {
           "name": "conversationUser_userId_user_id_fk",
           "tableFrom": "conversationUser",
-          "tableTo": "user",
           "columnsFrom": [
             "userId"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -285,41 +283,41 @@
         "conversation_agentId_agent_id_fk": {
           "name": "conversation_agentId_agent_id_fk",
           "tableFrom": "conversation",
-          "tableTo": "agent",
           "columnsFrom": [
             "agentId"
           ],
+          "tableTo": "agent",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         },
         "conversation_modelId_model_id_fk": {
           "name": "conversation_modelId_model_id_fk",
           "tableFrom": "conversation",
-          "tableTo": "model",
           "columnsFrom": [
             "modelId"
           ],
+          "tableTo": "model",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
-          "onUpdate": "cascade"
+          "onUpdate": "cascade",
+          "onDelete": "set null"
         },
         "conversation_currentNode_message_id_fk": {
           "name": "conversation_currentNode_message_id_fk",
           "tableFrom": "conversation",
-          "tableTo": "message",
           "columnsFrom": [
             "currentNode"
           ],
+          "tableTo": "message",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         }
       },
       "compositePrimaryKeys": {},
@@ -398,41 +396,41 @@
         "message_conversationId_conversation_id_fk": {
           "name": "message_conversationId_conversation_id_fk",
           "tableFrom": "message",
-          "tableTo": "conversation",
           "columnsFrom": [
             "conversationId"
           ],
+          "tableTo": "conversation",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "message_userId_user_id_fk": {
           "name": "message_userId_user_id_fk",
           "tableFrom": "message",
-          "tableTo": "user",
           "columnsFrom": [
             "userId"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         },
         "message_parentId_message_id_fk": {
           "name": "message_parentId_message_id_fk",
           "tableFrom": "message",
-          "tableTo": "message",
           "columnsFrom": [
             "parentId"
           ],
+          "tableTo": "message",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -551,8 +549,9 @@
   },
   "enums": {},
   "_meta": {
-    "schemas": {},
     "tables": {},
     "columns": {}
-  }
+  },
+  "id": "78720edd-d3ed-4bca-8ea5-f1c8bb9750f1",
+  "prevId": "00000000-0000-0000-0000-000000000000"
 }

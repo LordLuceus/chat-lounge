@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { voices } from "$lib/stores/voices-store";
+  import { voices } from "$lib/stores";
   import { Loader } from "lucide-svelte";
   import DataTable from "./DataTable.svelte";
 </script>

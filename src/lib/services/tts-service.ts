@@ -1,6 +1,6 @@
 import { generateAudioFilename } from "$lib/helpers/filename";
 import { ttsCleanup } from "$lib/helpers/tts-cleanup";
-import { ttsGenerating } from "$lib/stores/tts-generating-store";
+import { ttsGenerating } from "$lib/stores";
 
 interface TTSOptions {
   text: string;

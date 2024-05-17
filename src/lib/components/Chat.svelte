@@ -1,6 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/environment";
-  import { afterNavigate, pushState } from "$app/navigation";
+  import { afterNavigate, goto } from "$app/navigation";
   import { page } from "$app/stores";
   import Message from "$lib/components/Message.svelte";
   import Recorder from "$lib/components/Recorder.svelte";
@@ -11,9 +11,15 @@
   import { getMessageSiblings } from "$lib/helpers/conversation-helpers";
   import type { ConversationWithMessageMap } from "$lib/server/conversations-service";
   import { generateTTS } from "$lib/services/tts-service";
-  import { audioFilename, currentAudioUrl, downloadUrl } from "$lib/stores/audio-store";
-  import { conversationStore } from "$lib/stores/conversation-store";
-  import { voices } from "$lib/stores/voices-store";
+  import {
+    audioFilename,
+    conversationStore,
+    currentAudioUrl,
+    downloadUrl,
+    newConversation,
+    ttsText,
+    voices
+  } from "$lib/stores";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
   import { useChat } from "ai/svelte";
   import { onDestroy, onMount } from "svelte";
@@ -66,16 +72,20 @@
     useChat({
       onFinish: async (message) => {
         if (voiceMessage) {
-          generateTTS({
-            text: message.content,
-            voice: selectedVoice?.value,
-            onPlayAudio: (audioUrl: string | null) => currentAudioUrl.set(audioUrl),
-            onDownloadAudio: ({ downloadUrl, filename }) =>
-              setDownloadUrlAndFilename(downloadUrl, filename),
-            onError: (error: string) => toast.error(error),
-            signal
-          });
-          setVoiceMessage("");
+          if (!$conversationStore) {
+            ttsText.set(message.content);
+          } else {
+            generateTTS({
+              text: message.content,
+              voice: selectedVoice?.value,
+              onPlayAudio: (audioUrl: string | null) => currentAudioUrl.set(audioUrl),
+              onDownloadAudio: ({ downloadUrl, filename }) =>
+                setDownloadUrlAndFilename(downloadUrl, filename),
+              onError: (error: string) => toast.error(error),
+              signal
+            });
+            setVoiceMessage("");
+          }
         } else {
           finishSound.play();
         }
@@ -84,9 +94,12 @@
           $createConversationMutation.mutate(undefined, {
             onSuccess: async (data) => {
               if (data.id) {
-                pushState(`${agent?.id ? "/agents/" + agent.id : ""}/conversations/${data.id}`, {});
-                client.invalidateQueries({ queryKey: ["conversations"] });
-                conversationStore.set(data);
+                newConversation.set(true);
+                await goto(`${agent?.id ? "/agents/" + agent.id : ""}/conversations/${data.id}`, {
+                  keepFocus: true,
+                  noScroll: true
+                });
+                newConversation.set(false);
               }
             }
           });
@@ -115,6 +128,7 @@
   }
 
   function focusChatInput() {
+    if ($newConversation) return;
     const chatInput = document.querySelector(".chat-input") as HTMLTextAreaElement;
     chatInput.focus();
   }
@@ -143,6 +157,19 @@
 
     controller = new AbortController();
     signal = controller.signal;
+
+    if ($ttsText) {
+      generateTTS({
+        text: $ttsText,
+        voice: selectedVoice?.value,
+        onPlayAudio: (audioUrl: string | null) => currentAudioUrl.set(audioUrl),
+        onDownloadAudio: ({ downloadUrl, filename }) =>
+          setDownloadUrlAndFilename(downloadUrl, filename),
+        onError: (error: string) => toast.error(error),
+        signal
+      });
+      $ttsText = "";
+    }
   });
 
   onDestroy(() => {
@@ -150,7 +177,7 @@
       finishSound.pause();
       finishSound.remove();
 
-      resetAudio();
+      if (!$newConversation) resetAudio();
       conversationStore.set(null);
     }
   });
@@ -242,7 +269,7 @@
   }
 
   afterNavigate(() => {
-    resetConversation();
+    if (!$newConversation) resetConversation();
     focusChatInput();
   });
 
@@ -361,7 +388,7 @@
     <Textarea
       bind:value={$input}
       on:keydown={handleMessageSubmit}
-      placeholder="Type your message..."
+      placeholder={agent ? `Message ${agent.name}:` : "Type your message:"}
       class="chat-input"
       rows={1}
       cols={200}

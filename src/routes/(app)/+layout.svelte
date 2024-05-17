@@ -7,7 +7,7 @@
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Toaster } from "$lib/components/ui/sonner";
   import type { Agent, Conversation } from "$lib/drizzle/schema";
-  import { voices } from "$lib/stores/voices-store";
+  import { voices } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api/paged-response";
   import type { Voice } from "$lib/types/elevenlabs/voices";
   import { createInfiniteQuery, createQuery, type CreateQueryResult } from "@tanstack/svelte-query";

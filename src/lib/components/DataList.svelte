@@ -1,7 +1,7 @@
 <script lang="ts">
   import InfiniteScroll from "$lib/components/InfiniteScroll.svelte";
   import { Button } from "$lib/components/ui/button";
-  import { searchParams } from "$lib/stores/search-params";
+  import { searchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api/paged-response";
   import type { CreateInfiniteQueryResult, InfiniteData } from "@tanstack/svelte-query";
   import Search from "svelte-search";

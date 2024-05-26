@@ -17,6 +17,7 @@
 - [ ] Add preferred model and voice to agents.
 - [ ] Add ability to pin agents and conversations to the top of the list.
 - [x] Cache voices because they don't change often and there's no need to call the ElevenLabs API every time we change a page. This will also make the app faster. We can use Query.
+- [ ] Add custom instructions.
 
 ## TTS
 

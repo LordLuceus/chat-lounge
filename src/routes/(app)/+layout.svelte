@@ -2,12 +2,14 @@
   import { goto } from "$app/navigation";
   import AgentActions from "$lib/components/AgentActions.svelte";
   import ConversationActions from "$lib/components/ConversationActions.svelte";
+  import Toast from "$lib/components/Toast.svelte";
   import * as Avatar from "$lib/components/ui/avatar";
   import { Button } from "$lib/components/ui/button";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Toaster } from "$lib/components/ui/sonner";
   import type { Agent, Conversation } from "$lib/drizzle/schema";
-  import { voices } from "$lib/stores";
+  import { generateTTS } from "$lib/services/tts-service";
+  import { audioFilename, currentAudioUrl, downloadUrl, ttsProps, voices } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api/paged-response";
   import type { Voice } from "$lib/types/elevenlabs/voices";
   import { createInfiniteQuery, createQuery, type CreateQueryResult } from "@tanstack/svelte-query";
@@ -15,6 +17,7 @@
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
   import { SunMoon } from "lucide-svelte";
   import { ModeWatcher, resetMode, setMode } from "mode-watcher";
+  import { toast } from "svelte-sonner";
   import type { LayoutData } from "./$types";
   import NavList from "./NavList.svelte";
 
@@ -61,6 +64,23 @@
     });
 
   $: if ($voicesQuery) voices.set($voicesQuery.data);
+
+  function setDownloadUrlAndFilename(url: string, filename: string) {
+    downloadUrl.set(url);
+    audioFilename.set(filename);
+  }
+
+  $: if ($ttsProps) {
+    generateTTS({
+      text: $ttsProps.text,
+      voice: $ttsProps.voice,
+      onPlayAudio: (audioUrl: string | null) => currentAudioUrl.set(audioUrl),
+      onDownloadAudio: ({ downloadUrl, filename }) =>
+        setDownloadUrlAndFilename(downloadUrl, filename),
+      onError: (error: string) => toast.error(Toast, { componentProps: { text: error } }),
+      signal: $ttsProps.signal
+    });
+  }
 </script>
 
 <header class="flex items-center justify-between p-4">
@@ -138,6 +158,15 @@
 
 <main class="flex flex-col items-center">
   <slot />
+
+  {#if $currentAudioUrl}
+    <section aria-label="Audio player">
+      <audio src={$currentAudioUrl} controls autoplay />
+      {#if $downloadUrl}
+        <a href={$downloadUrl} download={$audioFilename}> Download audio </a>
+      {/if}
+    </section>
+  {/if}
 </main>
 
 <footer>

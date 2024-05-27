@@ -10,14 +10,13 @@
   import type { Message as ExtendedMessage } from "$lib/helpers/conversation-helpers";
   import { getMessageSiblings } from "$lib/helpers/conversation-helpers";
   import type { ConversationWithMessageMap } from "$lib/server/conversations-service";
-  import { generateTTS } from "$lib/services/tts-service";
   import {
     audioFilename,
     conversationStore,
     currentAudioUrl,
     downloadUrl,
     newConversation,
-    ttsText,
+    ttsProps,
     voices
   } from "$lib/stores";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
@@ -72,20 +71,8 @@
     useChat({
       onFinish: async (message) => {
         if (voiceMessage) {
-          if (!$conversationStore) {
-            ttsText.set(message.content);
-          } else {
-            generateTTS({
-              text: message.content,
-              voice: selectedVoice?.value,
-              onPlayAudio: (audioUrl: string | null) => currentAudioUrl.set(audioUrl),
-              onDownloadAudio: ({ downloadUrl, filename }) =>
-                setDownloadUrlAndFilename(downloadUrl, filename),
-              onError: (error: string) => toast.error(error),
-              signal
-            });
-            setVoiceMessage("");
-          }
+          ttsProps.set({ text: message.content, voice: selectedVoice?.value, signal });
+          setVoiceMessage("");
         } else {
           finishSound.play();
         }
@@ -157,19 +144,6 @@
 
     controller = new AbortController();
     signal = controller.signal;
-
-    if ($ttsText) {
-      generateTTS({
-        text: $ttsText,
-        voice: selectedVoice?.value,
-        onPlayAudio: (audioUrl: string | null) => currentAudioUrl.set(audioUrl),
-        onDownloadAudio: ({ downloadUrl, filename }) =>
-          setDownloadUrlAndFilename(downloadUrl, filename),
-        onError: (error: string) => toast.error(error),
-        signal
-      });
-      $ttsText = "";
-    }
   });
 
   onDestroy(() => {
@@ -214,16 +188,12 @@
     }
   }
 
-  function setDownloadUrlAndFilename(url: string, filename: string) {
-    downloadUrl.set(url);
-    audioFilename.set(filename);
-  }
-
   function setVoiceMessage(message: string) {
     voiceMessage = message;
   }
 
   function resetAudio() {
+    ttsProps.set(null);
     currentAudioUrl.set(null);
     downloadUrl.set("");
     audioFilename.set("");
@@ -398,12 +368,3 @@
     <Recorder {setVoiceMessage} />
   {/if}
 </section>
-
-{#if $currentAudioUrl}
-  <section aria-label="Audio player">
-    <audio src={$currentAudioUrl} controls autoplay />
-    {#if $downloadUrl}
-      <a href={$downloadUrl} download={$audioFilename}> Download audio </a>
-    {/if}
-  </section>
-{/if}

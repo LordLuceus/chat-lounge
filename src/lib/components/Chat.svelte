@@ -364,7 +364,7 @@
       cols={200}
     />
   </form>
-  {#if apiKeys?.openai}
+  {#if apiKeys?.openai && apiKeys.eleven && !$isLoading}
     <Recorder {setVoiceMessage} />
   {/if}
 </section>

@@ -209,3 +209,5 @@ export type ConversationWithMessages = Conversation & {
 export type Model = InferSelectModel<typeof models>;
 
 export type Agent = InferSelectModel<typeof agents>;
+
+export type ApiKey = InferSelectModel<typeof apiKeys>;

@@ -1,5 +1,5 @@
 import { db } from "$lib/drizzle/db";
-import { agents } from "$lib/drizzle/schema";
+import { Visibility, agents } from "$lib/drizzle/schema";
 import { and, desc, eq, sql } from "drizzle-orm";
 
 export interface AgentCreateOptions {
@@ -7,6 +7,7 @@ export interface AgentCreateOptions {
   name: string;
   description?: string;
   instructions: string;
+  visibility: Visibility;
 }
 
 export async function getAgents(
@@ -68,8 +69,17 @@ export async function getRecentAgents(userId: string) {
     .limit(5);
 }
 
-export async function createAgent({ userId, name, description, instructions }: AgentCreateOptions) {
-  return db.insert(agents).values({ userId, name, description, instructions }).returning();
+export async function createAgent({
+  userId,
+  name,
+  description,
+  instructions,
+  visibility
+}: AgentCreateOptions) {
+  return db
+    .insert(agents)
+    .values({ userId, name, description, instructions, visibility })
+    .returning();
 }
 
 export async function updateAgent(

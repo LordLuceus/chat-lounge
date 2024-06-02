@@ -61,6 +61,7 @@
 <h1>Conversations</h1>
 
 <DataList query={conversationsQuery} let:item searchLabel="Search conversations">
+  <p slot="no-results">No conversations found.</p>
   <Card.Root>
     <Card.Header>
       <Card.Title tag="h2">

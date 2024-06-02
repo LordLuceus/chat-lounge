@@ -48,7 +48,7 @@
 
 {#if $query.isSuccess}
   {#if $query.data.pages[0].meta.total === 0}
-    <p>No results found</p>
+    <slot name="no-results" />
   {/if}
 
   <InfiniteScroll
@@ -57,7 +57,7 @@
   >
     <ul class="list-none">
       {#each $query.data.pages as { data }}
-        {#each data as item (item.id)}
+        {#each data as item}
           <li class="flex items-center">
             <slot {item} />
           </li>

@@ -1,6 +1,6 @@
 <script lang="ts">
   import Chat from "$lib/components/Chat.svelte";
-  import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
+  import CheckApiKeys from "$lib/components/CheckApiKeys.svelte";
   import type { PageData } from "./$types";
 
   export let data: PageData;
@@ -15,6 +15,6 @@
   {data.agent.name}
 </h1>
 
-<SignedIn let:user>
+<CheckApiKeys {data}>
   <Chat agent={data.agent} apiKeys={data.keys} models={data.models} />
-</SignedIn>
+</CheckApiKeys>

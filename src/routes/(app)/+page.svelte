@@ -1,6 +1,6 @@
 <script lang="ts">
   import Chat from "$lib/components/Chat.svelte";
-  import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
+  import CheckApiKeys from "$lib/components/CheckApiKeys.svelte";
   import type { PageData } from "./$types";
 
   export let data: PageData;
@@ -16,20 +16,6 @@
 
 <h1>ChatLounge</h1>
 
-<SignedIn let:user>
-  {#if !data.keys.eleven && !data.keys.mistral && !data.keys.openai}
-    <p>You don't have any API keys set.</p>
-    <p>
-      <a href="/settings">Set your API keys</a> or
-      <a href="/getting-started">Read the getting started guide</a>.
-    </p>
-  {:else if !data.keys.mistral && !data.keys.openai}
-    <p>You need a Mistral or OpenAI API key to continue.</p>
-    <p>
-      <a href="/settings">Set your API keys</a> or
-      <a href="/getting-started">Read the getting started guide</a>.
-    </p>
-  {:else}
-    <Chat apiKeys={data.keys} models={data.models} />
-  {/if}
-</SignedIn>
+<CheckApiKeys {data}>
+  <Chat apiKeys={data.keys} models={data.models} />
+</CheckApiKeys>

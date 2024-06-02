@@ -1,6 +1,6 @@
 import { db } from "$lib/drizzle/db";
-import { Visibility, agents } from "$lib/drizzle/schema";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { Visibility, agentUsers, agents } from "$lib/drizzle/schema";
+import { and, eq, or, sql } from "drizzle-orm";
 
 export interface AgentCreateOptions {
   userId: string;
@@ -14,11 +14,14 @@ export async function getAgents(
   userId: string,
   limit: number = 10,
   offset: number = 0,
-  sortBy: string = "agent.lastUsedAt DESC",
-  search?: string
+  sortBy: string = "agentUser.lastUsedAt DESC",
+  search?: string,
+  visibility: Visibility | null = null,
+  ownerOnly: boolean = false,
+  usedOnly: boolean = true
 ) {
   const result = await db
-    .select({
+    .selectDistinct({
       id: agents.id,
       userId: agents.userId,
       name: agents.name,
@@ -26,22 +29,26 @@ export async function getAgents(
       instructions: agents.instructions,
       createdAt: agents.createdAt,
       updatedAt: agents.updatedAt,
-      lastUsedAt: agents.lastUsedAt
+      lastUsedAt: agentUsers.lastUsedAt
     })
     .from(agents)
-    .where(sql`(${agents.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`)
+    .leftJoin(agentUsers, and(eq(agents.id, agentUsers.agentId), eq(agentUsers.userId, userId)))
+    .where(
+      sql`(${ownerOnly ? sql`${agentUsers.userId} = ${userId} AND ${agentUsers.isOwner}` : sql`${agentUsers.userId} IS NULL OR ${agentUsers.userId} = ${userId}`}) ${usedOnly ? sql`AND (${agentUsers.userId} IS NOT NULL)` : undefined} AND (${visibility} IS NULL OR ${agents.visibility} = ${visibility}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
+    )
     .orderBy(sql`${sql.raw(sortBy)}`)
     .limit(limit)
     .offset(offset);
 
   const total = (
     await db
-      .select({
+      .selectDistinct({
         count: sql`COUNT(*)`.mapWith(Number)
       })
       .from(agents)
+      .leftJoin(agentUsers, and(eq(agents.id, agentUsers.agentId), eq(agentUsers.userId, userId)))
       .where(
-        sql`(${agents.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
+        sql`(${ownerOnly ? sql`${agentUsers.userId} = ${userId} AND ${agentUsers.isOwner}` : sql`${agentUsers.userId} IS NULL OR ${agentUsers.userId} = ${userId}`}) ${usedOnly ? sql`AND (${agentUsers.userId} IS NOT NULL)` : undefined} AND (${visibility} IS NULL OR ${agents.visibility} = ${visibility}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
       )
   ).at(0);
 
@@ -49,24 +56,32 @@ export async function getAgents(
 }
 
 export async function getAgent(userId: string, agentId: string) {
-  return db.query.agents.findFirst({
-    where: and(eq(agents.userId, userId), eq(agents.id, agentId))
-  });
-}
-
-export async function getAgentByName(userId: string, name: string) {
-  return db.query.agents.findFirst({
-    where: and(eq(agents.userId, userId), eq(agents.name, name))
-  });
-}
-
-export async function getRecentAgents(userId: string) {
-  return db
-    .select()
-    .from(agents)
-    .where(eq(agents.userId, userId))
-    .orderBy(desc(agents.lastUsedAt))
-    .limit(5);
+  return (
+    await db
+      .select({
+        id: agents.id,
+        userId: agents.userId,
+        name: agents.name,
+        description: agents.description,
+        instructions: agents.instructions,
+        createdAt: agents.createdAt,
+        updatedAt: agents.updatedAt,
+        lastUsedAt: agentUsers.lastUsedAt,
+        visibility: agents.visibility
+      })
+      .from(agents)
+      .innerJoin(agentUsers, eq(agents.id, agentUsers.agentId))
+      .where(
+        and(
+          eq(agents.id, agentId),
+          or(
+            eq(agentUsers.userId, userId),
+            eq(agents.visibility, Visibility.Public),
+            eq(agents.visibility, Visibility.Hidden)
+          )
+        )
+      )
+  ).at(0);
 }
 
 export async function createAgent({
@@ -76,10 +91,20 @@ export async function createAgent({
   instructions,
   visibility
 }: AgentCreateOptions) {
-  return db
-    .insert(agents)
-    .values({ userId, name, description, instructions, visibility })
-    .returning();
+  const agent = (
+    await db
+      .insert(agents)
+      .values({ userId, name, description, instructions, visibility })
+      .returning()
+  ).at(0);
+
+  if (!agent) {
+    throw new Error("Failed to create agent");
+  }
+
+  await addAgentUser(agent.id, userId, true);
+
+  return agent;
 }
 
 export async function updateAgent(
@@ -98,12 +123,24 @@ export async function updateAgent(
 }
 
 export async function updateLastUsed(userId: string, agentId: string) {
+  const agentUser = await db.query.agentUsers.findFirst({
+    where: and(eq(agentUsers.userId, userId), eq(agentUsers.agentId, agentId))
+  });
+
+  if (!agentUser) {
+    await addAgentUser(agentId, userId, false);
+  }
+
   return db
-    .update(agents)
+    .update(agentUsers)
     .set({ lastUsedAt: new Date() })
-    .where(and(eq(agents.userId, userId), eq(agents.id, agentId)));
+    .where(and(eq(agentUsers.userId, userId), eq(agentUsers.agentId, agentId)));
 }
 
 export async function deleteAgent(userId: string, agentId: string) {
   return db.delete(agents).where(and(eq(agents.userId, userId), eq(agents.id, agentId)));
+}
+
+export async function addAgentUser(agentId: string, userId: string, isOwner: boolean) {
+  return db.insert(agentUsers).values({ agentId, userId, isOwner });
 }

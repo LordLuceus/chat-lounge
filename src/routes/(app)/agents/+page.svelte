@@ -5,10 +5,12 @@
   import DataList from "$lib/components/DataList.svelte";
   import * as Card from "$lib/components/ui/card";
   import * as Dialog from "$lib/components/ui/dialog";
-  import type { Agent } from "$lib/drizzle/schema";
+  import * as ToggleGroup from "$lib/components/ui/toggle-group";
+  import { Visibility, type Agent } from "$lib/drizzle/schema";
   import { searchParams, type SearchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api/paged-response";
   import { createInfiniteQuery } from "@tanstack/svelte-query";
+  import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
   import { onDestroy } from "svelte";
   import Time from "svelte-time";
   import { derived } from "svelte/store";
@@ -17,7 +19,10 @@
 
   export let data: PageData;
 
-  const fetchAgents = async ({ pageParam = 1 }, { search, sortBy, sortOrder }: SearchParams) => {
+  const fetchAgents = async (
+    { pageParam = 1 },
+    { search, sortBy, sortOrder, visibility, ownerOnly }: SearchParams
+  ) => {
     const url = new URL("/api/agents", $page.url.origin);
 
     url.searchParams.set("page", pageParam.toString());
@@ -30,8 +35,14 @@
     if (sortOrder) {
       url.searchParams.set("sortOrder", sortOrder);
     }
+    if (visibility) {
+      url.searchParams.set("visibility", visibility);
+    }
+    if (ownerOnly) {
+      url.searchParams.set("ownerOnly", ownerOnly.toString());
+    }
 
-    return await fetch(url.toString()).then((res) => res.json());
+    return fetch(url.toString()).then((res) => res.json());
   };
 
   const agentsQuery = createInfiniteQuery<PagedResponse<Agent>>(
@@ -51,7 +62,8 @@
   );
 
   onDestroy(() => {
-    if (browser) searchParams.set({ search: "", sortBy: "", sortOrder: "" });
+    if (browser)
+      searchParams.set({ search: "", sortBy: "", sortOrder: "", ownerOnly: false, visibility: "" });
   });
 </script>
 
@@ -71,26 +83,51 @@
   </Dialog.Content>
 </Dialog.Root>
 
-<DataList query={agentsQuery} let:item searchLabel="Search agents">
-  <Card.Root>
-    <Card.Header>
-      <Card.Title tag="h2">
-        <a href={`/agents/${item.id}`}>{item.name}</a>
-      </Card.Title>
-      {#if item.description}
-        <Card.Description>{item.description}</Card.Description>
+<ToggleGroup.Root
+  type="single"
+  onValueChange={(value) => {
+    if (value === "mine") {
+      searchParams.update((params) => ({ ...params, ownerOnly: true, visibility: undefined }));
+    } else if (value === "public") {
+      searchParams.update((params) => ({
+        ...params,
+        ownerOnly: false,
+        visibility: Visibility.Public
+      }));
+    } else {
+      searchParams.update((params) => ({ ...params, ownerOnly: false, visibility: undefined }));
+    }
+  }}
+>
+  <ToggleGroup.Item value="mine">My agents</ToggleGroup.Item>
+  <ToggleGroup.Item value="public">Public agents</ToggleGroup.Item>
+</ToggleGroup.Root>
+
+<SignedIn let:user>
+  <DataList query={agentsQuery} let:item searchLabel="Search agents">
+    <p slot="no-results">No agents found.</p>
+    <Card.Root>
+      <Card.Header>
+        <Card.Title tag="h2">
+          <a href={`/agents/${item.id}`}>{item.name}</a>
+        </Card.Title>
+        {#if item.description}
+          <Card.Description>{item.description}</Card.Description>
+        {/if}
+      </Card.Header>
+      {#if item.lastUsedAt}
+        <Card.Content>
+          <p>
+            <strong>Last chat </strong>
+            <Time timestamp={item.lastUsedAt} relative />
+          </p>
+        </Card.Content>
       {/if}
-    </Card.Header>
-    {#if item.lastUsedAt}
-      <Card.Content>
-        <p>
-          <strong>Last chat </strong>
-          <Time timestamp={item.lastUsedAt} relative />
-        </p>
-      </Card.Content>
-    {/if}
-    <Card.Footer>
-      <AgentActions id={item.id} name={item.name} />
-    </Card.Footer>
-  </Card.Root>
-</DataList>
+      {#if item.userId === user?.id}
+        <Card.Footer>
+          <AgentActions id={item.id} name={item.name} />
+        </Card.Footer>
+      {/if}
+    </Card.Root>
+  </DataList>
+</SignedIn>

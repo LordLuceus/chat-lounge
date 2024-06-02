@@ -1,4 +1,4 @@
-import type { Agent } from "$lib/drizzle/schema";
+import { Visibility, type AgentWithUsage } from "$lib/drizzle/schema";
 import { QueryParamsProcessor } from "$lib/query-params-processor";
 import { createAgent, getAgents, type AgentCreateOptions } from "$lib/server/agents-service";
 import type { PagedResponse } from "$lib/types/api/paged-response";
@@ -16,14 +16,25 @@ export const GET = (async ({ locals, url }) => {
 
   const { limit, offset } = paramsProcessor.getPagination();
   const search = paramsProcessor.getSearchQuery(["name"]);
-  const sortBy = paramsProcessor.getSorting("conversation");
+  const sortBy = paramsProcessor.getSorting("agent");
+  const visibility = paramsProcessor.getVisibility();
+  const ownerOnly = paramsProcessor.getOwnerOnly();
 
-  const result = await getAgents(userId, limit, offset, sortBy, search);
+  const result = await getAgents(
+    userId,
+    limit,
+    offset,
+    sortBy,
+    search,
+    visibility,
+    ownerOnly,
+    visibility !== Visibility.Public
+  );
 
   return json({
     data: result.agents,
     meta: { page, pageSize, total: result.total, totalPages: Math.ceil(result.total! / pageSize) }
-  } as PagedResponse<Agent>);
+  } as PagedResponse<AgentWithUsage>);
 }) satisfies RequestHandler;
 
 export const POST = (async ({ locals, request }) => {

@@ -1,5 +1,11 @@
 import { relations, sql, type InferSelectModel } from "drizzle-orm";
-import { integer, sqliteTable, text, type AnySQLiteColumn } from "drizzle-orm/sqlite-core";
+import {
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+  type AnySQLiteColumn
+} from "drizzle-orm/sqlite-core";
 import { v4 as uuidv4 } from "uuid";
 
 export enum AIProvider {
@@ -60,7 +66,6 @@ export const agents = sqliteTable("agent", {
     .notNull()
     .$type<Visibility>()
     .default(sql`'private'`),
-  lastUsedAt: integer("lastUsedAt", { mode: "timestamp_ms" }),
   createdAt: integer("createdAt", { mode: "timestamp_ms" })
     .notNull()
     .$default(() => new Date()),
@@ -104,24 +109,28 @@ export const conversations = sqliteTable("conversation", {
     .$onUpdate(() => new Date())
 });
 
-export const conversationUsers = sqliteTable("conversationUser", {
-  id: text("id")
-    .notNull()
-    .primaryKey()
-    .$default(() => uuidv4()),
-  conversationId: text("conversationId")
-    .notNull()
-    .references(() => conversations.id, { onDelete: "cascade" }),
-  userId: text("userId")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  createdAt: integer("createdAt", { mode: "timestamp_ms" })
-    .notNull()
-    .$default(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
-    .notNull()
-    .$onUpdate(() => new Date())
-});
+export const conversationUsers = sqliteTable(
+  "conversationUser",
+  {
+    conversationId: text("conversationId")
+      .notNull()
+      .references(() => conversations.id, { onDelete: "cascade" }),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: integer("createdAt", { mode: "timestamp_ms" })
+      .notNull()
+      .$default(() => new Date()),
+    updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
+      .notNull()
+      .$onUpdate(() => new Date())
+  },
+  (table) => {
+    return {
+      pk: primaryKey({ columns: [table.conversationId, table.userId] })
+    };
+  }
+);
 
 export const messages = sqliteTable("message", {
   id: text("id")
@@ -148,6 +157,33 @@ export const messages = sqliteTable("message", {
     .$onUpdate(() => new Date())
 });
 
+export const agentUsers = sqliteTable(
+  "agentUser",
+  {
+    agentId: text("agentId")
+      .notNull()
+      .references(() => agents.id, { onDelete: "cascade" }),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    lastUsedAt: integer("lastUsedAt", { mode: "timestamp_ms" }),
+    isOwner: integer("isOwner", { mode: "boolean" })
+      .notNull()
+      .default(sql`false`),
+    createdAt: integer("createdAt", { mode: "timestamp_ms" })
+      .notNull()
+      .$default(() => new Date()),
+    updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
+      .notNull()
+      .$onUpdate(() => new Date())
+  },
+  (table) => {
+    return {
+      pk: primaryKey({ columns: [table.agentId, table.userId] })
+    };
+  }
+);
+
 export const conversationsRelations = relations(conversations, ({ many, one }) => ({
   messages: many(messages),
   agent: one(agents, { fields: [conversations.agentId], references: [agents.id] }),
@@ -161,14 +197,16 @@ export const conversationsRelations = relations(conversations, ({ many, one }) =
 
 export const agentsRelations = relations(agents, ({ many, one }) => ({
   conversations: many(conversations),
-  user: one(users, { fields: [agents.userId], references: [users.id] })
+  owner: one(users, { fields: [agents.userId], references: [users.id] }),
+  agentUsers: many(agentUsers)
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
   apiKeys: many(apiKeys),
   conversationUsers: many(conversationUsers),
   messages: many(messages),
-  agents: many(agents)
+  agents: many(agents),
+  agentUsers: many(agentUsers)
 }));
 
 export const modelsRelations = relations(models, ({ many }) => ({
@@ -201,6 +239,11 @@ export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
   user: one(users, { fields: [apiKeys.userId], references: [users.id] })
 }));
 
+export const agentUsersRelations = relations(agentUsers, ({ one }) => ({
+  agent: one(agents, { fields: [agentUsers.agentId], references: [agents.id] }),
+  user: one(users, { fields: [agentUsers.userId], references: [users.id] })
+}));
+
 export type Conversation = InferSelectModel<typeof conversations>;
 export type ConversationWithMessages = Conversation & {
   messages: Array<InferSelectModel<typeof messages> & { childIds?: string[] }>;
@@ -209,5 +252,9 @@ export type ConversationWithMessages = Conversation & {
 export type Model = InferSelectModel<typeof models>;
 
 export type Agent = InferSelectModel<typeof agents>;
+
+export type AgentWithUsage = Agent & {
+  lastUsedAt: Date | null;
+};
 
 export type ApiKey = InferSelectModel<typeof apiKeys>;

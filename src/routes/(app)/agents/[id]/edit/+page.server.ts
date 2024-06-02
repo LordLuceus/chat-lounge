@@ -1,4 +1,4 @@
-import { getAgent, updateAgent } from "$lib/server/agents-service.js";
+import { getAgent, updateAgent, type AgentCreateOptions } from "$lib/server/agents-service.js";
 import { error, fail } from "@sveltejs/kit";
 import { message, superValidate } from "sveltekit-superforms";
 import { zod } from "sveltekit-superforms/adapters";
@@ -35,7 +35,7 @@ export const actions: Actions = {
       return fail(400, { form });
     }
 
-    await updateAgent(form.id, form.data);
+    await updateAgent(form.id, form.data as AgentCreateOptions);
     return message(form, "Agent updated successfully");
   }
 };

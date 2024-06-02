@@ -35,6 +35,6 @@ export const actions: Actions = {
       visibility: visibility as Visibility
     });
 
-    return message(form, { agentId: agent.at(0)?.id, created: true });
+    return message(form, { agentId: agent.id, created: true });
   }
 };

@@ -14,8 +14,7 @@
     "push": "drizzle-kit push",
     "migrate": "node src/lib/drizzle/migrate.js",
     "studio": "drizzle-kit studio",
-    "prepare": "husky || true",
-    "postinstall": "pnpm run migrate"
+    "prepare": "husky || true"
   },
   "devDependencies": {
     "@clerk/backend": "^0.38.8",

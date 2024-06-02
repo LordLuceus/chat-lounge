@@ -1,7 +1,7 @@
 <script lang="ts">
   import InfiniteScroll from "$lib/components/InfiniteScroll.svelte";
   import { Button } from "$lib/components/ui/button";
-  import { searchParams } from "$lib/stores/search-params";
+  import { searchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api/paged-response";
   import type { CreateInfiniteQueryResult, InfiniteData } from "@tanstack/svelte-query";
   import Search from "svelte-search";
@@ -48,7 +48,7 @@
 
 {#if $query.isSuccess}
   {#if $query.data.pages[0].meta.total === 0}
-    <p>No results found</p>
+    <slot name="no-results" />
   {/if}
 
   <InfiniteScroll
@@ -57,7 +57,7 @@
   >
     <ul class="list-none">
       {#each $query.data.pages as { data }}
-        {#each data as item (item.id)}
+        {#each data as item}
           <li class="flex items-center">
             <slot {item} />
           </li>

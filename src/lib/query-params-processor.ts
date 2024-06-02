@@ -1,3 +1,5 @@
+import type { Visibility } from "./drizzle/schema";
+
 export type SortOrder = "ASC" | "DESC";
 export interface RequestParams {
   page: number;
@@ -5,6 +7,8 @@ export interface RequestParams {
   sortBy?: string;
   sortOrder: SortOrder;
   search?: string;
+  visibility?: Visibility;
+  ownerOnly?: boolean;
 }
 
 export class QueryParamsProcessor {
@@ -26,7 +30,9 @@ export class QueryParamsProcessor {
       limit: parseInt(params.limit) || this.defaultLimit,
       sortBy: params.sortBy || "",
       sortOrder: this.validateSortOrder(params.sortOrder),
-      search: params.search || ""
+      search: params.search || "",
+      visibility: params.visibility,
+      ownerOnly: params.ownerOnly === "true"
     };
   }
 
@@ -69,5 +75,13 @@ export class QueryParamsProcessor {
       .map((column) => `lower(${column}) LIKE '%${sanitizedSearch}%'`)
       .join(" OR ");
     return `(${searchQuery})`;
+  }
+
+  public getVisibility() {
+    return this.params.visibility || null;
+  }
+
+  public getOwnerOnly() {
+    return this.params.ownerOnly;
   }
 }

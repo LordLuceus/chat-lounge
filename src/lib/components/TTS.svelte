@@ -1,9 +1,13 @@
 <script lang="ts">
   import Toast from "$lib/components/Toast.svelte";
   import { Button } from "$lib/components/ui/button";
-  import { generateTTS } from "$lib/services/tts-service";
-  import { audioFilename, currentAudioUrl, downloadUrl } from "$lib/stores/audio-store";
-  import { ttsGenerating } from "$lib/stores/tts-generating-store";
+  import {
+    audioFilename,
+    downloadUrl,
+    newConversation,
+    ttsGenerating,
+    ttsProps
+  } from "$lib/stores";
   import { Loader, Speech } from "lucide-svelte";
   import { onDestroy } from "svelte";
   import { toast } from "svelte-sonner";
@@ -26,18 +30,11 @@
   const tts = async (): Promise<void> => {
     controller = new AbortController();
     signal = controller.signal;
-    await generateTTS({
-      text,
-      voice,
-      onPlayAudio: (audioUrl) => currentAudioUrl.set(audioUrl),
-      onDownloadAudio: ({ downloadUrl, filename }) =>
-        handleDownloadAudio({ url: downloadUrl, filename }),
-      onError: handleError,
-      signal
-    });
+    ttsProps.set({ text, voice, signal });
   };
 
   onDestroy(() => {
+    if ($newConversation) return;
     controller?.abort();
   });
 </script>

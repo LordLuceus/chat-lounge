@@ -5,7 +5,7 @@
   import DataList from "$lib/components/DataList.svelte";
   import * as Card from "$lib/components/ui/card";
   import type { Conversation } from "$lib/drizzle/schema";
-  import { searchParams, type SearchParams } from "$lib/stores/search-params";
+  import { searchParams, type SearchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api/paged-response";
   import { createInfiniteQuery } from "@tanstack/svelte-query";
   import { onDestroy } from "svelte";
@@ -61,6 +61,7 @@
 <h1>Conversations</h1>
 
 <DataList query={conversationsQuery} let:item searchLabel="Search conversations">
+  <p slot="no-results">No conversations found.</p>
   <Card.Root>
     <Card.Header>
       <Card.Title tag="h2">

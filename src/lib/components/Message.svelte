@@ -6,7 +6,7 @@
   import * as Avatar from "$lib/components/ui/avatar";
   import { Button } from "$lib/components/ui/button";
   import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
-  import { conversationStore } from "$lib/stores/conversation-store";
+  import { conversationStore } from "$lib/stores";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
   import type { Message } from "ai/svelte";
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";

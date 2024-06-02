@@ -2,19 +2,22 @@
   import { goto } from "$app/navigation";
   import AgentActions from "$lib/components/AgentActions.svelte";
   import ConversationActions from "$lib/components/ConversationActions.svelte";
+  import Toast from "$lib/components/Toast.svelte";
   import * as Avatar from "$lib/components/ui/avatar";
   import { Button } from "$lib/components/ui/button";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Toaster } from "$lib/components/ui/sonner";
   import type { Agent, Conversation } from "$lib/drizzle/schema";
-  import { voices } from "$lib/stores/voices-store";
+  import { generateTTS } from "$lib/services/tts-service";
+  import { audioFilename, currentAudioUrl, downloadUrl, ttsProps, voices } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api/paged-response";
   import type { Voice } from "$lib/types/elevenlabs/voices";
   import { createInfiniteQuery, createQuery, type CreateQueryResult } from "@tanstack/svelte-query";
   import ClerkLoaded from "clerk-sveltekit/client/ClerkLoaded.svelte";
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
   import { SunMoon } from "lucide-svelte";
-  import { ModeWatcher, resetMode, setMode } from "mode-watcher";
+  import { resetMode, setMode } from "mode-watcher";
+  import { toast } from "svelte-sonner";
   import type { LayoutData } from "./$types";
   import NavList from "./NavList.svelte";
 
@@ -61,43 +64,62 @@
     });
 
   $: if ($voicesQuery) voices.set($voicesQuery.data);
+
+  function setDownloadUrlAndFilename(url: string, filename: string) {
+    downloadUrl.set(url);
+    audioFilename.set(filename);
+  }
+
+  $: if ($ttsProps) {
+    generateTTS({
+      text: $ttsProps.text,
+      voice: $ttsProps.voice,
+      onPlayAudio: (audioUrl: string | null) => currentAudioUrl.set(audioUrl),
+      onDownloadAudio: ({ downloadUrl, filename }) =>
+        setDownloadUrlAndFilename(downloadUrl, filename),
+      onError: (error: string) => toast.error(Toast, { componentProps: { text: error } }),
+      signal: $ttsProps.signal
+    });
+  }
 </script>
 
-<header class="flex items-center justify-between p-4">
-  <a href="/">
-    <img src="/assets/chatlounge_logo.webp" alt="ChatLounge" />
-  </a>
-  <nav class="flex">
-    <a href="/">Home</a>
-    {#if $conversationsQuery.isSuccess && $conversationsQuery.data.pages[0].meta.total > 0}
-      <NavList query={conversationsQuery} itemType="Conversations">
-        <div slot="link" let:item>
-          <a href={`${item.agentId ? "/agents/" + item.agentId : ""}/conversations/${item.id}`}
-            >{item.name}</a
-          >
-        </div>
-        <div slot="menu" let:item>
-          <ConversationActions id={item.id} name={item.name} />
-        </div>
-      </NavList>
-    {/if}
-    {#if $agentsQuery.isSuccess && $agentsQuery.data.pages[0].meta.total > 0}
-      <NavList query={agentsQuery} itemType="Agents">
-        <div slot="link" let:item>
-          <a href={`/agents/${item.id}`}>{item.name}</a>
-        </div>
-        <div slot="menu" let:item>
-          <AgentActions id={item.id} name={item.name} />
-        </div>
-      </NavList>
-    {:else}
-      <a href="/agents">Agents</a>
-    {/if}
-    {#if data?.keys?.eleven}
-      <a href="/voices">Voices</a>
-    {/if}
-  </nav>
-  <SignedIn>
+<SignedIn let:user>
+  <header class="flex items-center justify-between p-4">
+    <a href="/">
+      <img src="/assets/chatlounge_logo.webp" alt="ChatLounge" />
+    </a>
+    <nav class="flex">
+      <a href="/">Home</a>
+      {#if $conversationsQuery.isSuccess && $conversationsQuery.data.pages[0].meta.total > 0}
+        <NavList query={conversationsQuery} itemType="Conversations">
+          <div slot="link" let:item>
+            <a href={`${item.agentId ? "/agents/" + item.agentId : ""}/conversations/${item.id}`}
+              >{item.name}</a
+            >
+          </div>
+          <div slot="menu" let:item>
+            <ConversationActions id={item.id} name={item.name} />
+          </div>
+        </NavList>
+      {/if}
+      {#if $agentsQuery.isSuccess && $agentsQuery.data.pages[0].meta.total > 0}
+        <NavList query={agentsQuery} itemType="Agents">
+          <div slot="link" let:item>
+            <a href={`/agents/${item.id}`}>{item.name}</a>
+          </div>
+          <div slot="menu" let:item>
+            {#if user?.id === item.userId}
+              <AgentActions id={item.id} name={item.name} />
+            {/if}
+          </div>
+        </NavList>
+      {:else}
+        <a href="/agents">Agents</a>
+      {/if}
+      {#if data?.keys?.eleven}
+        <a href="/voices">Voices</a>
+      {/if}
+    </nav>
     <ClerkLoaded let:clerk>
       <DropdownMenu.Root>
         <DropdownMenu.Trigger>
@@ -118,30 +140,37 @@
         </DropdownMenu.Content>
       </DropdownMenu.Root>
     </ClerkLoaded>
-  </SignedIn>
-  <DropdownMenu.Root>
-    <DropdownMenu.Trigger asChild let:builder>
-      <Button builders={[builder]} variant="outline" size="icon">
-        <SunMoon />
-        <span class="sr-only">Toggle theme</span>
-      </Button>
-    </DropdownMenu.Trigger>
-    <DropdownMenu.Content align="end">
-      <DropdownMenu.Item on:click={() => setMode("light")}>Light</DropdownMenu.Item>
-      <DropdownMenu.Item on:click={() => setMode("dark")}>Dark</DropdownMenu.Item>
-      <DropdownMenu.Item on:click={() => resetMode()}>System</DropdownMenu.Item>
-    </DropdownMenu.Content>
-  </DropdownMenu.Root>
-</header>
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild let:builder>
+        <Button builders={[builder]} variant="outline" size="icon">
+          <SunMoon />
+          <span class="sr-only">Toggle theme</span>
+        </Button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Content align="end">
+        <DropdownMenu.Item on:click={() => setMode("light")}>Light</DropdownMenu.Item>
+        <DropdownMenu.Item on:click={() => setMode("dark")}>Dark</DropdownMenu.Item>
+        <DropdownMenu.Item on:click={() => resetMode()}>System</DropdownMenu.Item>
+      </DropdownMenu.Content>
+    </DropdownMenu.Root>
+  </header>
 
-<ModeWatcher />
+  <main class="flex flex-col items-center">
+    <slot />
 
-<main class="flex flex-col items-center">
-  <slot />
-</main>
+    {#if $currentAudioUrl}
+      <section aria-label="Audio player">
+        <audio src={$currentAudioUrl} controls autoplay />
+        {#if $downloadUrl}
+          <a href={$downloadUrl} download={$audioFilename}> Download audio </a>
+        {/if}
+      </section>
+    {/if}
+  </main>
 
-<footer>
-  <a href="/changelog">Changelog</a>
-</footer>
+  <footer>
+    <a href="/changelog">Changelog</a>
+  </footer>
 
-<Toaster />
+  <Toaster />
+</SignedIn>

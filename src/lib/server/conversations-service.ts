@@ -1,13 +1,17 @@
-import { OPENAI_API_KEY } from "$env/static/private";
 import { db } from "$lib/drizzle/db";
 import {
+  AIProvider,
   conversationUsers,
   conversations,
   messages,
   type ConversationWithMessages
 } from "$lib/drizzle/schema";
+import { getApiKey } from "$lib/server/api-keys-service";
+import { getModel } from "$lib/server/models-service";
+import { createMistral } from "@ai-sdk/mistral";
+import { createOpenAI } from "@ai-sdk/openai";
+import { generateText } from "ai";
 import { and, asc, desc, eq, sql } from "drizzle-orm";
-import { OpenAI } from "openai";
 
 export interface ConversationCreateOptions {
   name?: string;
@@ -29,8 +33,6 @@ interface Message {
 export type ConversationWithMessageMap = ConversationWithMessages & {
   messageMap: Record<string, Message>;
 };
-
-const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
 export async function getConversations(
   userId: string,
@@ -133,7 +135,7 @@ export async function createConversation({
     );
   }
 
-  const title = await generateConversationName(messages);
+  const title = await generateConversationName(messages, modelId, userId);
   if (title) await updateConversation(conversation.id, { name: title });
 
   return getConversation(userId, conversation.id);
@@ -351,23 +353,38 @@ export async function deleteConversationMessage(conversationId: string, messageI
     .where(and(eq(messages.id, messageId), eq(messages.conversationId, conversationId)));
 }
 
-async function generateConversationName(messages: { role: string; content: string }[]) {
+async function generateConversationName(
+  messages: { role: string; content: string }[],
+  modelId: string | null,
+  userId: string
+) {
+  if (!modelId) return null;
+
+  const model = await getModel(modelId);
+
+  if (!model) return null;
+
+  const apiKey = await getApiKey(userId, model.provider as AIProvider);
+
+  if (!apiKey) return null;
+
   const prompt =
     "Summarise the following conversation in five words or fewer. Be as concise as possible without losing the context of the conversation. Your goal is to extract the key point of the conversation and turn it into a short and interesting title. Respond only with the title and nothing else.";
 
   const context = messages.map(({ role, content }) => `${role}: ${content}`).join("\n");
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-3.5-turbo",
-    messages: [
-      {
-        role: "user",
-        content: prompt + "\n\n---\n\n" + context
-      }
-    ]
+  const provider =
+    apiKey.provider === AIProvider.Mistral
+      ? createMistral({ apiKey: apiKey.key })
+      : createOpenAI({ apiKey: apiKey.key });
+  const { text } = await generateText({
+    model: provider(
+      apiKey.provider === AIProvider.Mistral ? "mistral-medium-latest" : "gpt-3.5-turbo"
+    ),
+    messages: [{ role: "user", content: prompt + "\n\n---\n\n" + context }]
   });
 
-  return response.choices[0].message.content?.trim().replaceAll('"', "");
+  return text.trim().replaceAll('"', "");
 }
 
 function createMessageMap(messages: Message[]): Record<string, Message> {

@@ -1,3 +1,4 @@
+import { Visibility } from "$lib/drizzle/schema";
 import { createAgent } from "$lib/server/agents-service";
 import { fail } from "@sveltejs/kit";
 import { message, superValidate } from "sveltekit-superforms";
@@ -25,9 +26,15 @@ export const actions: Actions = {
       return fail(400, { form });
     }
 
-    const { name, description, instructions } = form.data;
-    const agent = await createAgent({ userId: userId!, name, description, instructions });
+    const { name, description, instructions, visibility } = form.data;
+    const agent = await createAgent({
+      userId: userId!,
+      name,
+      description,
+      instructions,
+      visibility: visibility as Visibility
+    });
 
-    return message(form, { agentId: agent.at(0)?.id, created: true });
+    return message(form, { agentId: agent.id, created: true });
   }
 };

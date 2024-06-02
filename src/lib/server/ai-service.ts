@@ -1,4 +1,4 @@
-import type { AIProvider, Agent, Model } from "$lib/drizzle/schema";
+import type { AIProvider, Agent, AgentWithUsage, Model } from "$lib/drizzle/schema";
 import {
   addConversationMessage,
   getConversationMessage,
@@ -36,7 +36,7 @@ class AIService {
     messages: Message[],
     model: Model,
     userId: string,
-    agent?: Agent,
+    agent?: AgentWithUsage,
     conversationId?: string,
     regenerate?: boolean,
     messageId?: string

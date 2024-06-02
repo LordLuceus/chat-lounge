@@ -2,9 +2,10 @@
   import { goto } from "$app/navigation";
   import * as Form from "$lib/components/ui/form";
   import { Input } from "$lib/components/ui/input";
+  import * as RadioGroup from "$lib/components/ui/radio-group";
   import { Textarea } from "$lib/components/ui/textarea";
   import { useQueryClient } from "@tanstack/svelte-query";
-  import { superForm, type Infer, type SuperValidated } from "sveltekit-superforms";
+  import SuperDebug, { superForm, type Infer, type SuperValidated } from "sveltekit-superforms";
   import { zodClient } from "sveltekit-superforms/adapters";
   import { agentSchema, type AgentSchema } from "./schema";
 
@@ -58,5 +59,32 @@
     >
     <Form.FieldErrors />
   </Form.Field>
+  <Form.Fieldset {form} name="visibility">
+    <Form.Legend>Visibility</Form.Legend>
+    <RadioGroup.Root bind:value={$formData.visibility} class="flex flex-col space-y-1">
+      <div class="flex items-center space-x-3 space-y-0">
+        <Form.Control let:attrs>
+          <RadioGroup.Item value="public" {...attrs} />
+          <Form.Label class="font-normal">Public</Form.Label>
+        </Form.Control>
+      </div>
+      <div class="flex items-center space-x-3 space-y-0">
+        <Form.Control let:attrs>
+          <RadioGroup.Item value="private" {...attrs} />
+          <Form.Label class="font-normal">Private</Form.Label>
+        </Form.Control>
+      </div>
+      <div class="flex items-center space-x-3 space-y-0">
+        <Form.Control let:attrs>
+          <RadioGroup.Item value="hidden" {...attrs} />
+          <Form.Label class="font-normal">Link only</Form.Label>
+        </Form.Control>
+      </div>
+      <RadioGroup.Input name="visibility" />
+    </RadioGroup.Root>
+    <Form.FieldErrors />
+  </Form.Fieldset>
   <Form.Button>Save</Form.Button>
 </form>
+
+<SuperDebug data={$formData} />

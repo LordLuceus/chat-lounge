@@ -19,6 +19,7 @@
 - [x] Cache voices because they don't change often and there's no need to call the ElevenLabs API every time we change a page. This will also make the app faster. We can use Query.
 - [ ] Add custom instructions.
 - [x] Use the user's API key for title generation.
+- [x] Add agent sharing.
 
 ## TTS
 
@@ -29,7 +30,7 @@
 
 ## Long term
 
-- [ ] Implement agent and conversation sharing.
+- [ ] Implement conversation sharing.
 - [ ] Add a way to talk to other agents in the same conversation.
 - [ ] Add multi-user conversation support.
 - [ ] Add image support.

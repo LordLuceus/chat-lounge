@@ -5,7 +5,7 @@
   import * as RadioGroup from "$lib/components/ui/radio-group";
   import { Textarea } from "$lib/components/ui/textarea";
   import { useQueryClient } from "@tanstack/svelte-query";
-  import SuperDebug, { superForm, type Infer, type SuperValidated } from "sveltekit-superforms";
+  import { superForm, type Infer, type SuperValidated } from "sveltekit-superforms";
   import { zodClient } from "sveltekit-superforms/adapters";
   import { agentSchema, type AgentSchema } from "./schema";
 
@@ -86,5 +86,3 @@
   </Form.Fieldset>
   <Form.Button>Save</Form.Button>
 </form>
-
-<SuperDebug data={$formData} />

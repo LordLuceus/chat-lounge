@@ -1,9 +1,10 @@
-import type { AIProvider, Agent, AgentWithUsage, Model } from "$lib/drizzle/schema";
+import { AIProvider, type Agent, type AgentWithUsage, type Model } from "$lib/drizzle/schema";
 import {
   addConversationMessage,
   getConversationMessage,
   getLastSummary
 } from "$lib/server/conversations-service";
+import { createGoogleGenerativeAI, type GoogleGenerativeAIProvider } from "@ai-sdk/google";
 import { createMistral, type MistralProvider } from "@ai-sdk/mistral";
 import { createOpenAI, type OpenAIProvider } from "@ai-sdk/openai";
 import { StreamingTextResponse, generateText, streamText } from "ai";
@@ -15,9 +16,30 @@ interface Message {
   content: string;
 }
 
+interface safetySettings {
+  category:
+    | "HARM_CATEGORY_DANGEROUS_CONTENT"
+    | "HARM_CATEGORY_HARASSMENT"
+    | "HARM_CATEGORY_HATE_SPEECH"
+    | "HARM_CATEGORY_SEXUALLY_EXPLICIT";
+  threshold: "BLOCK_NONE";
+}
+
+interface GoogleSettings {
+  safetySettings: safetySettings[];
+}
+
 class AIService {
-  private client: MistralProvider | OpenAIProvider;
+  private client: MistralProvider | OpenAIProvider | GoogleGenerativeAIProvider;
   private readonly LIMIT_MULTIPLIER = 0.9; // We use 90% of the token limit to give us some headroom
+  private readonly GOOGLE_SETTINGS: GoogleSettings = {
+    safetySettings: [
+      { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+      { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+      { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+      { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" }
+    ]
+  };
 
   constructor(
     private provider: AIProvider,
@@ -27,6 +49,8 @@ class AIService {
       this.client = createMistral({ apiKey: apiKey });
     } else if (provider === "openai") {
       this.client = createOpenAI({ apiKey: apiKey });
+    } else if (provider === "google") {
+      this.client = createGoogleGenerativeAI({ apiKey: apiKey });
     } else {
       throw new Error("Unsupported AI provider");
     }
@@ -74,7 +98,7 @@ class AIService {
 
   private async getResponse(messages: Message[], modelId: string, system?: string) {
     const result = await streamText({
-      model: this.client(modelId),
+      model: this.client(modelId, this.provider === "google" ? this.GOOGLE_SETTINGS : undefined),
       messages,
       system,
       temperature: 1.0
@@ -88,7 +112,7 @@ class AIService {
       "Summarise this conversation. Keep it concise, but retain as much information as possible.";
 
     const { text } = await generateText({
-      model: this.client(modelId),
+      model: this.client(modelId, this.provider === "google" ? this.GOOGLE_SETTINGS : undefined),
       messages: [...messages.slice(0, -1), { role: "user", content: prompt }],
       system,
       temperature: 0.5
@@ -178,6 +202,23 @@ class AIService {
     await addConversationMessage(conversationId, summary, "user", userId, messageId, true);
 
     return messages;
+  }
+
+  public async generateConversationName(
+    messages: { role: string; content: string }[],
+    modelId: string
+  ) {
+    const prompt =
+      "Summarise the following conversation in five words or fewer. Be as concise as possible without losing the context of the conversation. Your goal is to extract the key point of the conversation and turn it into a short and interesting title. Respond only with the title and nothing else.";
+
+    const context = messages.map(({ role, content }) => `${role}: ${content}`).join("\n");
+
+    const { text } = await generateText({
+      model: this.client(modelId),
+      messages: [{ role: "user", content: prompt + "\n\n---\n\n" + context }]
+    });
+
+    return text.trim().replaceAll('"', "");
   }
 }
 

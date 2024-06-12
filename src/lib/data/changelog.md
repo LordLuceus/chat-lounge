@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 12 Jun, 2024
+
+We've added support for Google's Gemini models, specifically Gemini 1.5 Flash and Gemini 1.5 Pro. You can set your Google API key in the settings page just like the other providers. Note that, if you're in Europe, you'll need to have a paid account to use the Gemini models. Happy chatting! 🚀
+
 ## 2 Jun, 2024
 
 We've added agent sharing to ChatLounge. You can now share agents with other users, allowing them to use your agent in their conversations. You can make your agents visible to all users or shareable by a link. We've also fixed some bugs around creating new conversations and TTS. Enjoy!

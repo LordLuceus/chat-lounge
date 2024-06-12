@@ -9,7 +9,8 @@ export const load = (async ({ locals }) => {
   const keys = {
     mistral: storedKeys.some((key) => key.provider === AIProvider.Mistral),
     eleven: storedKeys.some((key) => key.provider === AIProvider.ElevenLabs),
-    openai: storedKeys.some((key) => key.provider === AIProvider.OpenAI)
+    openai: storedKeys.some((key) => key.provider === AIProvider.OpenAI),
+    google: storedKeys.some((key) => key.provider === AIProvider.Google)
   };
 
   return {

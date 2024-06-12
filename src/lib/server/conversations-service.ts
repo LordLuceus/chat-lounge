@@ -6,11 +6,9 @@ import {
   messages,
   type ConversationWithMessages
 } from "$lib/drizzle/schema";
+import AIService from "$lib/server/ai-service";
 import { getApiKey } from "$lib/server/api-keys-service";
 import { getModel } from "$lib/server/models-service";
-import { createMistral } from "@ai-sdk/mistral";
-import { createOpenAI } from "@ai-sdk/openai";
-import { generateText } from "ai";
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 
 export interface ConversationCreateOptions {
@@ -353,6 +351,13 @@ export async function deleteConversationMessage(conversationId: string, messageI
     .where(and(eq(messages.id, messageId), eq(messages.conversationId, conversationId)));
 }
 
+function createMessageMap(messages: Message[]): Record<string, Message> {
+  return messages.reduce<Record<string, Message>>((obj, message) => {
+    obj[message.id] = message;
+    return obj;
+  }, {});
+}
+
 async function generateConversationName(
   messages: { role: string; content: string }[],
   modelId: string | null,
@@ -368,28 +373,15 @@ async function generateConversationName(
 
   if (!apiKey) return null;
 
-  const prompt =
-    "Summarise the following conversation in five words or fewer. Be as concise as possible without losing the context of the conversation. Your goal is to extract the key point of the conversation and turn it into a short and interesting title. Respond only with the title and nothing else.";
+  if (apiKey.provider === AIProvider.Mistral) {
+    modelId = "mistral-medium-latest";
+  } else if (apiKey.provider === AIProvider.OpenAI) {
+    modelId = "gpt-3.5-turbo";
+  } else if (apiKey.provider === AIProvider.Google) {
+    modelId = "models/gemini-1.5-flash-latest";
+  }
 
-  const context = messages.map(({ role, content }) => `${role}: ${content}`).join("\n");
+  const service = new AIService(apiKey.provider as AIProvider, apiKey.key);
 
-  const provider =
-    apiKey.provider === AIProvider.Mistral
-      ? createMistral({ apiKey: apiKey.key })
-      : createOpenAI({ apiKey: apiKey.key });
-  const { text } = await generateText({
-    model: provider(
-      apiKey.provider === AIProvider.Mistral ? "mistral-medium-latest" : "gpt-3.5-turbo"
-    ),
-    messages: [{ role: "user", content: prompt + "\n\n---\n\n" + context }]
-  });
-
-  return text.trim().replaceAll('"', "");
-}
-
-function createMessageMap(messages: Message[]): Record<string, Message> {
-  return messages.reduce<Record<string, Message>>((obj, message) => {
-    obj[message.id] = message;
-    return obj;
-  }, {});
+  return service.generateConversationName(messages, modelId);
 }

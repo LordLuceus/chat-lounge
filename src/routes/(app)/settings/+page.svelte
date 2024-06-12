@@ -20,8 +20,8 @@
     <p>Here you can manage your API keys.</p>
     <h2>API Keys</h2>
     <p>
-      Manage your API keys for supported providers. To use the app, at least one of Mistral or
-      OpenAI is required. ElevenLabs is required for voice conversations.
+      Manage your API keys for supported providers. To use the app, at least one of Mistral, OpenAI,
+      or Google is required. ElevenLabs and OpenAI are required for voice conversations.
     </p>
     <h3>Mistral</h3>
     {#if data.keys?.mistral}
@@ -46,6 +46,14 @@
     {:else}
       <p>You haven't set your ElevenLabs API key yet.</p>
       <ApiKeyForm provider={AIProvider.ElevenLabs} openText="Set" {form} />
+    {/if}
+    <h3>Google</h3>
+    {#if data.keys?.google}
+      <p>Your Google API key is set.</p>
+      <ApiKeyForm provider={AIProvider.Google} openText="Change" {form} />
+    {:else}
+      <p>You haven't set your Google API key yet.</p>
+      <ApiKeyForm provider={AIProvider.Google} openText="Set" {form} />
     {/if}
   </SignedIn>
 </section>

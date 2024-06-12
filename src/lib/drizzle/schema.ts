@@ -11,7 +11,8 @@ import { v4 as uuidv4 } from "uuid";
 export enum AIProvider {
   Mistral = "mistral",
   OpenAI = "openai",
-  ElevenLabs = "elevenlabs"
+  ElevenLabs = "elevenlabs",
+  Google = "google"
 }
 
 export enum Visibility {

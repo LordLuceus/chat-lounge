@@ -19,8 +19,8 @@
     ttsProps,
     voices
   } from "$lib/stores";
+  import { useChat } from "@ai-sdk/svelte";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
-  import { useChat } from "ai/svelte";
   import { onDestroy, onMount } from "svelte";
   import Select from "svelte-select";
   import { toast } from "svelte-sonner";

@@ -374,9 +374,9 @@ async function generateConversationName(
   if (!apiKey) return null;
 
   if (apiKey.provider === AIProvider.Mistral) {
-    modelId = "mistral-medium-latest";
+    modelId = "open-mistral-nemo";
   } else if (apiKey.provider === AIProvider.OpenAI) {
-    modelId = "gpt-3.5-turbo";
+    modelId = "gpt-4o-mini";
   } else if (apiKey.provider === AIProvider.Google) {
     modelId = "models/gemini-1.5-flash-latest";
   }

@@ -1,3 +1,8 @@
+## Bugfixes
+
+- [ ] Fix bug with editing a message that is not the last message in the conversation.
+- [ ] Fix bug where typing in the chat input does not work when switching between conversations or agents.
+
 ## Conversations:
 
 - [x] CRITICAL: Fix the bug where continuing a conversation with a new message does not work in the case when we have just navigated to a newly saved conversation (using pushState). This is likely a store sync issue.
@@ -11,6 +16,7 @@
 
 ## General
 
+- [ ] Update models: add gpt-4o-mini, remove mistral-small and mistral-medium.
 - [x] Refactor the Mistral and OpenAI services to use a common interface.
 - [x] Make the agents list at the top dynamic with Query just like the conversations list.
 - [x] Always show the current agent and conversation at the top of the page. (Done with infiniteQuery.)
@@ -33,4 +39,5 @@
 - [ ] Implement conversation sharing.
 - [ ] Add a way to talk to other agents in the same conversation.
 - [ ] Add multi-user conversation support.
-- [ ] Add image support.
+- [ ] Add image, audio, and video support.
+- [ ] Add internet search support.

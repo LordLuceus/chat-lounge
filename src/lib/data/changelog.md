@@ -1,5 +1,11 @@
 # ChatLounge Changelog
 
+## 1 Aug, 2024
+
+We removed the soon-to-be-deprecated Mistral AI models, mistral-small and mistral-medium, and added the new gpt-4o-mini model. We also fixed a few bugs related to deleting conversations and agents. In addition, we added a popup that notifies you when the app has been updated.
+
+On a side note, ElevenLabs recently released their new Turbo v2.5 model. However, after careful evaluation, we've decided not to switch to it by default as it actually makes some voices sound worse. We'll keep the Turbo v2 model for now, but we'll add a setting to switch between models in the future.
+
 ## 12 Jun, 2024
 
 We've added support for Google's Gemini models, specifically Gemini 1.5 Flash and Gemini 1.5 Pro. You can set your Google API key in the settings page just like the other providers. Note that, if you're in Europe, you'll need to have a paid account to use the Gemini models. Happy chatting! 🚀

@@ -2,6 +2,7 @@
   import { goto } from "$app/navigation";
   import AgentActions from "$lib/components/AgentActions.svelte";
   import ConversationActions from "$lib/components/ConversationActions.svelte";
+  import NewVersionPopup from "$lib/components/NewVersionPopup.svelte";
   import Toast from "$lib/components/Toast.svelte";
   import * as Avatar from "$lib/components/ui/avatar";
   import { Button } from "$lib/components/ui/button";
@@ -173,4 +174,5 @@
   </footer>
 
   <Toaster />
+  <NewVersionPopup />
 </SignedIn>

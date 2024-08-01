@@ -20,6 +20,9 @@
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ["agents"], exact: true });
       client.invalidateQueries({ queryKey: ["conversations"], exact: true });
+      client.invalidateQueries({
+        predicate: (query) => query.queryKey[0] === "agents" && query.queryKey[1] !== id
+      });
     }
   });
 

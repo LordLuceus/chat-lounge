@@ -36,7 +36,12 @@
           method: "DELETE"
         })
       ).json(),
-    onSuccess: () => client.invalidateQueries({ queryKey: ["conversations"], exact: true })
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ["conversations"], exact: true });
+      client.invalidateQueries({
+        predicate: (query) => query.queryKey[0] === "conversations" && query.queryKey[1] !== id
+      });
+    }
   });
 
   let renameDialogOpen = false;

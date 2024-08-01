@@ -63,7 +63,7 @@
     "gpt-tokenizer": "^2.1.2",
     "lucide-svelte": "^0.344.0",
     "mode-watcher": "^0.2.2",
-    "openai": "^4.50.0",
+    "openai": "^4.53.2",
     "remark-breaks": "^4.0.0",
     "svelte-exmarkdown": "^3.0.3",
     "svelte-search": "^2.0.2",

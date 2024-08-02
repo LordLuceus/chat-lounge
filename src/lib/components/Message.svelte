@@ -7,8 +7,8 @@
   import { Button } from "$lib/components/ui/button";
   import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
   import { conversationStore } from "$lib/stores";
+  import type { Message } from "@ai-sdk/svelte";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
-  import type { Message } from "ai/svelte";
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
   import { BotMessageSquare } from "lucide-svelte";
   import Markdown from "svelte-exmarkdown";

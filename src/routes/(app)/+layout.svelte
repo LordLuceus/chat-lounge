@@ -163,7 +163,7 @@
       <section aria-label="Audio player">
         <audio src={$currentAudioUrl} controls autoplay />
         {#if $downloadUrl}
-          <a href={$downloadUrl} download={$audioFilename}> Download audio </a>
+          <a href={$downloadUrl} download={$audioFilename}>Download audio</a>
         {/if}
       </section>
     {/if}

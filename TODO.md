@@ -16,7 +16,7 @@
 
 ## General
 
-- [ ] Update models: add gpt-4o-mini, remove mistral-small and mistral-medium.
+- [x] Update models: add gpt-4o-mini, remove mistral-small and mistral-medium.
 - [x] Refactor the Mistral and OpenAI services to use a common interface.
 - [x] Make the agents list at the top dynamic with Query just like the conversations list.
 - [x] Always show the current agent and conversation at the top of the page. (Done with infiniteQuery.)

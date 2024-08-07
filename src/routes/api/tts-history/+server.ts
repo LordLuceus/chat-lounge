@@ -6,7 +6,7 @@ import type { ElevenLabsError } from "$lib/types/elevenlabs/elevenlabs-error";
 import type { HistoryResponse } from "$lib/types/elevenlabs/history";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
-export const GET = (async ({ locals, request }) => {
+export const GET = (async ({ locals, request, url }) => {
   if (!locals.session?.userId) {
     return error(401, "Unauthorized");
   }
@@ -25,14 +25,19 @@ export const GET = (async ({ locals, request }) => {
     return error(404, { message: "API key not found" });
   }
 
-  const response = await fetch(`${PUBLIC_ELEVENLABS_BASE_URL}/history/`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "xi-api-key": apiKey.key
-    },
-    signal: request.signal
-  });
+  const lastItemId = url.searchParams.get("lastItemId");
+
+  const response = await fetch(
+    `${PUBLIC_ELEVENLABS_BASE_URL}/history${lastItemId ? `?start_after_history_item_id=${lastItemId}` : ""}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "xi-api-key": apiKey.key
+      },
+      signal: request.signal
+    }
+  );
 
   if (!response.ok) {
     const result: ElevenLabsError = await response.json();

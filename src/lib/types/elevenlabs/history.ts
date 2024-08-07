@@ -31,7 +31,8 @@ export enum ModelID {
   ElevenEnglishStsV2 = "eleven_english_sts_v2",
   ElevenEnglishV2 = "eleven_english_v2",
   ElevenMultilingualV2 = "eleven_multilingual_v2",
-  ElevenTurboV2 = "eleven_turbo_v2"
+  ElevenTurboV2 = "eleven_turbo_v2",
+  ElevenTurboV25 = "eleven_turbo_v2_5"
 }
 
 export interface Settings {
@@ -53,5 +54,6 @@ export enum State {
 export enum VoiceCategory {
   Cloned = "cloned",
   Generated = "generated",
-  Premade = "premade"
+  Premade = "premade",
+  Professional = "professional"
 }

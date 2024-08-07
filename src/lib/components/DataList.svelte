@@ -4,6 +4,7 @@
   import { searchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api/paged-response";
   import type { CreateInfiniteQueryResult, InfiniteData } from "@tanstack/svelte-query";
+  import { Loader } from "lucide-svelte";
   import Search from "svelte-search";
 
   export let query: CreateInfiniteQueryResult<InfiniteData<PagedResponse<any>, unknown>, Error>;
@@ -68,7 +69,7 @@
 {/if}
 
 {#if $query.isFetching}
-  <p>Loading...</p>
+  <Loader />
 {/if}
 
 {#if $query.isError}

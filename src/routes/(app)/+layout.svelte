@@ -6,6 +6,7 @@
   import Toast from "$lib/components/Toast.svelte";
   import * as Avatar from "$lib/components/ui/avatar";
   import { Button } from "$lib/components/ui/button";
+  import * as Collapsible from "$lib/components/ui/collapsible";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Toaster } from "$lib/components/ui/sonner";
   import type { Agent, Conversation } from "$lib/drizzle/schema";
@@ -82,6 +83,8 @@
       signal: $ttsProps.signal
     });
   }
+
+  let ttsOpen = false;
 </script>
 
 <SignedIn let:user>
@@ -118,7 +121,19 @@
         <a href="/agents">Agents</a>
       {/if}
       {#if data?.keys?.eleven}
-        <a href="/voices">Voices</a>
+        <Collapsible.Root bind:open={ttsOpen}>
+          <Collapsible.Trigger aria-expanded={ttsOpen}>TTS</Collapsible.Trigger>
+          <Collapsible.Content>
+            <ul class="list-none">
+              <li>
+                <a href="/voices">Voices</a>
+              </li>
+              <li>
+                <a href="/tts-history">History</a>
+              </li>
+            </ul>
+          </Collapsible.Content>
+        </Collapsible.Root>
       {/if}
     </nav>
     <ClerkLoaded let:clerk>

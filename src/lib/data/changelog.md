@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 7 Aug, 2024
+
+We've added a TTS history page. You can now play, download, and delete TTS history items. You can find the page in the new TTS section of the navigation menu. Enjoy!
+
 ## 1 Aug, 2024
 
 We removed the soon-to-be-deprecated Mistral AI models, mistral-small and mistral-medium, and added the new gpt-4o-mini model. We also fixed a few bugs related to deleting conversations and agents. In addition, we added a popup that notifies you when the app has been updated.

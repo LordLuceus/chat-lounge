@@ -214,7 +214,7 @@ class AIService {
     const context = messages.map(({ role, content }) => `${role}: ${content}`).join("\n");
 
     const { text } = await generateText({
-      model: this.client(modelId),
+      model: this.client(modelId, this.provider === "google" ? this.GOOGLE_SETTINGS : undefined),
       messages: [{ role: "user", content: prompt + "\n\n---\n\n" + context }]
     });
 

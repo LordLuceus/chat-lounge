@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 10 Aug, 2024
+
+We've rolled out a potential fix for the issue where the Google provider occasionally does not generate a conversation title.
+
 ## 7 Aug, 2024
 
 We've added a TTS history page. You can now play, download, and delete TTS history items. You can find the page in the new TTS section of the navigation menu. Enjoy!

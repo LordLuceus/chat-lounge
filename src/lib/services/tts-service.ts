@@ -5,6 +5,7 @@ import { ttsGenerating } from "$lib/stores";
 interface TTSOptions {
   text: string;
   voice?: string;
+  modelId?: string;
   onPlayAudio: (audioUrl: string | null) => void;
   onDownloadAudio: (downloadOptions: { downloadUrl: string; filename: string }) => void;
   onError: (error: string) => void;
@@ -14,6 +15,7 @@ interface TTSOptions {
 export async function generateTTS({
   text,
   voice,
+  modelId,
   onPlayAudio,
   onDownloadAudio,
   onError,
@@ -39,7 +41,7 @@ export async function generateTTS({
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ text, voice, stream: false }),
+      body: JSON.stringify({ text, voice, stream: false, modelId }),
       signal
     });
 
@@ -78,7 +80,8 @@ export async function generateTTS({
           body: JSON.stringify({
             text,
             voice,
-            stream: true
+            stream: true,
+            modelId
           }),
           signal
         });

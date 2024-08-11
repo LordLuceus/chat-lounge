@@ -2,11 +2,13 @@
   import { browser } from "$app/environment";
   import { afterNavigate, goto } from "$app/navigation";
   import { page } from "$app/stores";
+  import AdvancedTtsSettings from "$lib/components/AdvancedTtsSettings.svelte";
   import Message from "$lib/components/Message.svelte";
   import Recorder from "$lib/components/Recorder.svelte";
   import Toast from "$lib/components/Toast.svelte";
   import { Button } from "$lib/components/ui/button";
   import { Textarea } from "$lib/components/ui/textarea";
+  import { ariaListOpen } from "$lib/helpers";
   import type { Message as ExtendedMessage } from "$lib/helpers/conversation-helpers";
   import { getMessageSiblings } from "$lib/helpers/conversation-helpers";
   import type { ConversationWithMessageMap } from "$lib/server/conversations-service";
@@ -16,19 +18,17 @@
     currentAudioUrl,
     downloadUrl,
     newConversation,
+    selectedTtsModel,
     ttsProps,
     voices
   } from "$lib/stores";
+  import type { SelectItem } from "$lib/types/client";
+  import { ModelID } from "$lib/types/elevenlabs";
   import { useChat } from "@ai-sdk/svelte";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
   import { onDestroy, onMount } from "svelte";
   import Select from "svelte-select";
   import { toast } from "svelte-sonner";
-
-  interface SelectItem {
-    label: string;
-    value: string;
-  }
 
   export let agent: { id: string; name: string } | undefined = undefined;
   export let apiKeys: { mistral: boolean; openai: boolean; eleven: boolean } | undefined;
@@ -71,7 +71,12 @@
     useChat({
       onFinish: async (message) => {
         if (voiceMessage) {
-          ttsProps.set({ text: message.content, voice: selectedVoice?.value, signal });
+          ttsProps.set({
+            text: message.content,
+            voice: selectedVoice?.value,
+            signal,
+            modelId: $selectedTtsModel?.value || ModelID.ElevenTurboV2
+          });
           setVoiceMessage("");
         } else {
           finishSound.play();
@@ -224,10 +229,6 @@
     handleVoiceSelection();
   }
 
-  const ariaListOpen = (label: string, count: number) => {
-    return `${label}, ${count} ${count < 2 ? "option" : "options"} available.`;
-  };
-
   function resetConversation() {
     setMessages(initialMessages || []);
     resetAudio();
@@ -294,6 +295,7 @@
     {ariaListOpen}
     clearable={false}
   />
+  <AdvancedTtsSettings />
 {/if}
 
 <section>
@@ -302,6 +304,7 @@
       <Message
         {message}
         voice={selectedVoice?.value}
+        modelId={$selectedTtsModel?.value}
         siblings={getMessageSiblings($conversationStore?.messages, message.id)}
         onEdit={handleEdit}
         isLoading={$isLoading}

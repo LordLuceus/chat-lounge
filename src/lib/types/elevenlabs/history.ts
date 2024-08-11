@@ -29,10 +29,13 @@ export enum ContentType {
 
 export enum ModelID {
   ElevenEnglishStsV2 = "eleven_english_sts_v2",
+  ElevenMultilingualStsV2 = "eleven_multilingual_sts_v2",
   ElevenEnglishV2 = "eleven_english_v2",
   ElevenMultilingualV2 = "eleven_multilingual_v2",
   ElevenTurboV2 = "eleven_turbo_v2",
-  ElevenTurboV25 = "eleven_turbo_v2_5"
+  ElevenTurboV25 = "eleven_turbo_v2_5",
+  ElevenMultilingualV1 = "eleven_multilingual_v1",
+  ElevenEnglishV1 = "eleven_monolingual_v1"
 }
 
 export interface Settings {

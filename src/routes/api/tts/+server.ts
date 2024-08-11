@@ -3,6 +3,7 @@ import { AIProvider } from "$lib/drizzle/schema";
 import { getApiKey } from "$lib/server/api-keys-service";
 import { getUser } from "$lib/server/users-service";
 import type { ElevenLabsError } from "$lib/types/elevenlabs/elevenlabs-error";
+import { ModelID } from "$lib/types/elevenlabs/history";
 import { error, type RequestHandler } from "@sveltejs/kit";
 
 export const POST = (async ({ locals, request }) => {
@@ -10,7 +11,7 @@ export const POST = (async ({ locals, request }) => {
     return error(401, "Unauthorized");
   }
 
-  const { stream, text, voice } = await request.json();
+  const { stream, text, voice, modelId } = await request.json();
   const { userId } = locals.session;
 
   const user = await getUser(userId);
@@ -37,7 +38,7 @@ export const POST = (async ({ locals, request }) => {
         "Content-Type": "application/json",
         "xi-api-key": apiKey.key
       },
-      body: JSON.stringify({ text, model_id: "eleven_turbo_v2" }),
+      body: JSON.stringify({ text, model_id: modelId ?? ModelID.ElevenTurboV2 }),
       signal: request.signal
     }
   );

@@ -20,6 +20,7 @@
 
   export let message: Message;
   export let voice: string | undefined;
+  export let modelId: string | undefined;
   export let siblings: Message[] = [];
   export let onEdit: (id: string, content: string) => void;
   export let isLoading: boolean | undefined;
@@ -67,7 +68,7 @@
           <EditMessage id={message.id} content={message.content} onSubmit={onEdit} />
         {/if}
         {#if $page.data.keys.eleven && message.role === "assistant"}
-          <Tts text={message.content} {voice} />
+          <Tts text={message.content} {voice} {modelId} />
         {/if}
         {#if message.role === "assistant"}
           <Button on:click={copyToClipboard}>Copy</Button>

@@ -76,6 +76,7 @@
     generateTTS({
       text: $ttsProps.text,
       voice: $ttsProps.voice,
+      modelId: $ttsProps.modelId,
       onPlayAudio: (audioUrl: string | null) => currentAudioUrl.set(audioUrl),
       onDownloadAudio: ({ downloadUrl, filename }) =>
         setDownloadUrlAndFilename(downloadUrl, filename),

@@ -14,6 +14,7 @@
 
   export let text: string;
   export let voice: string | undefined;
+  export let modelId: string | undefined;
 
   let controller: AbortController;
   let signal: AbortSignal;
@@ -27,10 +28,10 @@
     toast.error(Toast, { componentProps: { text: error } });
   };
 
-  const tts = async (): Promise<void> => {
+  const tts = (): void => {
     controller = new AbortController();
     signal = controller.signal;
-    ttsProps.set({ text, voice, signal });
+    ttsProps.set({ text, voice, signal, modelId });
   };
 
   onDestroy(() => {

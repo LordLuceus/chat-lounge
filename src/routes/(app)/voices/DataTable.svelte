@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Button } from "$lib/components/ui/button";
   import * as Table from "$lib/components/ui/table";
-  import type { Voice } from "$lib/types/elevenlabs/voices";
+  import type { Voice } from "$lib/types/elevenlabs";
   import { Render, Subscribe, createRender, createTable } from "svelte-headless-table";
   import { addPagination } from "svelte-headless-table/plugins";
   import { writable } from "svelte/store";

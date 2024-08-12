@@ -1,9 +1,10 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import Chat from "$lib/components/Chat.svelte";
-  import { getConversationMessages, type Message } from "$lib/helpers/conversation-helpers";
+  import { getConversationMessages, type Message } from "$lib/helpers";
   import type { ConversationWithMessageMap } from "$lib/server/conversations-service";
   import { conversationStore } from "$lib/stores";
+  import type { SelectItem } from "$lib/types/client";
   import { createQuery } from "@tanstack/svelte-query";
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
   import { derived } from "svelte/store";
@@ -22,7 +23,7 @@
   $: if ($conversationStore) messages = getConversationMessages($conversationStore);
 
   $: selectedModel = $page.data.models?.find(
-    (m: { label: string; value: string }) => m.value === $page.data.conversation.modelId
+    (m: SelectItem) => m.value === $page.data.conversation.modelId
   );
 </script>
 

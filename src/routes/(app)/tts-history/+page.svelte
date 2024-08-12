@@ -3,9 +3,9 @@
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
-  import { generateAudioFilename } from "$lib/helpers/filename";
+  import { generateAudioFilename } from "$lib/helpers";
   import { audioFilename, currentAudioUrl, downloadUrl } from "$lib/stores";
-  import type { HistoryResponse } from "$lib/types/elevenlabs/history";
+  import type { HistoryResponse } from "$lib/types/elevenlabs";
   import { createInfiniteQuery, createMutation, useQueryClient } from "@tanstack/svelte-query";
   import { Loader } from "lucide-svelte";
   import { toast } from "svelte-sonner";

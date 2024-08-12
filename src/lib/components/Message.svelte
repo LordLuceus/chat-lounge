@@ -3,6 +3,7 @@
   import { copyCodeBlocks } from "$lib/actions/copy-code";
   import EditMessage from "$lib/components/EditMessage.svelte";
   import Toast from "$lib/components/Toast.svelte";
+  import Tts from "$lib/components/TTS.svelte";
   import * as Avatar from "$lib/components/ui/avatar";
   import { Button } from "$lib/components/ui/button";
   import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
@@ -14,7 +15,6 @@
   import Markdown from "svelte-exmarkdown";
   import { gfmPlugin } from "svelte-exmarkdown/gfm";
   import { toast } from "svelte-sonner";
-  import Tts from "./TTS.svelte";
 
   const plugins = [gfmPlugin(), lineBreaksPlugin];
 

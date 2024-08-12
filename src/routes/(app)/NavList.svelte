@@ -1,7 +1,7 @@
 <script lang="ts">
   import InfiniteScroll from "$lib/components/InfiniteScroll.svelte";
   import * as Collapsible from "$lib/components/ui/collapsible";
-  import type { PagedResponse } from "$lib/types/api/paged-response";
+  import type { PagedResponse } from "$lib/types/api";
   import type { CreateInfiniteQueryResult, InfiniteData } from "@tanstack/svelte-query";
 
   export let query: CreateInfiniteQueryResult<InfiniteData<PagedResponse<any>, unknown>, Error>;

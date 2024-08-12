@@ -2,7 +2,7 @@ import { PUBLIC_ELEVENLABS_BASE_URL } from "$env/static/public";
 import { AIProvider } from "$lib/drizzle/schema";
 import { getApiKey } from "$lib/server/api-keys-service";
 import { getUser } from "$lib/server/users-service";
-import type { ElevenLabsError } from "$lib/types/elevenlabs/elevenlabs-error";
+import type { ElevenLabsError } from "$lib/types/elevenlabs";
 import { error, type RequestHandler } from "@sveltejs/kit";
 
 export const GET = (async ({ locals, request, params }) => {

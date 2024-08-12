@@ -8,7 +8,7 @@
   import * as ToggleGroup from "$lib/components/ui/toggle-group";
   import { Visibility, type Agent } from "$lib/drizzle/schema";
   import { searchParams, type SearchParams } from "$lib/stores";
-  import type { PagedResponse } from "$lib/types/api/paged-response";
+  import type { PagedResponse } from "$lib/types/api";
   import { createInfiniteQuery } from "@tanstack/svelte-query";
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
   import { onDestroy } from "svelte";

@@ -1,4 +1,4 @@
-import type { Visibility } from "./drizzle/schema";
+import type { Visibility } from "$lib/drizzle/schema";
 
 export type SortOrder = "ASC" | "DESC";
 export interface RequestParams {

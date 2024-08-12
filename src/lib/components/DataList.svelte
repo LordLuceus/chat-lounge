@@ -2,7 +2,7 @@
   import InfiniteScroll from "$lib/components/InfiniteScroll.svelte";
   import { Button } from "$lib/components/ui/button";
   import { searchParams } from "$lib/stores";
-  import type { PagedResponse } from "$lib/types/api/paged-response";
+  import type { PagedResponse } from "$lib/types/api";
   import type { CreateInfiniteQueryResult, InfiniteData } from "@tanstack/svelte-query";
   import { Loader } from "lucide-svelte";
   import Search from "svelte-search";

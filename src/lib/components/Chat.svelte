@@ -8,9 +8,8 @@
   import Toast from "$lib/components/Toast.svelte";
   import { Button } from "$lib/components/ui/button";
   import { Textarea } from "$lib/components/ui/textarea";
-  import { ariaListOpen } from "$lib/helpers";
-  import type { Message as ExtendedMessage } from "$lib/helpers/conversation-helpers";
-  import { getMessageSiblings } from "$lib/helpers/conversation-helpers";
+  import type { Message as ExtendedMessage } from "$lib/helpers";
+  import { ariaListOpen, getMessageSiblings } from "$lib/helpers";
   import type { ConversationWithMessageMap } from "$lib/server/conversations-service";
   import {
     audioFilename,

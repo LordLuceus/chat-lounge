@@ -6,7 +6,7 @@
   import * as Card from "$lib/components/ui/card";
   import type { Conversation } from "$lib/drizzle/schema";
   import { searchParams, type SearchParams } from "$lib/stores";
-  import type { PagedResponse } from "$lib/types/api/paged-response";
+  import type { PagedResponse } from "$lib/types/api";
   import { createInfiniteQuery } from "@tanstack/svelte-query";
   import { onDestroy } from "svelte";
   import Time from "svelte-time";

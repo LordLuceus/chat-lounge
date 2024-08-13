@@ -2,10 +2,10 @@
   import { browser } from "$app/environment";
   import { afterNavigate, goto } from "$app/navigation";
   import { page } from "$app/stores";
-  import AdvancedTtsSettings from "$lib/components/AdvancedTtsSettings.svelte";
   import Message from "$lib/components/Message.svelte";
   import Recorder from "$lib/components/Recorder.svelte";
   import Toast from "$lib/components/Toast.svelte";
+  import TtsSettings from "$lib/components/TtsSettings.svelte";
   import { Button } from "$lib/components/ui/button";
   import { Textarea } from "$lib/components/ui/textarea";
   import type { Message as ExtendedMessage } from "$lib/helpers";
@@ -39,11 +39,6 @@
   let chatForm: HTMLFormElement;
   let finishSound: HTMLAudioElement;
   let voiceMessage: string;
-
-  $: voiceItems = $voices?.map((voice) => ({
-    label: `${voice.name} (${voice.category})`,
-    value: voice.voice_id
-  }));
 
   let controller: AbortController;
   let signal: AbortSignal;
@@ -174,16 +169,6 @@
     }
   }
 
-  function handleVoiceSelection() {
-    if (!$selectedVoice) {
-      $selectedVoice = voiceItems?.at(0);
-    } else {
-      if (!$voices?.find((voice) => voice.voice_id === $selectedVoice?.value)) {
-        $selectedVoice = voiceItems?.at(0);
-      }
-    }
-  }
-
   function setVoiceMessage(message: string) {
     voiceMessage = message;
   }
@@ -256,10 +241,6 @@
       }
     });
   }
-
-  $: if ($voices) {
-    handleVoiceSelection();
-  }
 </script>
 
 <svelte:window on:keydown={handleCopyLastMessage} on:keydown={handleFocusChatInput} />
@@ -278,14 +259,7 @@
 {/if}
 
 {#if apiKeys?.eleven && $voices}
-  <Select
-    bind:value={$selectedVoice}
-    items={voiceItems}
-    placeholder="Select voice..."
-    {ariaListOpen}
-    clearable={false}
-  />
-  <AdvancedTtsSettings />
+  <TtsSettings />
 {/if}
 
 <section>

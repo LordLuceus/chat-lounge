@@ -1,5 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/environment";
+  import CharacterCounter from "$lib/components/CharacterCounter.svelte";
   import TtsSettings from "$lib/components/TtsSettings.svelte";
   import { Button } from "$lib/components/ui/button";
   import { Textarea } from "$lib/components/ui/textarea";
@@ -9,8 +10,10 @@
     downloadUrl,
     selectedTtsModel,
     selectedVoice,
+    ttsGenerating,
     ttsProps
   } from "$lib/stores";
+  import { Loader, Speech } from "lucide-svelte";
   import { onDestroy, onMount } from "svelte";
 
   let text: string;
@@ -53,5 +56,20 @@
 <h1>Generate Speech</h1>
 
 <TtsSettings />
-<Textarea bind:value={text} placeholder="Type your message..." rows={1} cols={200} autofocus />
-<Button on:click={handleSubmit}>Generate</Button>
+<Textarea
+  bind:value={text}
+  placeholder="Type or paste any text..."
+  rows={1}
+  cols={200}
+  autofocus
+  maxlength={$selectedTtsModel?.characterLimit}
+/>
+<CharacterCounter characterLimit={$selectedTtsModel?.characterLimit} value={text} />
+<Button on:click={handleSubmit} disabled={$ttsGenerating}>
+  {#if $ttsGenerating}
+    <Loader />
+  {:else}
+    <Speech />
+  {/if}
+  <span>{$ttsGenerating ? "Generating..." : "Speak"}</span>
+</Button>

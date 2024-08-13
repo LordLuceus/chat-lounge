@@ -3,13 +3,13 @@
   import * as Dialog from "$lib/components/ui/dialog";
   import { ariaListOpen } from "$lib/helpers";
   import { selectedTtsModel } from "$lib/stores";
-  import type { SelectItem } from "$lib/types/client";
+  import type { TtsModelItem } from "$lib/types/client";
   import type { ElevenLabsModel } from "$lib/types/elevenlabs";
   import { onMount } from "svelte";
   import Select from "svelte-select";
   import { toast } from "svelte-sonner";
 
-  let models: SelectItem[] | undefined;
+  let models: TtsModelItem[] | undefined;
 
   async function fetchTtsModels() {
     const response = await fetch("/api/tts-models");
@@ -23,7 +23,8 @@
       .filter((model) => model.can_do_text_to_speech)
       .map((model) => ({
         label: model.name,
-        value: model.model_id
+        value: model.model_id,
+        characterLimit: model.maximum_text_length_per_request
       }));
   }
 

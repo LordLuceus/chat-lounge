@@ -64,7 +64,7 @@
   autofocus
   maxlength={$selectedTtsModel?.characterLimit}
 />
-<CharacterCounter characterLimit={$selectedTtsModel?.characterLimit} value={text} />
+<CharacterCounter characterLimit={$selectedTtsModel?.characterLimit || 10000} value={text} />
 <Button on:click={handleSubmit} disabled={$ttsGenerating}>
   {#if $ttsGenerating}
     <Loader />

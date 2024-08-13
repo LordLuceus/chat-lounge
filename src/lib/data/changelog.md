@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 13 Aug, 2024
+
+We've added a new page where you can freely generate speech with your own text using ElevenLabs without being tied to a conversation with a language model.
+
 ## 11 Aug, 2024
 
 We've added an advanced TTS settings dialog. For now, you can select the ElevenLabs model you wish to use. Turbo V2 is still the default if you don't select a different model, but when you do, your selection is remembered until you change it. More options coming soon. Happy chatting!

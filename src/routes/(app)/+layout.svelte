@@ -126,6 +126,7 @@
           <Collapsible.Trigger aria-expanded={ttsOpen}>TTS</Collapsible.Trigger>
           <Collapsible.Content>
             <ul class="list-none">
+              <li><a href="/generate-tts">Generate Speech</a></li>
               <li>
                 <a href="/voices">Voices</a>
               </li>

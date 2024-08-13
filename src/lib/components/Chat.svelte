@@ -18,6 +18,7 @@
     downloadUrl,
     newConversation,
     selectedTtsModel,
+    selectedVoice,
     ttsProps,
     voices
   } from "$lib/stores";
@@ -38,8 +39,6 @@
   let chatForm: HTMLFormElement;
   let finishSound: HTMLAudioElement;
   let voiceMessage: string;
-
-  let selectedVoice: SelectItem | undefined = undefined;
 
   $: voiceItems = $voices?.map((voice) => ({
     label: `${voice.name} (${voice.category})`,
@@ -72,7 +71,7 @@
         if (voiceMessage) {
           ttsProps.set({
             text: message.content,
-            voice: selectedVoice?.value,
+            voice: $selectedVoice?.value,
             signal,
             modelId: $selectedTtsModel?.value || ModelID.ElevenTurboV2
           });
@@ -144,7 +143,6 @@
     finishSound = new Audio("/assets/typing.wav");
 
     handleModelSelection();
-    handleVoiceSelection();
 
     controller = new AbortController();
     signal = controller.signal;
@@ -177,17 +175,11 @@
   }
 
   function handleVoiceSelection() {
-    if (!selectedVoice) {
-      const storedVoice = localStorage.getItem("selectedVoice");
-      if (storedVoice) {
-        const parsedVoice: SelectItem = JSON.parse(storedVoice);
-        if ($voices?.find((voice) => voice.voice_id === parsedVoice.value)) {
-          selectedVoice = parsedVoice;
-        } else {
-          selectedVoice = voiceItems?.at(0);
-        }
-      } else {
-        selectedVoice = voiceItems?.at(0);
+    if (!$selectedVoice) {
+      $selectedVoice = voiceItems?.at(0);
+    } else {
+      if (!$voices?.find((voice) => voice.voice_id === $selectedVoice?.value)) {
+        $selectedVoice = voiceItems?.at(0);
       }
     }
   }
@@ -222,10 +214,6 @@
         }
       );
     }
-  }
-
-  $: if ($voices) {
-    handleVoiceSelection();
   }
 
   function resetConversation() {
@@ -268,6 +256,10 @@
       }
     });
   }
+
+  $: if ($voices) {
+    handleVoiceSelection();
+  }
 </script>
 
 <svelte:window on:keydown={handleCopyLastMessage} on:keydown={handleFocusChatInput} />
@@ -287,10 +279,9 @@
 
 {#if apiKeys?.eleven && $voices}
   <Select
-    bind:value={selectedVoice}
+    bind:value={$selectedVoice}
     items={voiceItems}
     placeholder="Select voice..."
-    on:change={(e) => localStorage.setItem("selectedVoice", JSON.stringify(selectedVoice))}
     {ariaListOpen}
     clearable={false}
   />
@@ -302,8 +293,6 @@
     {#each $messages as message}
       <Message
         {message}
-        voice={selectedVoice?.value}
-        modelId={$selectedTtsModel?.value}
         siblings={getMessageSiblings($conversationStore?.messages, message.id)}
         onEdit={handleEdit}
         isLoading={$isLoading}

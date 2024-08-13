@@ -5,6 +5,8 @@
     audioFilename,
     downloadUrl,
     newConversation,
+    selectedTtsModel,
+    selectedVoice,
     ttsGenerating,
     ttsProps
   } from "$lib/stores";
@@ -13,8 +15,6 @@
   import { toast } from "svelte-sonner";
 
   export let text: string;
-  export let voice: string | undefined;
-  export let modelId: string | undefined;
 
   let controller: AbortController;
   let signal: AbortSignal;
@@ -31,7 +31,7 @@
   const tts = (): void => {
     controller = new AbortController();
     signal = controller.signal;
-    ttsProps.set({ text, voice, signal, modelId });
+    ttsProps.set({ text, voice: $selectedVoice?.value, signal, modelId: $selectedTtsModel?.value });
   };
 
   onDestroy(() => {

@@ -3,6 +3,7 @@ export * from "./conversation-store";
 export * from "./new-conversation";
 export * from "./search-params";
 export * from "./selected-tts-model";
+export * from "./selected-voice";
 export * from "./tts-generating-store";
 export * from "./tts-props";
 export * from "./version-store";

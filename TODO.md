@@ -1,6 +1,6 @@
 ## Bugfixes
 
-- [ ] Fix bug with editing a message that is not the last message in the conversation.
+- [x] Fix bug with editing a message that is not the last message in the conversation.
 - [ ] Fix bug where typing in the chat input does not work when switching between conversations or agents.
 
 ## Conversations:

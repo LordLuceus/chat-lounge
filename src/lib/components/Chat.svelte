@@ -26,9 +26,10 @@
   import { ModelID } from "$lib/types/elevenlabs";
   import { useChat } from "@ai-sdk/svelte";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
-  import { onDestroy, onMount } from "svelte";
+  import { onDestroy, onMount, tick } from "svelte";
   import Select from "svelte-select";
   import { toast } from "svelte-sonner";
+  import { v4 as uuidv4 } from "uuid";
 
   export let agent: { id: string; name: string } | undefined = undefined;
   export let apiKeys: { mistral: boolean; openai: boolean; eleven: boolean } | undefined;
@@ -220,15 +221,17 @@
     setMessages(initialMessages);
   }
 
-  function handleEdit(id: string, content: string) {
+  async function handleEdit(id: string, content: string) {
     const messageIndex = $messages.findIndex((message) => message.id === id);
 
     if (messageIndex === -1) return;
 
-    const updatedMessages = [...$messages];
-    updatedMessages[messageIndex].content = content;
+    const updatedMessages = $messages.slice(0, messageIndex);
+    updatedMessages.push({ role: "user", content, id: uuidv4() });
 
     setMessages(updatedMessages);
+
+    await tick();
 
     reload({
       options: {

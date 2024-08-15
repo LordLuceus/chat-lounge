@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 15 Aug, 2024
+
+Fixed a bug where editing a message other than the last one in a conversation would result in strange behaviour, such as the new message being appended to the end of the conversation instead of replacing the old message.
+
 ## 13 Aug, 2024
 
 We've added a new page where you can freely generate speech with your own text using ElevenLabs without being tied to a conversation with a language model.

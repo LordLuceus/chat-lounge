@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 4 Sep, 2024
+
+Per user request, we now remove any code blocks from the text before generating TTS.
+
 ## 15 Aug, 2024
 
 Fixed a bug where editing a message other than the last one in a conversation would result in strange behaviour, such as the new message being appended to the end of the conversation instead of replacing the old message.

@@ -1,4 +1,7 @@
 export function ttsCleanup(text: string): string {
+  // Remove code blocks
+  text = removeCodeBlocks(text);
+
   // Define patterns for Markdown-specific characters and constructs
   const patterns = [
     /([*_`])/g, // Match *, _, and ` used typically for bold, italic, and code
@@ -17,4 +20,12 @@ export function ttsCleanup(text: string): string {
   });
 
   return text;
+}
+
+function removeCodeBlocks(markdown: string): string {
+  // Match code blocks delimited by triple backticks (```)
+  const codeBlockRegex = /```[\s\S]*?```/g;
+
+  // Replace all code blocks with empty strings
+  return markdown.replace(codeBlockRegex, "");
 }

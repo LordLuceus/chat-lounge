@@ -1,5 +1,5 @@
 import { db } from "$lib/drizzle/db";
-import { Visibility, agentUsers, agents } from "$lib/drizzle/schema";
+import { AgentType, Visibility, agentUsers, agents } from "$lib/drizzle/schema";
 import { and, eq, or, sql } from "drizzle-orm";
 
 export interface AgentCreateOptions {
@@ -8,6 +8,7 @@ export interface AgentCreateOptions {
   description?: string;
   instructions: string;
   visibility: Visibility;
+  type: AgentType;
 }
 
 export async function getAgents(
@@ -89,12 +90,13 @@ export async function createAgent({
   name,
   description,
   instructions,
-  visibility
+  visibility,
+  type
 }: AgentCreateOptions) {
   const agent = (
     await db
       .insert(agents)
-      .values({ userId, name, description, instructions, visibility })
+      .values({ userId, name, description, instructions, visibility, type })
       .returning()
   ).at(0);
 

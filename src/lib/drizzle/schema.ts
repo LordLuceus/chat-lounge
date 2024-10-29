@@ -21,6 +21,11 @@ export enum Visibility {
   Hidden = "hidden"
 }
 
+export enum AgentType {
+  Default = "default",
+  Character = "character"
+}
+
 export const users = sqliteTable("user", {
   id: text("id").notNull().primaryKey(),
   username: text("username").notNull().unique(),
@@ -67,6 +72,10 @@ export const agents = sqliteTable("agent", {
     .notNull()
     .$type<Visibility>()
     .default(sql`'private'`),
+  type: text("type")
+    .notNull()
+    .$type<AgentType>()
+    .default(sql`'default'`),
   createdAt: integer("createdAt", { mode: "timestamp_ms" })
     .notNull()
     .$default(() => new Date()),

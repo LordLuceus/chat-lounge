@@ -84,5 +84,24 @@
     </RadioGroup.Root>
     <Form.FieldErrors />
   </Form.Fieldset>
+  <Form.Fieldset {form} name="type">
+    <Form.Legend>Agent Type</Form.Legend>
+    <RadioGroup.Root bind:value={$formData.type} class="flex flex-col space-y-1">
+      <div class="flex items-center space-x-3 space-y-0">
+        <Form.Control let:attrs>
+          <RadioGroup.Item value="default" {...attrs} />
+          <Form.Label class="font-normal">Default</Form.Label>
+        </Form.Control>
+      </div>
+      <div class="flex items-center space-x-3 space-y-0">
+        <Form.Control let:attrs>
+          <RadioGroup.Item value="character" {...attrs} />
+          <Form.Label class="font-normal">Character</Form.Label>
+        </Form.Control>
+      </div>
+      <RadioGroup.Input name="type" />
+    </RadioGroup.Root>
+    <Form.FieldErrors />
+  </Form.Fieldset>
   <Form.Button>Save</Form.Button>
 </form>

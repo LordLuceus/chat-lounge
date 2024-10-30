@@ -76,6 +76,7 @@ export const agents = sqliteTable("agent", {
     .notNull()
     .$type<AgentType>()
     .default(sql`'default'`),
+  greeting: text("greeting"),
   createdAt: integer("createdAt", { mode: "timestamp_ms" })
     .notNull()
     .$default(() => new Date()),
@@ -268,3 +269,5 @@ export type AgentWithUsage = Agent & {
 };
 
 export type ApiKey = InferSelectModel<typeof apiKeys>;
+
+export type User = InferSelectModel<typeof users>;

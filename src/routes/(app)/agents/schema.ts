@@ -5,7 +5,8 @@ export const agentSchema = z.object({
   description: z.string().optional(),
   instructions: z.string().min(2),
   visibility: z.enum(["public", "private", "hidden"]),
-  type: z.enum(["default", "character"])
+  type: z.enum(["default", "character"]),
+  greeting: z.string().optional()
 });
 
 export type AgentSchema = typeof agentSchema;

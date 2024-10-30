@@ -1,13 +1,21 @@
-import { AIProvider, type Agent, type AgentWithUsage, type Model } from "$lib/drizzle/schema";
+import charPrompt from "$lib/data/character_prompt.md?raw";
+import {
+  AgentType,
+  AIProvider,
+  type Agent,
+  type AgentWithUsage,
+  type Model
+} from "$lib/drizzle/schema";
 import {
   addConversationMessage,
   getConversationMessage,
   getLastSummary
 } from "$lib/server/conversations-service";
+import { getUser } from "$lib/server/users-service";
 import { createGoogleGenerativeAI, type GoogleGenerativeAIProvider } from "@ai-sdk/google";
 import { createMistral, type MistralProvider } from "@ai-sdk/mistral";
 import { createOpenAI, type OpenAIProvider } from "@ai-sdk/openai";
-import { StreamingTextResponse, generateText, streamText } from "ai";
+import { generateText, StreamingTextResponse, streamText } from "ai";
 import type { ChatMessage } from "gpt-tokenizer/GptEncoding";
 import { isWithinTokenLimit } from "gpt-tokenizer/model/gpt-4";
 
@@ -86,7 +94,7 @@ class AIService {
     const response = await this.getResponse(
       processedMessages as Message[],
       model.id,
-      agent?.instructions
+      await this.prepareSystemPrompt(agent, userId)
     );
 
     const stream = response.toAIStream({
@@ -139,7 +147,7 @@ class AIService {
     }
 
     let processedMessages = agent?.instructions
-      ? [{ role: "system", content: agent.instructions }, ...messages]
+      ? [{ role: "system", content: await this.prepareSystemPrompt(agent, userId) }, ...messages]
       : messages;
 
     if (this.isWithinLimit(processedMessages, model.tokenLimit * this.LIMIT_MULTIPLIER)) {
@@ -191,14 +199,18 @@ class AIService {
     }
 
     const messagesWithSystemPrompt = agent?.instructions
-      ? [{ role: "system", content: agent.instructions }, ...messages]
+      ? [{ role: "system", content: await this.prepareSystemPrompt(agent, userId) }, ...messages]
       : messages;
 
     if (this.isWithinLimit(messagesWithSystemPrompt, model.tokenLimit * this.LIMIT_MULTIPLIER)) {
       return messages;
     }
 
-    const summary = await this.generateSummary(messages, model.id, agent?.instructions);
+    const summary = await this.generateSummary(
+      messages,
+      model.id,
+      await this.prepareSystemPrompt(agent, userId)
+    );
     await addConversationMessage(conversationId, summary, "user", userId, messageId, true);
 
     return messages;
@@ -219,6 +231,23 @@ class AIService {
     });
 
     return text.trim().replaceAll('"', "");
+  }
+
+  private async prepareSystemPrompt(agent: Agent | undefined, userId: string): Promise<string> {
+    if (!agent) return "";
+    const user = await getUser(userId);
+
+    if (!user) return "";
+
+    if (agent.type === AgentType.Default) {
+      return agent.instructions;
+    }
+
+    const prompt = charPrompt
+      .replaceAll("{{char}}", agent.name)
+      .replaceAll("{{user}}", user.username.charAt(0).toUpperCase() + user.username.slice(1))
+      .replace("{{character_definition}}", agent.instructions);
+    return prompt;
   }
 }
 

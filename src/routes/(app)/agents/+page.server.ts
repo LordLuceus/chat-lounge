@@ -26,14 +26,15 @@ export const actions: Actions = {
       return fail(400, { form });
     }
 
-    const { name, description, instructions, visibility, type } = form.data;
+    const { name, description, instructions, visibility, type, greeting } = form.data;
     const agent = await createAgent({
       userId: userId!,
       name,
       description,
       instructions,
       visibility: visibility as Visibility,
-      type: type as AgentType
+      type: type as AgentType,
+      greeting
     });
 
     return message(form, { agentId: agent.id, created: true });

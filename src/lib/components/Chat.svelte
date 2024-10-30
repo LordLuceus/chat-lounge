@@ -313,12 +313,10 @@
   <form
     on:submit={(e) =>
       handleSubmit(e, {
-        options: {
-          body: {
-            modelId: selectedModel?.value,
-            agentId: agent?.id,
-            conversationId: $conversationStore?.id
-          }
+        body: {
+          modelId: selectedModel?.value,
+          agentId: agent?.id,
+          conversationId: $conversationStore?.id
         }
       })}
     bind:this={chatForm}

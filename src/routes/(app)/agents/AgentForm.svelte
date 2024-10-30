@@ -4,6 +4,7 @@
   import { Input } from "$lib/components/ui/input";
   import * as RadioGroup from "$lib/components/ui/radio-group";
   import { Textarea } from "$lib/components/ui/textarea";
+  import { AgentType } from "$lib/drizzle/schema";
   import { useQueryClient } from "@tanstack/svelte-query";
   import { superForm, type Infer, type SuperValidated } from "sveltekit-superforms";
   import { zodClient } from "sveltekit-superforms/adapters";
@@ -33,6 +34,25 @@
 </script>
 
 <form method="POST" use:enhance {action}>
+  <Form.Fieldset {form} name="type">
+    <Form.Legend>Agent Type</Form.Legend>
+    <RadioGroup.Root bind:value={$formData.type} class="flex flex-col space-y-1">
+      <div class="flex items-center space-x-3 space-y-0">
+        <Form.Control let:attrs>
+          <RadioGroup.Item value="default" {...attrs} />
+          <Form.Label class="font-normal">Default</Form.Label>
+        </Form.Control>
+      </div>
+      <div class="flex items-center space-x-3 space-y-0">
+        <Form.Control let:attrs>
+          <RadioGroup.Item value="character" {...attrs} />
+          <Form.Label class="font-normal">Character</Form.Label>
+        </Form.Control>
+      </div>
+      <RadioGroup.Input name="type" />
+    </RadioGroup.Root>
+    <Form.FieldErrors />
+  </Form.Fieldset>
   <Form.Field {form} name="name">
     <Form.Control let:attrs>
       <Form.Label>Name</Form.Label>
@@ -59,6 +79,16 @@
     >
     <Form.FieldErrors />
   </Form.Field>
+  {#if $formData.type === AgentType.Character}
+    <Form.Field {form} name="greeting">
+      <Form.Control let:attrs>
+        <Form.Label>Greeting</Form.Label>
+        <Textarea {...attrs} bind:value={$formData.greeting} />
+      </Form.Control>
+      <Form.Description>The character's first message when starting a new chat.</Form.Description>
+      <Form.FieldErrors />
+    </Form.Field>
+  {/if}
   <Form.Fieldset {form} name="visibility">
     <Form.Legend>Visibility</Form.Legend>
     <RadioGroup.Root bind:value={$formData.visibility} class="flex flex-col space-y-1">
@@ -84,24 +114,6 @@
     </RadioGroup.Root>
     <Form.FieldErrors />
   </Form.Fieldset>
-  <Form.Fieldset {form} name="type">
-    <Form.Legend>Agent Type</Form.Legend>
-    <RadioGroup.Root bind:value={$formData.type} class="flex flex-col space-y-1">
-      <div class="flex items-center space-x-3 space-y-0">
-        <Form.Control let:attrs>
-          <RadioGroup.Item value="default" {...attrs} />
-          <Form.Label class="font-normal">Default</Form.Label>
-        </Form.Control>
-      </div>
-      <div class="flex items-center space-x-3 space-y-0">
-        <Form.Control let:attrs>
-          <RadioGroup.Item value="character" {...attrs} />
-          <Form.Label class="font-normal">Character</Form.Label>
-        </Form.Control>
-      </div>
-      <RadioGroup.Input name="type" />
-    </RadioGroup.Root>
-    <Form.FieldErrors />
-  </Form.Fieldset>
+
   <Form.Button>Save</Form.Button>
 </form>

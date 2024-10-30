@@ -1,9 +1,18 @@
 <script lang="ts">
   import Chat from "$lib/components/Chat.svelte";
   import CheckApiKeys from "$lib/components/CheckApiKeys.svelte";
+  import type { Message } from "$lib/helpers";
+  import { v4 as uuidv4 } from "uuid";
   import type { PageData } from "./$types";
 
   export let data: PageData;
+
+  let initialMessages: Message[];
+  $: if (data.agent.greeting) {
+    initialMessages = [
+      { role: "assistant", content: data.agent.greeting, id: uuidv4(), parentId: null }
+    ];
+  }
 </script>
 
 <svelte:head>
@@ -16,5 +25,5 @@
 </h1>
 
 <CheckApiKeys {data}>
-  <Chat agent={data.agent} apiKeys={data.keys} models={data.models} />
+  <Chat agent={data.agent} apiKeys={data.keys} models={data.models} {initialMessages} />
 </CheckApiKeys>

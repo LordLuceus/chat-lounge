@@ -9,6 +9,7 @@ export interface AgentCreateOptions {
   instructions: string;
   visibility: Visibility;
   type: AgentType;
+  greeting?: string;
 }
 
 export async function getAgents(
@@ -68,7 +69,9 @@ export async function getAgent(userId: string, agentId: string) {
         createdAt: agents.createdAt,
         updatedAt: agents.updatedAt,
         lastUsedAt: agentUsers.lastUsedAt,
-        visibility: agents.visibility
+        visibility: agents.visibility,
+        type: agents.type,
+        greeting: agents.greeting
       })
       .from(agents)
       .innerJoin(agentUsers, eq(agents.id, agentUsers.agentId))
@@ -91,12 +94,13 @@ export async function createAgent({
   description,
   instructions,
   visibility,
-  type
+  type,
+  greeting
 }: AgentCreateOptions) {
   const agent = (
     await db
       .insert(agents)
-      .values({ userId, name, description, instructions, visibility, type })
+      .values({ userId, name, description, instructions, visibility, type, greeting })
       .returning()
   ).at(0);
 

@@ -25,6 +25,34 @@
   $: selectedModel = $page.data.models?.find(
     (m: SelectItem) => m.value === $page.data.conversation.modelId
   );
+
+  function exportChat(messages: Message[], userName?: string | null) {
+    if (!messages || messages.length === 0) return;
+
+    // Format the chat messages as plain text
+    const assistantName = $page.data.agent?.name || "Assistant";
+    const userNameText = userName || "User";
+
+    const chatText = messages
+      .map(
+        (message) =>
+          `${message.role === "assistant" ? assistantName : userNameText}\n${message.content}`
+      )
+      .join("\n\n");
+
+    // Create a blob and download link
+    const blob = new Blob([chatText], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+
+    // Trigger download
+    const downloadLink = document.createElement("a");
+    downloadLink.href = url;
+    downloadLink.download = `${$conversationStore?.name}.txt`;
+    downloadLink.click();
+
+    // Clean up URL object after download
+    URL.revokeObjectURL(url);
+  }
 </script>
 
 <svelte:head>
@@ -44,4 +72,7 @@
     {selectedModel}
     agent={$page.data?.agent}
   />
+  <div class="export-chat">
+    <button on:click={() => exportChat(messages, user?.username)}>Export chat</button>
+  </div>
 </SignedIn>

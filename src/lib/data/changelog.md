@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 7 Nov, 2024
+
+Added an option to export a chat as JSON and fixed an issue with model selection.
+
 ## 4 Nov, 2024
 
 Added basic support for characters. Characters are another type of agent optimised for chatting with characters, real or fictional. You can create a character just like a standard agent, but with a few additional features. The greeting field allows you to add an initial message that will be used as the first message in any new chat with the character. Also, you can use the {{user}} and {{char}} placeholders in your instructions to refer to the user and the character, respectively. These will automatically be replaced with the appropriate names when the character is used in a chat. We expect to add more features to characters in the future, so don't hesitate to let us know if you have any suggestions!

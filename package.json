@@ -9,7 +9,7 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "lint": "prettier --check . && eslint .",
-    "format": "prettier --write .",
+    "format": "prettier --write '**/*.{js,ts,svelte}'",
     "generate": "drizzle-kit generate",
     "push": "drizzle-kit push",
     "migrate": "node src/lib/drizzle/migrate.js",

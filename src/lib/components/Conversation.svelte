@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import Chat from "$lib/components/Chat.svelte";
+  import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { getConversationMessages, type Message } from "$lib/helpers";
   import type { ConversationWithMessageMap } from "$lib/server/conversations-service";
   import { conversationStore } from "$lib/stores";
@@ -26,7 +27,7 @@
     (m: SelectItem) => m.value === $page.data.conversation.modelId
   );
 
-  function exportChat(messages: Message[], userName?: string | null) {
+  function exportChatAsText(messages: Message[], userName?: string | null) {
     if (!messages || messages.length === 0) return;
 
     // Format the chat messages as plain text
@@ -53,6 +54,36 @@
     // Clean up URL object after download
     URL.revokeObjectURL(url);
   }
+
+  function exportChatAsJson(messages: Message[], userName?: string | null, userId?: string) {
+    if (!messages || messages.length === 0) return;
+
+    // Format the chat messages as JSON
+    const assistantName = $page.data.agent?.name || "Assistant";
+    const userNameText = userName || "User";
+
+    const chatJson = messages.map((message) => ({
+      role: message.role,
+      content: message.content,
+      name: message.role === "assistant" ? assistantName : userNameText,
+      id: message.id,
+      parentId: message.parentId,
+      senderId: message.role === "user" ? userId : $page.data.agent?.id
+    }));
+
+    // Create a blob and download link
+    const blob = new Blob([JSON.stringify(chatJson, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    // Trigger download
+    const downloadLink = document.createElement("a");
+    downloadLink.href = url;
+    downloadLink.download = `${$conversationStore?.name}.json`;
+    downloadLink.click();
+
+    // Clean up URL object after download
+    URL.revokeObjectURL(url);
+  }
 </script>
 
 <svelte:head>
@@ -73,6 +104,16 @@
     agent={$page.data?.agent}
   />
   <div class="export-chat">
-    <button on:click={() => exportChat(messages, user?.username)}>Export chat</button>
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger>Export Chat</DropdownMenu.Trigger>
+      <DropdownMenu.Content>
+        <DropdownMenu.Item on:click={() => exportChatAsText(messages, user?.username)}
+          >Export to text file</DropdownMenu.Item
+        >
+        <DropdownMenu.Item on:click={() => exportChatAsJson(messages, user?.username, user?.id)}
+          >Export to JSON</DropdownMenu.Item
+        >
+      </DropdownMenu.Content>
+    </DropdownMenu.Root>
   </div>
 </SignedIn>

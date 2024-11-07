@@ -248,14 +248,18 @@
 
 <svelte:window on:keydown={handleCopyLastMessage} on:keydown={handleFocusChatInput} />
 
-<Select
-  bind:value={selectedModel}
-  items={models}
-  placeholder="Select model..."
-  on:change={(e) => localStorage.setItem("selectedModel", JSON.stringify(selectedModel))}
-  {ariaListOpen}
-  clearable={false}
-/>
+{#if !$messages.find((m) => m.role === "user")}
+  <Select
+    bind:value={selectedModel}
+    items={models}
+    placeholder="Select model..."
+    on:change={(e) => localStorage.setItem("selectedModel", JSON.stringify(selectedModel))}
+    {ariaListOpen}
+    clearable={false}
+  />
+{:else if selectedModel}
+  <p>{agent?.name ? `${agent.name} (${selectedModel.label})` : selectedModel.label}</p>
+{/if}
 
 {#if apiKeys?.eleven && $voices}
   <TtsSettings />

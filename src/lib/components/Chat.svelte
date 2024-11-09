@@ -275,14 +275,11 @@
           });
 
           if (response.ok) {
-            const conversation = await response.json();
-            client.invalidateQueries({ queryKey: ["conversations"] });
-            await goto(
-              `/${conversation.agentId ? "agents/" + conversation.agentId : ""}/conversations/${conversation.id}`
-            );
+            toast.info(Toast, { componentProps: { text: "Import queued." } });
           }
         } catch (error) {
           console.error("Error importing conversation:", error);
+          toast.error(Toast, { componentProps: { text: "Failed to import conversation." } });
         }
       };
 

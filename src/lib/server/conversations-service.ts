@@ -32,12 +32,12 @@ export type ConversationWithMessageMap = ConversationWithMessages & {
   messageMap: Record<string, Message>;
 };
 
-interface MessageImport {
+export interface MessageImport {
   id: string;
   content: string;
   role: "user" | "assistant";
   parentId: string | null;
-  senderId: string | null;
+  senderId: string | null | undefined;
   name: string | null;
 }
 
@@ -399,10 +399,13 @@ export async function importChat(userId: string, modelId: string, data: MessageI
   const assistantMessage = data.find((m) => m.role === "assistant");
 
   if (!assistantMessage) {
-    return;
+    return null;
   }
 
-  const agentId = assistantMessage.senderId;
+  let agentId = assistantMessage.senderId;
+  if (agentId === undefined) {
+    agentId = null;
+  }
   const messages = data.map((m) => ({ role: m.role, content: m.content }));
 
   return createConversation({ name: "Imported Chat", agentId, modelId, userId, messages });

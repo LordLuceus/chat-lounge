@@ -1,4 +1,4 @@
-import charPrompt from "$lib/data/character_prompt.md?raw";
+import charPrompt from "$lib/data/character_prompt.txt?raw";
 import {
   AgentType,
   AIProvider,
@@ -247,9 +247,11 @@ class AIService {
     }
 
     const prompt = charPrompt
+      .replace("{{character_definition}}", agent.instructions)
       .replaceAll("{{char}}", agent.name)
-      .replaceAll("{{user}}", user.username.charAt(0).toUpperCase() + user.username.slice(1))
-      .replace("{{character_definition}}", agent.instructions);
+      .replaceAll("{{user}}", user.username.charAt(0).toUpperCase() + user.username.slice(1));
+
+    console.log(prompt);
     return prompt;
   }
 }

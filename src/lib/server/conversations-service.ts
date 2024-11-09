@@ -32,6 +32,15 @@ export type ConversationWithMessageMap = ConversationWithMessages & {
   messageMap: Record<string, Message>;
 };
 
+interface MessageImport {
+  id: string;
+  content: string;
+  role: "user" | "assistant";
+  parentId: string | null;
+  senderId: string | null;
+  name: string | null;
+}
+
 export async function getConversations(
   userId: string,
   limit: number = 10,
@@ -384,4 +393,17 @@ async function generateConversationName(
   const service = new AIService(apiKey.provider as AIProvider, apiKey.key);
 
   return service.generateConversationName(messages, modelId);
+}
+
+export async function importChat(userId: string, modelId: string, data: MessageImport[]) {
+  const assistantMessage = data.find((m) => m.role === "assistant");
+
+  if (!assistantMessage) {
+    return;
+  }
+
+  const agentId = assistantMessage.senderId;
+  const messages = data.map((m) => ({ role: m.role, content: m.content }));
+
+  return createConversation({ name: "Imported Chat", agentId, modelId, userId, messages });
 }

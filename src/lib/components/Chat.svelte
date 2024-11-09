@@ -244,6 +244,54 @@
       }
     });
   }
+
+  function importConversation() {
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.style.display = "none"; // Optionally hide the input element
+
+    // Attach a change event listener to handle file selection
+    fileInput.addEventListener("change", async () => {
+      const file = fileInput.files?.[0];
+
+      if (!file) return;
+
+      const reader = new FileReader();
+
+      reader.onload = async (event) => {
+        const json = event.target?.result as string;
+        const data = JSON.parse(json);
+        const modelId = selectedModel?.value;
+
+        if (!modelId || !json) return;
+
+        try {
+          const response = await fetch(`/api/conversations/import`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ data, modelId })
+          });
+
+          if (response.ok) {
+            const conversation = await response.json();
+            client.invalidateQueries({ queryKey: ["conversations"] });
+            await goto(
+              `/${conversation.agentId ? "agents/" + conversation.agentId : ""}/conversations/${conversation.id}`
+            );
+          }
+        } catch (error) {
+          console.error("Error importing conversation:", error);
+        }
+      };
+
+      reader.readAsText(file); // Start reading the file once it's selected
+    });
+
+    // Trigger the file selection dialog
+    fileInput.click();
+  }
 </script>
 
 <svelte:window on:keydown={handleCopyLastMessage} on:keydown={handleFocusChatInput} />
@@ -332,5 +380,11 @@
   </form>
   {#if apiKeys?.openai && apiKeys.eleven && !$isLoading}
     <Recorder {setVoiceMessage} />
+  {/if}
+
+  {#if !$conversationStore}
+    <div class="import-conversation">
+      <Button on:click={importConversation}>Import conversation</Button>
+    </div>
   {/if}
 </section>

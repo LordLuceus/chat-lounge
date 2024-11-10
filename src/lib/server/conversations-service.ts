@@ -206,7 +206,8 @@ export async function addConversationMessage(
   role: "user" | "assistant",
   userId?: string,
   messageId?: string,
-  isInternal: boolean = false
+  isInternal: boolean = false,
+  regenerate: boolean = false
 ) {
   const message = (
     await db
@@ -217,7 +218,7 @@ export async function addConversationMessage(
 
   if (!message) throw new Error("Failed to add message");
 
-  const parent = await findParent(role, messageId, conversationId);
+  const parent = await findParent(role, messageId, conversationId, regenerate);
 
   if (parent) {
     await updateConversationMessage(conversationId, message.id, { parentId: parent.message.id });
@@ -239,7 +240,12 @@ export async function addConversationMessage(
   if (!isInternal) await updateConversation(conversationId, { currentNode: message.id });
 }
 
-async function findParent(role: string, messageId: string | undefined, conversationId: string) {
+async function findParent(
+  role: string,
+  messageId: string | undefined,
+  conversationId: string,
+  regenerate: boolean
+) {
   if (role === "user") {
     if (messageId) {
       const currentMessage = await getConversationMessage(conversationId, messageId);
@@ -292,8 +298,8 @@ async function findParent(role: string, messageId: string | undefined, conversat
   if (currentNode) {
     if (currentNode?.message.role === "user") {
       return currentNode;
-    } else if (currentNode.message.parentId) {
-      const userMessage = (
+    } else if (currentNode.message.parentId && regenerate) {
+      const previousMessage = (
         await db
           .select()
           .from(messages)
@@ -301,15 +307,16 @@ async function findParent(role: string, messageId: string | undefined, conversat
           .where(
             and(
               eq(messages.conversationId, conversationId),
-              eq(messages.role, "user"),
               eq(messages.id, currentNode.message.parentId)
             )
           )
       ).at(0);
 
-      if (userMessage) {
-        return userMessage;
+      if (previousMessage) {
+        return previousMessage;
       }
+    } else if (currentNode.message.parentId && !regenerate) {
+      return currentNode;
     }
   }
   return null;
@@ -342,6 +349,7 @@ export async function getLastSummary(conversationId: string) {
     orderBy: [desc(messages.createdAt)]
   });
 }
+
 export async function updateConversationMessage(
   conversationId: string,
   messageId: string,

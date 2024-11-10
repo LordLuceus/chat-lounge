@@ -77,7 +77,7 @@ class AIService {
 
     const onCompletion = async (completion: string) => {
       if (conversationId) {
-        if (!regenerate) {
+        if (!regenerate && messages.at(-1)?.role === "user") {
           await addConversationMessage(
             conversationId,
             messages.at(-1)?.content as string,
@@ -86,7 +86,15 @@ class AIService {
             messageId
           );
         }
-        await addConversationMessage(conversationId, completion, "assistant");
+        await addConversationMessage(
+          conversationId,
+          completion,
+          "assistant",
+          undefined,
+          undefined,
+          false,
+          regenerate
+        );
         this.postProcess(processedMessages as Message[], model, userId, agent, conversationId);
       }
     };
@@ -251,7 +259,6 @@ class AIService {
       .replaceAll("{{char}}", agent.name)
       .replaceAll("{{user}}", user.username.charAt(0).toUpperCase() + user.username.slice(1));
 
-    console.log(prompt);
     return prompt;
   }
 }

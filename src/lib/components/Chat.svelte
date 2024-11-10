@@ -26,6 +26,7 @@
   import { ModelID } from "$lib/types/elevenlabs";
   import { useChat } from "@ai-sdk/svelte";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
+  import { auth, runs } from "@trigger.dev/sdk/v3";
   import { onDestroy, onMount, tick } from "svelte";
   import Select from "svelte-select";
   import { toast } from "svelte-sonner";
@@ -249,6 +250,7 @@
     const fileInput = document.createElement("input");
     fileInput.type = "file";
     fileInput.style.display = "none"; // Optionally hide the input element
+    fileInput.accept = "application/json";
 
     // Attach a change event listener to handle file selection
     fileInput.addEventListener("change", async () => {
@@ -275,11 +277,30 @@
           });
 
           if (response.ok) {
-            toast.info(Toast, { componentProps: { text: "Import queued." } });
+            const handle = await response.json();
+            auth.configure({ accessToken: handle.publicAccessToken });
+
+            for await (const run of runs.subscribeToRun(handle.id)) {
+              toast.info(Toast, { componentProps: { text: `Import ${run.status.toLowerCase()}` } });
+
+              if (run.status === "COMPLETED") {
+                const { conversation } = run.output;
+
+                if (!conversation) return;
+                client.invalidateQueries({ queryKey: ["conversations"] });
+                await goto(
+                  `${conversation.agentId ? "/agents/" + conversation.agentId : ""}/conversations/${conversation.id}`
+                );
+                break;
+              } else if (run.status === "FAILED") {
+                toast.error(Toast, {
+                  componentProps: { text: `There was an error importing the chat: ${run.error}` }
+                });
+              }
+            }
           }
         } catch (error) {
           console.error("Error importing conversation:", error);
-          toast.error(Toast, { componentProps: { text: "Failed to import conversation." } });
         }
       };
 
@@ -293,18 +314,14 @@
 
 <svelte:window on:keydown={handleCopyLastMessage} on:keydown={handleFocusChatInput} />
 
-{#if !$messages.find((m) => m.role === "user")}
-  <Select
-    bind:value={selectedModel}
-    items={models}
-    placeholder="Select model..."
-    on:change={(e) => localStorage.setItem("selectedModel", JSON.stringify(selectedModel))}
-    {ariaListOpen}
-    clearable={false}
-  />
-{:else if selectedModel}
-  <p>{agent?.name ? `${agent.name} (${selectedModel.label})` : selectedModel.label}</p>
-{/if}
+<Select
+  bind:value={selectedModel}
+  items={models}
+  placeholder="Select model..."
+  on:change={(e) => localStorage.setItem("selectedModel", JSON.stringify(selectedModel))}
+  {ariaListOpen}
+  clearable={false}
+/>
 
 {#if apiKeys?.eleven && $voices}
   <TtsSettings />
@@ -362,7 +379,8 @@
           modelId: selectedModel?.value,
           agentId: agent?.id,
           conversationId: $conversationStore?.id
-        }
+        },
+        allowEmptySubmit: true
       })}
     bind:this={chatForm}
   >
@@ -381,7 +399,7 @@
 
   {#if !$conversationStore}
     <div class="import-conversation">
-      <Button on:click={importConversation}>Import conversation</Button>
+      <Button on:click={importConversation}>Import conversation (BETA)</Button>
     </div>
   {/if}
 </section>

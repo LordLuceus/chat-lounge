@@ -15,7 +15,11 @@ export const load = (async (event) => {
     return error(404, "Agent not found");
   }
 
-  const formData = { ...agent, description: agent.description ?? undefined };
+  const formData = {
+    ...agent,
+    description: agent.description ?? undefined,
+    greeting: agent.greeting ?? undefined
+  };
 
   return {
     agent,

@@ -1,6 +1,4 @@
 import { error, json, type RequestHandler } from "@sveltejs/kit";
-import { tasks } from "@trigger.dev/sdk/v3";
-import type { importChatTask } from "../../../../trigger/import-chat";
 
 export const POST = (async ({ locals, request }) => {
   if (!locals.session?.userId) {
@@ -15,11 +13,6 @@ export const POST = (async ({ locals, request }) => {
     return error(400, "No model ID provided");
   }
 
-  const handle = await tasks.trigger<typeof importChatTask>("import-chat", {
-    userId,
-    modelId,
-    data
-  });
-
-  return json(handle);
+  // Placeholder for importing conversations
+  return json({ userId, data });
 }) satisfies RequestHandler;

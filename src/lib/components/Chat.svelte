@@ -26,7 +26,6 @@
   import { ModelID } from "$lib/types/elevenlabs";
   import { useChat } from "@ai-sdk/svelte";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
-  import { auth, runs } from "@trigger.dev/sdk/v3";
   import { onDestroy, onMount, tick } from "svelte";
   import Select from "svelte-select";
   import { toast } from "svelte-sonner";
@@ -277,27 +276,7 @@
           });
 
           if (response.ok) {
-            const handle = await response.json();
-            auth.configure({ accessToken: handle.publicAccessToken });
-
-            for await (const run of runs.subscribeToRun(handle.id)) {
-              toast.info(Toast, { componentProps: { text: `Import ${run.status.toLowerCase()}` } });
-
-              if (run.status === "COMPLETED") {
-                const { conversation } = run.output;
-
-                if (!conversation) return;
-                client.invalidateQueries({ queryKey: ["conversations"] });
-                await goto(
-                  `${conversation.agentId ? "/agents/" + conversation.agentId : ""}/conversations/${conversation.id}`
-                );
-                break;
-              } else if (run.status === "FAILED") {
-                toast.error(Toast, {
-                  componentProps: { text: `There was an error importing the chat: ${run.error}` }
-                });
-              }
-            }
+            // TODO: Implement importing conversations
           }
         } catch (error) {
           console.error("Error importing conversation:", error);

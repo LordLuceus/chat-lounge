@@ -112,6 +112,9 @@ export const conversations = sqliteTable("conversation", {
   currentNode: text("currentNode").references((): AnySQLiteColumn => messages.id, {
     onDelete: "set null"
   }),
+  isImporting: integer("isImporting", { mode: "boolean" })
+    .notNull()
+    .default(sql`0`),
   createdAt: integer("createdAt", { mode: "timestamp_ms" })
     .notNull()
     .$default(() => new Date()),

@@ -7,3 +7,13 @@ services:
       - .env
     container_name: chat-lounge
     restart: unless-stopped
+    depends_on:
+      - valkey
+
+  valkey:
+    image: valkey/valkey:latest # Use the official Valkey image
+    container_name: valkey-server
+    ports:
+      - 6379:6379
+    restart: unless-stopped
+    command: [ "valkey-server", "--appendonly", "yes" ] # Enable persistence

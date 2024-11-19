@@ -231,10 +231,15 @@ class AIService {
     const prompt =
       "Summarise the following conversation in five words or fewer. Be as concise as possible without losing the context of the conversation. Your goal is to extract the key point of the conversation and turn it into a short and interesting title. Respond only with the title and nothing else.";
 
-    const context = messages
-      .slice(0, 2)
-      .map(({ role, content }) => `${role}: ${content}`)
-      .join("\n");
+    let messageContext: typeof messages;
+
+    if (messages.at(0)?.role === "assistant") {
+      messageContext = messages.slice(0, 3);
+    } else {
+      messageContext = messages.slice(0, 2);
+    }
+
+    const context = messageContext.map(({ role, content }) => `${role}: ${content}`).join("\n");
 
     const { text } = await generateText({
       model: this.client(modelId, this.provider === "google" ? this.GOOGLE_SETTINGS : undefined),

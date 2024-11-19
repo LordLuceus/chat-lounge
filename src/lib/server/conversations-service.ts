@@ -18,6 +18,7 @@ export interface ConversationCreateOptions {
   userId: string;
   messages: { role: "user" | "assistant"; content: string }[];
   currentNode?: string;
+  isImporting?: boolean;
 }
 
 interface Message {
@@ -56,7 +57,8 @@ export async function getConversations(
       agentId: conversations.agentId,
       createdAt: conversations.createdAt,
       updatedAt: conversations.updatedAt,
-      currentNode: conversations.currentNode
+      currentNode: conversations.currentNode,
+      isImporting: conversations.isImporting
     })
     .from(conversations)
     .innerJoin(conversationUsers, eq(conversations.id, conversationUsers.conversationId))
@@ -120,12 +122,18 @@ export async function createConversation({
   agentId,
   modelId,
   userId,
-  messages
+  messages,
+  isImporting
 }: ConversationCreateOptions) {
   const conversation = (
     await db
       .insert(conversations)
-      .values({ name: name ? name : "New Chat", agentId, modelId })
+      .values({
+        name: name ? name : "New Chat",
+        agentId,
+        modelId,
+        isImporting: isImporting ? true : false
+      })
       .returning()
   ).at(0);
 
@@ -142,6 +150,7 @@ export async function createConversation({
     );
   }
 
+  if (messages.length === 0) return getConversation(userId, conversation.id);
   const title = await generateConversationName(messages, modelId, userId);
   if (title) await updateConversation(conversation.id, { name: title });
 
@@ -403,18 +412,31 @@ async function generateConversationName(
   return service.generateConversationName(messages, modelId);
 }
 
-export async function importChat(userId: string, modelId: string, data: MessageImport[]) {
-  const assistantMessage = data.find((m) => m.role === "assistant");
-
-  if (!assistantMessage) {
-    return null;
-  }
-
-  let agentId = assistantMessage.senderId;
-  if (agentId === undefined) {
-    agentId = null;
-  }
+export async function importChat(
+  conversationId: string,
+  userId: string,
+  modelId: string,
+  data: MessageImport[],
+  updateProgress?: (progress: number) => void
+) {
   const messages = data.map((m) => ({ role: m.role, content: m.content }));
 
-  return createConversation({ name: "Imported Chat", agentId, modelId, userId, messages });
+  for (const message of messages) {
+    await addConversationMessage(
+      conversationId,
+      message.content,
+      message.role,
+      message.role === "user" ? userId : undefined
+    );
+
+    if (updateProgress)
+      updateProgress(Math.round((messages.indexOf(message) / messages.length) * 100));
+  }
+
+  const title = await generateConversationName(messages, modelId, userId);
+  if (title) await updateConversation(conversationId, { name: title });
+
+  if (updateProgress) updateProgress(100);
+
+  await updateConversation(conversationId, { isImporting: false });
 }

@@ -18,6 +18,7 @@ export interface ConversationCreateOptions {
   userId: string;
   messages: { role: "user" | "assistant"; content: string }[];
   currentNode?: string;
+  isImporting?: boolean;
 }
 
 interface Message {
@@ -31,6 +32,15 @@ interface Message {
 export type ConversationWithMessageMap = ConversationWithMessages & {
   messageMap: Record<string, Message>;
 };
+
+export interface MessageImport {
+  id: string;
+  content: string;
+  role: "user" | "assistant";
+  parentId: string | null;
+  senderId: string | null | undefined;
+  name: string | null;
+}
 
 export async function getConversations(
   userId: string,
@@ -47,7 +57,8 @@ export async function getConversations(
       agentId: conversations.agentId,
       createdAt: conversations.createdAt,
       updatedAt: conversations.updatedAt,
-      currentNode: conversations.currentNode
+      currentNode: conversations.currentNode,
+      isImporting: conversations.isImporting
     })
     .from(conversations)
     .innerJoin(conversationUsers, eq(conversations.id, conversationUsers.conversationId))
@@ -111,12 +122,18 @@ export async function createConversation({
   agentId,
   modelId,
   userId,
-  messages
+  messages,
+  isImporting
 }: ConversationCreateOptions) {
   const conversation = (
     await db
       .insert(conversations)
-      .values({ name: name ? name : "New Chat", agentId, modelId })
+      .values({
+        name: name ? name : "New Chat",
+        agentId,
+        modelId,
+        isImporting: isImporting ? true : false
+      })
       .returning()
   ).at(0);
 
@@ -133,6 +150,7 @@ export async function createConversation({
     );
   }
 
+  if (messages.length === 0) return getConversation(userId, conversation.id);
   const title = await generateConversationName(messages, modelId, userId);
   if (title) await updateConversation(conversation.id, { name: title });
 
@@ -197,7 +215,8 @@ export async function addConversationMessage(
   role: "user" | "assistant",
   userId?: string,
   messageId?: string,
-  isInternal: boolean = false
+  isInternal: boolean = false,
+  regenerate: boolean = false
 ) {
   const message = (
     await db
@@ -208,7 +227,7 @@ export async function addConversationMessage(
 
   if (!message) throw new Error("Failed to add message");
 
-  const parent = await findParent(role, messageId, conversationId);
+  const parent = await findParent(role, messageId, conversationId, regenerate);
 
   if (parent) {
     await updateConversationMessage(conversationId, message.id, { parentId: parent.message.id });
@@ -230,7 +249,12 @@ export async function addConversationMessage(
   if (!isInternal) await updateConversation(conversationId, { currentNode: message.id });
 }
 
-async function findParent(role: string, messageId: string | undefined, conversationId: string) {
+async function findParent(
+  role: string,
+  messageId: string | undefined,
+  conversationId: string,
+  regenerate: boolean
+) {
   if (role === "user") {
     if (messageId) {
       const currentMessage = await getConversationMessage(conversationId, messageId);
@@ -283,8 +307,8 @@ async function findParent(role: string, messageId: string | undefined, conversat
   if (currentNode) {
     if (currentNode?.message.role === "user") {
       return currentNode;
-    } else if (currentNode.message.parentId) {
-      const userMessage = (
+    } else if (currentNode.message.parentId && regenerate) {
+      const previousMessage = (
         await db
           .select()
           .from(messages)
@@ -292,15 +316,16 @@ async function findParent(role: string, messageId: string | undefined, conversat
           .where(
             and(
               eq(messages.conversationId, conversationId),
-              eq(messages.role, "user"),
               eq(messages.id, currentNode.message.parentId)
             )
           )
       ).at(0);
 
-      if (userMessage) {
-        return userMessage;
+      if (previousMessage) {
+        return previousMessage;
       }
+    } else if (currentNode.message.parentId && !regenerate) {
+      return currentNode;
     }
   }
   return null;
@@ -333,6 +358,7 @@ export async function getLastSummary(conversationId: string) {
     orderBy: [desc(messages.createdAt)]
   });
 }
+
 export async function updateConversationMessage(
   conversationId: string,
   messageId: string,
@@ -384,4 +410,33 @@ async function generateConversationName(
   const service = new AIService(apiKey.provider as AIProvider, apiKey.key);
 
   return service.generateConversationName(messages, modelId);
+}
+
+export async function importChat(
+  conversationId: string,
+  userId: string,
+  modelId: string,
+  data: MessageImport[],
+  updateProgress?: (progress: number) => void
+) {
+  const messages = data.map((m) => ({ role: m.role, content: m.content }));
+
+  for (const message of messages) {
+    await addConversationMessage(
+      conversationId,
+      message.content,
+      message.role,
+      message.role === "user" ? userId : undefined
+    );
+
+    if (updateProgress)
+      updateProgress(Math.round((messages.indexOf(message) / messages.length) * 100));
+  }
+
+  const title = await generateConversationName(messages, modelId, userId);
+  if (title) await updateConversation(conversationId, { name: title });
+
+  if (updateProgress) updateProgress(100);
+
+  await updateConversation(conversationId, { isImporting: false });
 }

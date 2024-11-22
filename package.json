@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "@clerk/backend": "^0.38.14",
-    "@sveltejs/adapter-cloudflare": "^4.7.4",
+    "@sveltejs/adapter-node": "^5.2.9",
     "@sveltejs/kit": "^2.7.4",
     "@sveltejs/vite-plugin-svelte": "^3.1.2",
     "@types/eslint": "^8.56.12",
@@ -42,8 +42,7 @@
     "tailwindcss": "^3.4.14",
     "tslib": "^2.8.1",
     "typescript": "^5.6.3",
-    "vite": "^5.4.10",
-    "wrangler": "^3.84.1"
+    "vite": "^5.4.10"
   },
   "type": "module",
   "dependencies": {
@@ -53,14 +52,17 @@
     "@ai-sdk/svelte": "^0.0.57",
     "@libsql/client": "^0.14.0",
     "@tanstack/svelte-query": "^5.59.17",
+    "ably": "^2.5.0",
     "ai": "^3.4.32",
     "bits-ui": "^0.19.7",
+    "bullmq": "^5.26.2",
     "clerk-sveltekit": "^0.4.2",
     "clsx": "^2.1.1",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.35.3",
     "formsnap": "^1.0.1",
     "gpt-tokenizer": "^2.6.0",
+    "ioredis": "^5.4.1",
     "lucide-svelte": "^0.344.0",
     "mode-watcher": "^0.2.2",
     "openai": "^4.70.2",
@@ -72,10 +74,11 @@
     "svelte-sonner": "^0.3.28",
     "svelte-time": "^0.9.0",
     "sveltekit-superforms": "^2.20.0",
-    "svix": "^1.37.0",
+    "svix": "^1.40.0",
     "tailwind-merge": "^2.5.4",
     "tailwind-variants": "^0.2.1",
     "uuid": "^9.0.1",
     "zod": "^3.23.8"
-  }
+  },
+  "packageManager": "pnpm@8.15.6+sha1.8105075ad0aa306138be128c017e9c41e28ecffa"
 }

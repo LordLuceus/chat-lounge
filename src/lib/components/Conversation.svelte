@@ -1,14 +1,21 @@
 <script lang="ts">
   import { page } from "$app/stores";
+  import { PUBLIC_ABLY_API_KEY } from "$env/static/public";
   import Chat from "$lib/components/Chat.svelte";
+  import Toast from "$lib/components/Toast.svelte";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { getConversationMessages, type Message } from "$lib/helpers";
   import type { ConversationWithMessageMap } from "$lib/server/conversations-service";
   import { conversationStore } from "$lib/stores";
   import type { SelectItem } from "$lib/types/client";
-  import { createQuery } from "@tanstack/svelte-query";
+  import { createQuery, useQueryClient } from "@tanstack/svelte-query";
+  import { Realtime } from "ably";
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
+  import { onDestroy, onMount } from "svelte";
+  import { toast } from "svelte-sonner";
   import { derived } from "svelte/store";
+
+  const client = useQueryClient();
 
   const conversationQuery = createQuery<ConversationWithMessageMap>(
     derived(page, ($page) => ({
@@ -84,6 +91,35 @@
     // Clean up URL object after download
     URL.revokeObjectURL(url);
   }
+
+  let progress: number = 0;
+  let ablyRealtime: Realtime;
+
+  onMount(async () => {
+    if (!$conversationStore?.isImporting) return;
+    ablyRealtime = new Realtime({ key: PUBLIC_ABLY_API_KEY });
+    await ablyRealtime.connection.once("connected");
+    const channel = ablyRealtime.channels.get(`import-${$conversationStore?.id}`);
+    channel.subscribe("progress", (message) => {
+      progress = message.data.progress;
+    });
+
+    channel.subscribe("completed", (message) => {
+      client.invalidateQueries({ queryKey: ["conversations"] });
+      toast.success(Toast, { componentProps: { text: "Chat imported successfully." } });
+      ablyRealtime.close();
+    });
+
+    channel.subscribe("failed", (message) => {
+      toast.error(Toast, {
+        componentProps: { text: `Failed to import chat. ${message.data.error}` }
+      });
+    });
+  });
+
+  onDestroy(() => {
+    if (ablyRealtime) ablyRealtime.close();
+  });
 </script>
 
 <svelte:head>
@@ -96,24 +132,33 @@
 </h1>
 
 <SignedIn let:user>
-  <Chat
-    apiKeys={$page.data.keys}
-    models={$page.data.models}
-    initialMessages={messages}
-    {selectedModel}
-    agent={$page.data?.agent}
-  />
-  <div class="export-chat">
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger>Export Chat</DropdownMenu.Trigger>
-      <DropdownMenu.Content>
-        <DropdownMenu.Item on:click={() => exportChatAsText(messages, user?.username)}
-          >Export to text file</DropdownMenu.Item
-        >
-        <DropdownMenu.Item on:click={() => exportChatAsJson(messages, user?.username, user?.id)}
-          >Export to JSON</DropdownMenu.Item
-        >
-      </DropdownMenu.Content>
-    </DropdownMenu.Root>
-  </div>
+  {#if !$conversationStore?.isImporting}
+    <Chat
+      apiKeys={$page.data.keys}
+      models={$page.data.models}
+      initialMessages={messages}
+      {selectedModel}
+      agent={$page.data?.agent}
+    />
+    <div class="export-chat">
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger>Export Chat</DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item on:click={() => exportChatAsText(messages, user?.username)}
+            >Export to text file</DropdownMenu.Item
+          >
+          <DropdownMenu.Item on:click={() => exportChatAsJson(messages, user?.username, user?.id)}
+            >Export to JSON</DropdownMenu.Item
+          >
+        </DropdownMenu.Content>
+      </DropdownMenu.Root>
+    </div>
+  {:else}
+    <div class="import-progress">
+      <p>Importing chat...</p>
+      <div class="progress-bar">
+        <progress max="100" value={progress} />
+      </div>
+    </div>
+  {/if}
 </SignedIn>

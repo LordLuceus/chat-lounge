@@ -22,7 +22,8 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
 
-ENV NODE_ENV=production
+ENV NODE_ENV production
+ENV ORIGIN https://chatlounge.app
 
 EXPOSE 3000
 

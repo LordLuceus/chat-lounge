@@ -2,6 +2,8 @@ FROM node:20-slim AS builder
 
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y ca-certificates
+
 RUN npm install -g pnpm
 
 COPY package.json pnpm-lock.yaml ./
@@ -16,6 +18,8 @@ RUN pnpm prune --production
 FROM node:20-slim
 
 WORKDIR /app
+
+RUN apt-get update && apt-get install -y ca-certificates
 
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/node_modules ./node_modules

@@ -1,6 +1,6 @@
 services:
   app:
-    build: ghcr.io/lordluceus/chat-lounge:master
+    build: .
     ports:
       - 3000:3000
     env_file:

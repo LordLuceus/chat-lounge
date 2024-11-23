@@ -1,4 +1,4 @@
-import { PUBLIC_ELEVENLABS_BASE_URL } from "$env/static/public";
+import { env } from "$env/dynamic/public";
 import { AIProvider } from "$lib/drizzle/schema";
 import { getApiKey } from "$lib/server/api-keys-service";
 import { getUser } from "$lib/server/users-service";
@@ -31,7 +31,7 @@ export const POST = (async ({ locals, request }) => {
   }
 
   const response = await fetch(
-    `${PUBLIC_ELEVENLABS_BASE_URL}/text-to-speech/${voice}${stream ? "/stream" : ""}`,
+    `${env.PUBLIC_ELEVENLABS_BASE_URL}/text-to-speech/${voice}${stream ? "/stream" : ""}`,
     {
       method: "POST",
       headers: {

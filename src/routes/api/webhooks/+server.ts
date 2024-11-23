@@ -1,4 +1,4 @@
-import { WEBHOOK_SECRET } from "$env/static/private";
+import { env } from "$env/dynamic/private";
 import { createUser, deleteUser, updateUser } from "$lib/server/users-service";
 import type { WebhookEvent } from "@clerk/backend";
 import { error, type RequestHandler } from "@sveltejs/kit";
@@ -16,7 +16,7 @@ export const POST = (async ({ request }) => {
   const payload = await request.json();
   const body = JSON.stringify(payload);
 
-  const wh = new Webhook(WEBHOOK_SECRET);
+  const wh = new Webhook(env.WEBHOOK_SECRET);
 
   let evt: WebhookEvent;
 

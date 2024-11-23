@@ -1,9 +1,9 @@
-import { PUBLIC_CLERK_PUBLISHABLE_KEY } from "$env/static/public";
+import { env } from "$env/dynamic/public";
 import { checkForUpdates, setVersion } from "$lib/helpers/check-for-updates";
 import type { HandleClientError } from "@sveltejs/kit";
 import { initializeClerkClient } from "clerk-sveltekit/client";
 
-initializeClerkClient(PUBLIC_CLERK_PUBLISHABLE_KEY, {
+initializeClerkClient(env.PUBLIC_CLERK_PUBLISHABLE_KEY, {
   afterSignInUrl: "/",
   afterSignUpUrl: "/",
   signInUrl: "/auth/sign-in",

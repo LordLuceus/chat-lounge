@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { PUBLIC_ABLY_API_KEY } from "$env/static/public";
+  import { env } from "$env/dynamic/public";
   import Chat from "$lib/components/Chat.svelte";
   import Toast from "$lib/components/Toast.svelte";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
@@ -97,7 +97,7 @@
 
   onMount(async () => {
     if (!$conversationStore?.isImporting) return;
-    ablyRealtime = new Realtime({ key: PUBLIC_ABLY_API_KEY });
+    ablyRealtime = new Realtime({ key: env.PUBLIC_ABLY_API_KEY });
     await ablyRealtime.connection.once("connected");
     const channel = ablyRealtime.channels.get(`import-${$conversationStore?.id}`);
     channel.subscribe("progress", (message) => {

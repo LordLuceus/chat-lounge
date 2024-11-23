@@ -1,4 +1,4 @@
-import { PUBLIC_ELEVENLABS_BASE_URL } from "$env/static/public";
+import { env } from "$env/dynamic/public";
 import { AIProvider } from "$lib/drizzle/schema";
 import { getApiKey } from "$lib/server/api-keys-service";
 import { getUser } from "$lib/server/users-service";
@@ -26,7 +26,7 @@ export const GET = (async ({ locals, request, params }) => {
     return error(404, { message: "API key not found" });
   }
 
-  const response = await fetch(`${PUBLIC_ELEVENLABS_BASE_URL}/history/${id}/audio`, {
+  const response = await fetch(`${env.PUBLIC_ELEVENLABS_BASE_URL}/history/${id}/audio`, {
     method: "GET",
     headers: {
       "xi-api-key": apiKey.key
@@ -73,7 +73,7 @@ export const DELETE = (async ({ locals, params }) => {
     return error(404, { message: "API key not found" });
   }
 
-  const response = await fetch(`${PUBLIC_ELEVENLABS_BASE_URL}/history/${id}`, {
+  const response = await fetch(`${env.PUBLIC_ELEVENLABS_BASE_URL}/history/${id}`, {
     method: "DELETE",
     headers: {
       "xi-api-key": apiKey.key

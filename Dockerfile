@@ -21,6 +21,8 @@ FROM node:20-slim
 
 WORKDIR /app
 
+RUN mkdir /app/data
+
 RUN apt-get update && apt-get install -y ca-certificates
 
 COPY --from=builder /app/build ./build

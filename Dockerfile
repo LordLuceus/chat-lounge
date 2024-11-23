@@ -20,15 +20,16 @@ FROM node:20-slim
 WORKDIR /app
 
 RUN mkdir /app/data
+RUN touch /app/data/chat-lounge.db
 RUN apt-get update && apt-get install -y ca-certificates
 
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
+RUN rm /app/data/chat-lounge.db
 
 ENV NODE_ENV=production
-ENV ORIGIN=https://chatlounge.app
 
 EXPOSE 3000
 

@@ -1,5 +1,14 @@
 # ChatLounge Changelog
 
+## 25 Nov, 2024
+
+This release brings some major, though mostly under-the-hood, changes to the app.
+
+- Migrated the app to a self-hosted server and a local database. In practice, this should make the app feel much snappier in many cases. As this is a major change, please let us know if you encounter any issues.
+- Added a feature to import a chat. This requires a JSON file structured like the one exported by the app. The import will be queued and processed in the background, though in most cases it will take only a few seconds to complete. You can check the progress of the import in the conversations page. This feature is still in beta and may have some issues, so please report any problems you encounter.
+- The language model is no longer locked in once you start a conversation. You can now switch between models at any time, and the conversation will continue using the new model. This should make it easier to experiment with different models and see how they perform.
+- Updated GPT 4O to the latest snapshot, 2024-11-20.
+
 ## 7 Nov, 2024
 
 Added an option to export a chat as JSON and fixed an issue with model selection.

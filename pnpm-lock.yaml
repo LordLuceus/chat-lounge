@@ -48,8 +48,8 @@ importers:
         specifier: ^16.4.5
         version: 16.4.5
       drizzle-orm:
-        specifier: ^0.35.3
-        version: 0.35.3(@cloudflare/workers-types@4.20241106.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(react@18.3.1)
+        specifier: ^0.36.4
+        version: 0.36.4(@cloudflare/workers-types@4.20241106.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(react@18.3.1)
       formsnap:
         specifier: ^1.0.1
         version: 1.0.1(svelte@4.2.19)(sveltekit-superforms@2.20.0(@sveltejs/kit@2.8.0(@sveltejs/vite-plugin-svelte@3.1.2(svelte@4.2.19)(vite@5.4.10(@types/node@22.9.0)))(svelte@4.2.19)(vite@5.4.10(@types/node@22.9.0)))(@types/json-schema@7.0.15)(svelte@4.2.19)(typescript@5.6.3))
@@ -136,8 +136,8 @@ importers:
         specifier: ^10.4.20
         version: 10.4.20(postcss@8.4.47)
       drizzle-kit:
-        specifier: ^0.26.2
-        version: 0.26.2
+        specifier: ^0.28.1
+        version: 0.28.1
       eslint:
         specifier: ^8.57.1
         version: 8.57.1
@@ -1987,19 +1987,19 @@ packages:
     resolution: {integrity: sha512-ZmdL2rui+eB2YwhsWzjInR8LldtZHGDoQ1ugH85ppHKwpUHL7j7rN0Ti9NCnGiQbhaZ11FpR+7ao1dNsmduNUg==}
     engines: {node: '>=12'}
 
-  drizzle-kit@0.26.2:
-    resolution: {integrity: sha512-cMq8omEKywjIy5KcqUo6LvEFxkl8/zYHsgYjFVXjmPWWtuW4blcz+YW9+oIhoaALgs2ebRjzXwsJgN9i6P49Dw==}
+  drizzle-kit@0.28.1:
+    resolution: {integrity: sha512-JimOV+ystXTWMgZkLHYHf2w3oS28hxiH1FR0dkmJLc7GHzdGJoJAQtQS5DRppnabsRZwE2U1F6CuezVBgmsBBQ==}
     hasBin: true
 
-  drizzle-orm@0.35.3:
-    resolution: {integrity: sha512-Uv6N+b36x4BaZlxc96e+ag7RnMapBLGhc4SSi2F7RDwqYJipWjaU/P68RUp1FbW9r+mxoDp8nMz2Eece8PJxfA==}
+  drizzle-orm@0.36.4:
+    resolution: {integrity: sha512-1OZY3PXD7BR00Gl61UUOFihslDldfH4NFRH2MbP54Yxi0G/PKn4HfO65JYZ7c16DeP3SpM3Aw+VXVG9j6CRSXA==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
       '@cloudflare/workers-types': '>=3'
-      '@electric-sql/pglite': '>=0.1.1'
+      '@electric-sql/pglite': '>=0.2.0'
       '@libsql/client': '>=0.10.0'
       '@libsql/client-wasm': '>=0.10.0'
-      '@neondatabase/serverless': '>=0.1'
+      '@neondatabase/serverless': '>=0.10.0'
       '@op-engineering/op-sqlite': '>=2'
       '@opentelemetry/api': ^1.4.1
       '@planetscale/database': '>=1'
@@ -2013,7 +2013,7 @@ packages:
       '@xata.io/client': '*'
       better-sqlite3: '>=7'
       bun-types: '*'
-      expo-sqlite: '>=13.2.0'
+      expo-sqlite: '>=14.0.0'
       knex: '*'
       kysely: '*'
       mysql2: '>=2'
@@ -2031,6 +2031,8 @@ packages:
       '@electric-sql/pglite':
         optional: true
       '@libsql/client':
+        optional: true
+      '@libsql/client-wasm':
         optional: true
       '@neondatabase/serverless':
         optional: true
@@ -4585,6 +4587,7 @@ snapshots:
     dependencies:
       '@libsql/core': 0.14.0
       js-base64: 3.7.7
+    optional: true
 
   '@libsql/client@0.14.0':
     dependencies:
@@ -5522,7 +5525,7 @@ snapshots:
 
   dotenv@16.4.5: {}
 
-  drizzle-kit@0.26.2:
+  drizzle-kit@0.28.1:
     dependencies:
       '@drizzle-team/brocli': 0.10.2
       '@esbuild-kit/esm-loader': 2.6.5
@@ -5531,12 +5534,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.35.3(@cloudflare/workers-types@4.20241106.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(react@18.3.1):
-    dependencies:
-      '@libsql/client-wasm': 0.14.0
+  drizzle-orm@0.36.4(@cloudflare/workers-types@4.20241106.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(react@18.3.1):
     optionalDependencies:
       '@cloudflare/workers-types': 4.20241106.0
       '@libsql/client': 0.14.0
+      '@libsql/client-wasm': 0.14.0
       '@opentelemetry/api': 1.9.0
       react: 18.3.1
 

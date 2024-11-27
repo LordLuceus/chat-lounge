@@ -10,7 +10,7 @@ services:
     depends_on:
       - valkey
     volumes:
-      - db-data:/data
+      - db-data:/app/data
 
   valkey:
     image: valkey/valkey:latest # Use the official Valkey image

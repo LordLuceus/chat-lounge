@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "6db8916a-74b2-4844-a469-ba37c2e7d7f8",
-  "prevId": "78720edd-d3ed-4bca-8ea5-f1c8bb9750f1",
+  "id": "7e631a80-1200-4014-aa50-9f7e5ec01ac4",
+  "prevId": "a10bbc56-fc1c-4488-92ed-7c9598f36acc",
   "tables": {
     "agentUser": {
       "name": "agentUser",
@@ -57,8 +57,12 @@
           "name": "agentUser_agentId_agent_id_fk",
           "tableFrom": "agentUser",
           "tableTo": "agent",
-          "columnsFrom": ["agentId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "agentId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -66,19 +70,27 @@
           "name": "agentUser_userId_user_id_fk",
           "tableFrom": "agentUser",
           "tableTo": "user",
-          "columnsFrom": ["userId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "agentUser_agentId_userId_pk": {
-          "columns": ["agentId", "userId"],
+          "columns": [
+            "agentId",
+            "userId"
+          ],
           "name": "agentUser_agentId_userId_pk"
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     },
     "agent": {
       "name": "agent",
@@ -126,6 +138,21 @@
           "autoincrement": false,
           "default": "'private'"
         },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'default'"
+        },
+        "greeting": {
+          "name": "greeting",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "createdAt": {
           "name": "createdAt",
           "type": "integer",
@@ -147,14 +174,19 @@
           "name": "agent_userId_user_id_fk",
           "tableFrom": "agent",
           "tableTo": "user",
-          "columnsFrom": ["userId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     },
     "apiKey": {
       "name": "apiKey",
@@ -205,7 +237,9 @@
       "indexes": {
         "apiKey_key_unique": {
           "name": "apiKey_key_unique",
-          "columns": ["key"],
+          "columns": [
+            "key"
+          ],
           "isUnique": true
         }
       },
@@ -214,14 +248,19 @@
           "name": "apiKey_userId_user_id_fk",
           "tableFrom": "apiKey",
           "tableTo": "user",
-          "columnsFrom": ["userId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     },
     "conversationUser": {
       "name": "conversationUser",
@@ -261,8 +300,12 @@
           "name": "conversationUser_conversationId_conversation_id_fk",
           "tableFrom": "conversationUser",
           "tableTo": "conversation",
-          "columnsFrom": ["conversationId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "conversationId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -270,19 +313,27 @@
           "name": "conversationUser_userId_user_id_fk",
           "tableFrom": "conversationUser",
           "tableTo": "user",
-          "columnsFrom": ["userId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "conversationUser_conversationId_userId_pk": {
-          "columns": ["conversationId", "userId"],
+          "columns": [
+            "conversationId",
+            "userId"
+          ],
           "name": "conversationUser_conversationId_userId_pk"
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     },
     "conversation": {
       "name": "conversation",
@@ -322,6 +373,22 @@
           "notNull": false,
           "autoincrement": false
         },
+        "isImporting": {
+          "name": "isImporting",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "0"
+        },
+        "isShared": {
+          "name": "isShared",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "0"
+        },
         "createdAt": {
           "name": "createdAt",
           "type": "integer",
@@ -343,8 +410,12 @@
           "name": "conversation_agentId_agent_id_fk",
           "tableFrom": "conversation",
           "tableTo": "agent",
-          "columnsFrom": ["agentId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "agentId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -352,8 +423,12 @@
           "name": "conversation_modelId_model_id_fk",
           "tableFrom": "conversation",
           "tableTo": "model",
-          "columnsFrom": ["modelId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "modelId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "cascade"
         },
@@ -361,14 +436,19 @@
           "name": "conversation_currentNode_message_id_fk",
           "tableFrom": "conversation",
           "tableTo": "message",
-          "columnsFrom": ["currentNode"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "currentNode"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     },
     "message": {
       "name": "message",
@@ -444,8 +524,12 @@
           "name": "message_conversationId_conversation_id_fk",
           "tableFrom": "message",
           "tableTo": "conversation",
-          "columnsFrom": ["conversationId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "conversationId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -453,8 +537,12 @@
           "name": "message_userId_user_id_fk",
           "tableFrom": "message",
           "tableTo": "user",
-          "columnsFrom": ["userId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -462,14 +550,19 @@
           "name": "message_parentId_message_id_fk",
           "tableFrom": "message",
           "tableTo": "message",
-          "columnsFrom": ["parentId"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "parentId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     },
     "model": {
       "name": "model",
@@ -520,7 +613,8 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     },
     "user": {
       "name": "user",
@@ -571,15 +665,19 @@
       "indexes": {
         "user_username_unique": {
           "name": "user_username_unique",
-          "columns": ["username"],
+          "columns": [
+            "username"
+          ],
           "isUnique": true
         }
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     }
   },
+  "views": {},
   "enums": {},
   "_meta": {
     "schemas": {},

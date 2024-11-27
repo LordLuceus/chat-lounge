@@ -1,4 +1,5 @@
-import { env } from "$env/dynamic/public";
+import { env as privateEnv } from "$env/dynamic/private";
+import { env as publicEnv } from "$env/dynamic/public";
 import { importChat } from "$lib/server/conversations-service";
 import { Realtime } from "ably";
 import { Queue, QueueEvents, Worker } from "bullmq";
@@ -8,6 +9,7 @@ import IORedis from "ioredis";
 const redis = new IORedis({
   host: "valkey-server",
   port: 6379,
+  password: privateEnv.REDIS_PASSWORD,
   maxRetriesPerRequest: null
 });
 
@@ -16,7 +18,7 @@ export const importQueue = new Queue("import-queue", { connection: redis });
 let ablyRealtime: Realtime | null = null;
 export function getAblyRealtime() {
   if (!ablyRealtime) {
-    const ablyApiKey = env.PUBLIC_ABLY_API_KEY;
+    const ablyApiKey = publicEnv.PUBLIC_ABLY_API_KEY;
 
     if (ablyApiKey) {
       // Check that API key is present

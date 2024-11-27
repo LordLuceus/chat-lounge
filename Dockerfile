@@ -30,6 +30,8 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
 COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
+COPY --from=builder /app/run.sh ./run.sh
+COPY --from=builder /app/src/lib/drizzle ./src/lib/drizzle
 
 ENV NODE_ENV=production
 

@@ -57,7 +57,6 @@
     "bullmq": "^5.26.2",
     "clerk-sveltekit": "^0.4.2",
     "clsx": "^2.1.1",
-    "dotenv": "^16.4.5",
     "drizzle-kit": "^0.28.1",
     "drizzle-orm": "^0.36.4",
     "formsnap": "^1.0.1",

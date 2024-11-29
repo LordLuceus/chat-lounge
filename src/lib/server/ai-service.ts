@@ -15,7 +15,7 @@ import { getUser } from "$lib/server/users-service";
 import { createGoogleGenerativeAI, type GoogleGenerativeAIProvider } from "@ai-sdk/google";
 import { createMistral, type MistralProvider } from "@ai-sdk/mistral";
 import { createOpenAI, type OpenAIProvider } from "@ai-sdk/openai";
-import { generateText, StreamingTextResponse, streamText } from "ai";
+import { generateText, streamText } from "ai";
 import type { ChatMessage } from "gpt-tokenizer/GptEncoding";
 import { isWithinTokenLimit } from "gpt-tokenizer/model/gpt-4";
 
@@ -75,7 +75,7 @@ class AIService {
   ) {
     const processedMessages = await this.preProcess(messages, model, userId, agent, conversationId);
 
-    const onCompletion = async (completion: string) => {
+    const onCompletion = async ({ text }: { text: string }) => {
       if (conversationId) {
         if (!regenerate && messages.at(-1)?.role === "user") {
           await addConversationMessage(
@@ -88,7 +88,7 @@ class AIService {
         }
         await addConversationMessage(
           conversationId,
-          completion,
+          text,
           "assistant",
           undefined,
           undefined,
@@ -99,25 +99,30 @@ class AIService {
       }
     };
 
-    const response = await this.getResponse(
+    const response = this.getResponse(
       processedMessages as Message[],
       model.id,
-      await this.prepareSystemPrompt(agent, userId)
+      await this.prepareSystemPrompt(agent, userId),
+      onCompletion
     );
 
-    const stream = response.toAIStream({
-      onFinal: onCompletion
-    });
+    const stream = response.toDataStreamResponse();
 
-    return new StreamingTextResponse(stream);
+    return stream;
   }
 
-  private async getResponse(messages: Message[], modelId: string, system?: string) {
-    const result = await streamText({
+  private getResponse(
+    messages: Message[],
+    modelId: string,
+    system?: string,
+    onFinish?: ({ text }: { text: string }) => void
+  ) {
+    const result = streamText({
       model: this.client(modelId, this.provider === "google" ? this.GOOGLE_SETTINGS : undefined),
       messages,
       system,
-      temperature: 1.0
+      temperature: 1.0,
+      onFinish
     });
 
     return result;

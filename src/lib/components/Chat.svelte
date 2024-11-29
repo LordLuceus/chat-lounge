@@ -190,12 +190,10 @@
       append(
         { content: voiceMessage, role: "user" },
         {
-          options: {
-            body: {
-              modelId: selectedModel?.value,
-              agentId: agent?.id,
-              conversationId: $conversationStore?.id
-            }
+          body: {
+            modelId: selectedModel?.value,
+            agentId: agent?.id,
+            conversationId: $conversationStore?.id
           }
         }
       );
@@ -234,13 +232,11 @@
     await tick();
 
     reload({
-      options: {
-        body: {
-          modelId: selectedModel?.value,
-          agentId: agent?.id,
-          conversationId: $conversationStore?.id,
-          messageId: id
-        }
+      body: {
+        modelId: selectedModel?.value,
+        agentId: agent?.id,
+        conversationId: $conversationStore?.id,
+        messageId: id
       }
     });
   }
@@ -332,13 +328,11 @@
     <Button
       on:click={() =>
         reload({
-          options: {
-            body: {
-              modelId: selectedModel?.value,
-              agentId: agent?.id,
-              conversationId: $conversationStore?.id,
-              regenerate: true
-            }
+          body: {
+            modelId: selectedModel?.value,
+            agentId: agent?.id,
+            conversationId: $conversationStore?.id,
+            regenerate: true
           }
         })}>Regenerate</Button
     >
@@ -348,12 +342,10 @@
     <Button
       on:click={() =>
         reload({
-          options: {
-            body: {
-              modelId: selectedModel?.value,
-              agentId: agent?.id,
-              conversationId: $conversationStore?.id
-            }
+          body: {
+            modelId: selectedModel?.value,
+            agentId: agent?.id,
+            conversationId: $conversationStore?.id
           }
         })}>Try again</Button
     >

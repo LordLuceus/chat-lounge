@@ -4,6 +4,7 @@
   import EditMessage from "$lib/components/EditMessage.svelte";
   import Toast from "$lib/components/Toast.svelte";
   import Tts from "$lib/components/TTS.svelte";
+  import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import * as Avatar from "$lib/components/ui/avatar";
   import { Button } from "$lib/components/ui/button";
   import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
@@ -22,6 +23,9 @@
   export let siblings: Message[] = [];
   export let onEdit: (id: string, content: string) => void;
   export let isLoading: boolean | undefined;
+  export let isLastMessage: boolean | undefined;
+
+  let rewindDialogOpen = false;
 
   async function copyToClipboard() {
     await navigator.clipboard.writeText(message.content);
@@ -46,6 +50,23 @@
   function setCurrentNode(id?: string) {
     if (!id) return;
     $updateConversationMutation.mutate(id);
+  }
+
+  async function rewind(id: string) {
+    const response = await fetch(`/api/conversations/${$conversationStore?.id}/rewind`, {
+      method: "POST",
+      body: JSON.stringify({ messageId: id })
+    });
+
+    if (!response.ok) {
+      toast.error(Toast, {
+        componentProps: { text: "Failed to rewind conversation." }
+      });
+    }
+
+    client.invalidateQueries({ queryKey: ["conversations"] });
+    toast.success(Toast, { componentProps: { text: "Rewind successful." } });
+    rewindDialogOpen = false;
   }
 </script>
 
@@ -86,10 +107,29 @@
             >
           </div>
         {/if}
+        {#if message.role === "assistant" && !isLastMessage}
+          <Button on:click={() => (rewindDialogOpen = true)}>Rewind</Button>
+        {/if}
       </div>
     </section>
   {/if}
 </SignedIn>
+
+<AlertDialog.Root bind:open={rewindDialogOpen}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Rewind conversation?</AlertDialog.Title>
+      <AlertDialog.Description
+        >This will rewind the conversation to this message. Any messages after this point will be
+        deleted.</AlertDialog.Description
+      >
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+      <AlertDialog.Action on:click={() => rewind(message.id)}>Rewind</AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>
 
 <style>
   section {

@@ -9,7 +9,7 @@ import {
 import AIService from "$lib/server/ai-service";
 import { getApiKey } from "$lib/server/api-keys-service";
 import { getModel } from "$lib/server/models-service";
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 
 export interface ConversationCreateOptions {
   name?: string;
@@ -439,4 +439,56 @@ export async function importChat(
   if (updateProgress) updateProgress(100);
 
   await updateConversation(conversationId, { isImporting: false });
+}
+
+function collectChildMessageIds(conversation: ConversationWithMessageMap): string[] {
+  const { currentNode, messageMap } = conversation;
+
+  // If the current node is not found, return an empty array
+  if (!currentNode) {
+    return [];
+  }
+
+  function dfs(nodeId: string): string[] {
+    // Get the current message object from the message map
+    const currentMessage = messageMap[nodeId];
+
+    // If the message doesn't exist, return an empty array (edge case)
+    if (!currentMessage) {
+      return [];
+    }
+
+    // Collect all child ids recursively
+    const allChildIds = currentMessage.childIds.flatMap((childId) => dfs(childId));
+
+    // Return the current node and all its descendants
+    return [nodeId, ...allChildIds];
+  }
+
+  // Start traversal from the current node but exclude the current node itself from the result
+  return dfs(currentNode).slice(1);
+}
+
+export async function rewindConversation(
+  conversationId: string,
+  userId: string,
+  messageId: string
+) {
+  const conversation = await getConversation(userId, conversationId);
+
+  if (!conversation) {
+    throw new Error("Conversation not found");
+  }
+
+  conversation.currentNode = messageId;
+  const childMessageIds = collectChildMessageIds(conversation);
+
+  await db
+    .delete(messages)
+    .where(and(eq(messages.conversationId, conversationId), inArray(messages.id, childMessageIds)));
+
+  await db
+    .update(conversations)
+    .set({ currentNode: messageId })
+    .where(eq(conversations.id, conversationId));
 }

@@ -318,6 +318,7 @@
         siblings={getMessageSiblings($conversationStore?.messages, message.id)}
         onEdit={handleEdit}
         isLoading={$isLoading}
+        isLastMessage={message.id === $messages.at(-1)?.id}
       />
     {/each}
   </div>

@@ -23,7 +23,7 @@ WORKDIR /app
 
 RUN mkdir /app/data
 
-RUN apt-get update && apt-get install -y ca-certificates
+RUN apt-get update && apt-get install -y ca-certificates sqlite3
 
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/node_modules ./node_modules

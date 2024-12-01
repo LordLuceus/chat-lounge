@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 1 Dec, 2024
+
+We've added a rewind conversation feature. This allows you to rewind the conversation to a specific message, deleting all messages beyond that point. Also, you can now send an empty message and the AI will continue the conversation from that point.
+
 ## 25 Nov, 2024
 
 This release brings some major, though mostly under-the-hood, changes to the app.

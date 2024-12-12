@@ -9,7 +9,7 @@ export interface AgentCreateOptions {
   instructions: string;
   visibility: Visibility;
   type: AgentType;
-  greeting?: string;
+  greeting?: string | null;
 }
 
 export async function getAgents(

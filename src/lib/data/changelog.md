@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 12 Dec, 2024
+
+Fixed a bug where the greeting message remained even if deleted.
+
 ## 1 Dec, 2024
 
 We've added a rewind conversation feature. This allows you to rewind the conversation to a specific message, deleting all messages beyond that point. Also, you can now send an empty message and the AI will continue the conversation from that point.

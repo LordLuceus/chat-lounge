@@ -44,8 +44,26 @@
     }
   });
 
+  const shareConversationMutation = createMutation({
+    mutationFn: async (id: string) =>
+      (
+        await fetch(`/api/conversations/${id}/share`, {
+          method: "POST"
+        })
+      ).json(),
+    onSuccess: ({ id }) => {
+      // Copy the shared conversation link to the clipboard
+      const url = `${window.location.origin}/conversations/${id}/share`;
+      navigator.clipboard.writeText(url);
+      toast.success(Toast, {
+        componentProps: { text: "Conversation shared successfully. Copied link to clipboard." }
+      });
+    }
+  });
+
   let renameDialogOpen = false;
   let deleteDialogOpen = false;
+  let shareDialogOpen = false;
   let newName = "";
 
   $: newName = name;
@@ -56,6 +74,10 @@
 
   function deleteClick() {
     deleteDialogOpen = true;
+  }
+
+  function shareClick() {
+    shareDialogOpen = true;
   }
 
   function handleRename() {
@@ -75,6 +97,14 @@
         if ($page.url.pathname.includes(conversationId)) {
           goto("/");
         }
+      }
+    });
+  }
+
+  function handleShare() {
+    $shareConversationMutation.mutate(id, {
+      onSuccess: () => {
+        shareDialogOpen = false;
       }
     });
   }
@@ -105,10 +135,27 @@
   </AlertDialog.Content>
 </AlertDialog.Root>
 
+<Dialog.Root bind:open={shareDialogOpen}>
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Share conversation</Dialog.Title>
+      <Dialog.Description
+        >Share this conversation with other users. This will copy a link to the shared conversation
+        that you can share with your friends. Any messages beyond this point will not be shared.</Dialog.Description
+      >
+    </Dialog.Header>
+    <Dialog.Footer>
+      <Button on:click={() => (shareDialogOpen = false)}>Cancel</Button>
+      <Button on:click={handleShare}>Share</Button>
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog.Root>
+
 <DropdownMenu.Root>
   <DropdownMenu.Trigger>Actions</DropdownMenu.Trigger>
   <DropdownMenu.Content>
     <DropdownMenu.Item on:click={renameClick}>Rename</DropdownMenu.Item>
+    <DropdownMenu.Item on:click={shareClick}>Share</DropdownMenu.Item>
     <DropdownMenu.Item on:click={deleteClick}>Delete</DropdownMenu.Item>
   </DropdownMenu.Content>
 </DropdownMenu.Root>

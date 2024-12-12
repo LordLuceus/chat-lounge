@@ -4,8 +4,11 @@ import {
   conversationUsers,
   conversations,
   messages,
+  sharedConversations,
+  sharedMessages,
   type ConversationWithMessages
 } from "$lib/drizzle/schema";
+import { getConversationMessages as getMessages } from "$lib/helpers";
 import AIService from "$lib/server/ai-service";
 import { getApiKey } from "$lib/server/api-keys-service";
 import { getModel } from "$lib/server/models-service";
@@ -491,4 +494,51 @@ export async function rewindConversation(
     .update(conversations)
     .set({ currentNode: messageId })
     .where(eq(conversations.id, conversationId));
+}
+
+export async function shareConversation(conversationId: string, userId: string) {
+  const conversation = await getConversation(userId, conversationId);
+
+  if (!conversation) {
+    throw new Error("Conversation not found");
+  }
+
+  const sharedConversation = (
+    await db
+      .insert(sharedConversations)
+      .values({
+        userId,
+        conversationId,
+        name: conversation.name,
+        sharedAt: new Date()
+      })
+      .returning()
+  ).at(0);
+
+  if (!sharedConversation) {
+    throw new Error("Failed to share conversation");
+  }
+
+  const messages = getMessages(conversation);
+
+  await db.insert(sharedMessages).values(
+    messages.map((message) => ({
+      sharedConversationId: sharedConversation.id,
+      content: message.content,
+      role: message.role
+    }))
+  );
+
+  return sharedConversation;
+}
+
+export async function getSharedConversation(conversationId: string) {
+  const conversation = await db.query.sharedConversations.findFirst({
+    with: {
+      sharedMessages: { where: eq(sharedMessages.sharedConversationId, conversationId) }
+    },
+    where: eq(sharedConversations.id, conversationId)
+  });
+
+  return conversation;
 }

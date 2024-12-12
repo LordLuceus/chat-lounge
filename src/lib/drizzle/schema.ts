@@ -115,9 +115,6 @@ export const conversations = sqliteTable("conversation", {
   isImporting: integer("isImporting", { mode: "boolean" })
     .notNull()
     .default(sql`0`),
-  isShared: integer("isShared", { mode: "boolean" })
-    .notNull()
-    .default(sql`0`),
   createdAt: integer("createdAt", { mode: "timestamp_ms" })
     .notNull()
     .$default(() => new Date()),
@@ -201,6 +198,50 @@ export const agentUsers = sqliteTable(
   }
 );
 
+export const sharedConversations = sqliteTable("sharedConversation", {
+  id: text("id")
+    .notNull()
+    .primaryKey()
+    .$default(() => uuidv4()),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  conversationId: text("conversationId")
+    .notNull()
+    .references(() => conversations.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  sharedAt: integer("sharedAt", { mode: "timestamp_ms" })
+    .notNull()
+    .$default(() => new Date()),
+  createdAt: integer("createdAt", { mode: "timestamp_ms" })
+    .notNull()
+    .$default(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
+    .notNull()
+    .$onUpdate(() => new Date())
+});
+
+export const sharedMessages = sqliteTable("sharedMessage", {
+  id: text("id")
+    .notNull()
+    .primaryKey()
+    .$default(() => uuidv4()),
+  sharedConversationId: text("sharedConversationId")
+    .notNull()
+    .references(() => sharedConversations.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  role: text("role").notNull().$type<"user" | "assistant">(),
+  parentId: text("parentId").references((): AnySQLiteColumn => sharedMessages.id, {
+    onDelete: "cascade"
+  }),
+  createdAt: integer("createdAt", { mode: "timestamp_ms" })
+    .notNull()
+    .$default(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
+    .notNull()
+    .$onUpdate(() => new Date())
+});
+
 export const conversationsRelations = relations(conversations, ({ many, one }) => ({
   messages: many(messages),
   agent: one(agents, { fields: [conversations.agentId], references: [agents.id] }),
@@ -223,7 +264,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   conversationUsers: many(conversationUsers),
   messages: many(messages),
   agents: many(agents),
-  agentUsers: many(agentUsers)
+  agentUsers: many(agentUsers),
+  sharedConversations: many(sharedConversations)
 }));
 
 export const modelsRelations = relations(models, ({ many }) => ({
@@ -261,6 +303,27 @@ export const agentUsersRelations = relations(agentUsers, ({ one }) => ({
   user: one(users, { fields: [agentUsers.userId], references: [users.id] })
 }));
 
+export const sharedConversationsRelations = relations(sharedConversations, ({ many, one }) => ({
+  conversation: one(conversations, {
+    fields: [sharedConversations.conversationId],
+    references: [conversations.id]
+  }),
+  user: one(users, { fields: [sharedConversations.userId], references: [users.id] }),
+  sharedMessages: many(sharedMessages)
+}));
+
+export const sharedMessagesRelations = relations(sharedMessages, ({ one }) => ({
+  sharedConversation: one(sharedConversations, {
+    fields: [sharedMessages.sharedConversationId],
+    references: [sharedConversations.id]
+  }),
+  parent: one(sharedMessages, {
+    fields: [sharedMessages.parentId],
+    references: [sharedMessages.id],
+    relationName: "parent"
+  })
+}));
+
 export type Conversation = InferSelectModel<typeof conversations>;
 export type ConversationWithMessages = Conversation & {
   messages: Array<InferSelectModel<typeof messages> & { childIds?: string[] }>;
@@ -277,3 +340,7 @@ export type AgentWithUsage = Agent & {
 export type ApiKey = InferSelectModel<typeof apiKeys>;
 
 export type User = InferSelectModel<typeof users>;
+
+export type SharedConversation = InferSelectModel<typeof sharedConversations>;
+
+export type SharedMessage = InferSelectModel<typeof sharedMessages>;

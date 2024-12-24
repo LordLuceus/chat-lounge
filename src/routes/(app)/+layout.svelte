@@ -103,7 +103,11 @@
             >
           </div>
           <div slot="menu" let:item>
-            <ConversationActions id={item.id} name={item.name} />
+            <ConversationActions
+              id={item.id}
+              name={item.name}
+              sharedConversationId={item.sharedConversationId}
+            />
           </div>
         </NavList>
       {/if}
@@ -147,6 +151,9 @@
           </Avatar.Root>
         </DropdownMenu.Trigger>
         <DropdownMenu.Content align="end">
+          <DropdownMenu.Item on:click={() => goto("/conversations/shared")}
+            >My shared conversations</DropdownMenu.Item
+          >
           <DropdownMenu.Item on:click={() => goto("/settings")}>Settings</DropdownMenu.Item>
           <DropdownMenu.Item on:click={() => goto("/profile")}>Account</DropdownMenu.Item>
           <DropdownMenu.Item

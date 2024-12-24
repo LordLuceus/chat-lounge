@@ -1,5 +1,13 @@
 # ChatLounge Changelog
 
+## 24 Dec, 2024
+
+Shared conversations are here! 🎉 You can now share conversations with other users. Just click the Share button in the conversation menu, and the share link will be copied to your clipboard. You can then share the link with anyone you want. Anyone with the link will be able to continue the conversation from where you left off (each user will have their own, separate copy of the conversation). Note that shared conversations do not update as you add new messages to the original conversation, i.e. they are fixed at the point of creation. This will be addressed in a future update, but for now you can unshare and reshare the conversation to update it.
+
+You can view conversations you've shared in the new My shared conversations page, which you can access from the user dropdown menu.
+
+We hope you enjoy the new updates. Let us know if you have any feedback or suggestions! Merry Christmas! 🎅
+
 ## 12 Dec, 2024
 
 Fixed a bug where the greeting message remained even if deleted.

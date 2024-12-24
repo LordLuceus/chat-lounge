@@ -15,6 +15,20 @@
       "when": 1732697503419,
       "tag": "0001_chilly_makkari",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1733141192003,
+      "tag": "0002_pink_aaron_stack",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1734939910536,
+      "tag": "0003_complete_psynapse",
+      "breakpoints": true
     }
   ]
 }

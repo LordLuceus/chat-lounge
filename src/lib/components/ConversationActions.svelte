@@ -12,6 +12,7 @@
 
   export let id: string;
   export let name: string;
+  export let sharedConversationId: string | undefined;
 
   const client = useQueryClient();
 
@@ -44,8 +45,42 @@
     }
   });
 
+  const shareConversationMutation = createMutation({
+    mutationFn: async (id: string) =>
+      (
+        await fetch(`/api/conversations/${id}/share`, {
+          method: "POST"
+        })
+      ).json(),
+    onSuccess: ({ id }) => {
+      // Copy the shared conversation link to the clipboard
+      const url = `${window.location.origin}/conversations/shared/${id}`;
+      navigator.clipboard.writeText(url);
+      toast.success(Toast, {
+        componentProps: { text: "Conversation shared successfully. Copied link to clipboard." }
+      });
+      client.invalidateQueries({ queryKey: ["sharedConversations"] });
+      client.invalidateQueries({ queryKey: ["conversations"] });
+    }
+  });
+
+  const unshareConversationMutation = createMutation({
+    mutationFn: async (id: string) =>
+      (
+        await fetch(`/api/conversations/shared/${id}`, {
+          method: "DELETE"
+        })
+      ).json(),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ["sharedConversations"] });
+      client.invalidateQueries({ queryKey: ["conversations"] });
+    }
+  });
+
   let renameDialogOpen = false;
   let deleteDialogOpen = false;
+  let shareDialogOpen = false;
+  let unshareDialogOpen = false;
   let newName = "";
 
   $: newName = name;
@@ -56,6 +91,14 @@
 
   function deleteClick() {
     deleteDialogOpen = true;
+  }
+
+  function shareClick() {
+    shareDialogOpen = true;
+  }
+
+  function unshareClick() {
+    unshareDialogOpen = true;
   }
 
   function handleRename() {
@@ -75,6 +118,23 @@
         if ($page.url.pathname.includes(conversationId)) {
           goto("/");
         }
+      }
+    });
+  }
+
+  function handleShare() {
+    $shareConversationMutation.mutate(id, {
+      onSuccess: () => {
+        shareDialogOpen = false;
+      }
+    });
+  }
+
+  function handleUnshare() {
+    if (!sharedConversationId) return;
+    $unshareConversationMutation.mutate(sharedConversationId, {
+      onSuccess: () => {
+        unshareDialogOpen = false;
       }
     });
   }
@@ -105,10 +165,45 @@
   </AlertDialog.Content>
 </AlertDialog.Root>
 
+<AlertDialog.Root bind:open={unshareDialogOpen}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Unshare conversation</AlertDialog.Title>
+      <AlertDialog.Description
+        >Are you sure you want to stop sharing {name}?</AlertDialog.Description
+      >
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+      <AlertDialog.Action on:click={handleUnshare}>Unshare</AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>
+
+<Dialog.Root bind:open={shareDialogOpen}>
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Share conversation</Dialog.Title>
+      <Dialog.Description
+        >Share this conversation with other users. This will copy a link to the shared conversation
+        that you can share with your friends. Any messages beyond this point will not be shared.</Dialog.Description
+      >
+    </Dialog.Header>
+    <Dialog.Footer>
+      <Button on:click={handleShare}>Share</Button>
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog.Root>
+
 <DropdownMenu.Root>
   <DropdownMenu.Trigger>Actions</DropdownMenu.Trigger>
   <DropdownMenu.Content>
     <DropdownMenu.Item on:click={renameClick}>Rename</DropdownMenu.Item>
+    {#if sharedConversationId}
+      <DropdownMenu.Item on:click={unshareClick}>Unshare</DropdownMenu.Item>
+    {:else}
+      <DropdownMenu.Item on:click={shareClick}>Share</DropdownMenu.Item>
+    {/if}
     <DropdownMenu.Item on:click={deleteClick}>Delete</DropdownMenu.Item>
   </DropdownMenu.Content>
 </DropdownMenu.Root>

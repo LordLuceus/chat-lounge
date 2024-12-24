@@ -251,7 +251,7 @@ class AIService {
       messages: [{ role: "user", content: prompt + "\n\n---\n\n" + context }]
     });
 
-    return text.trim().replaceAll('"', "");
+    return text.trim().replaceAll('"', "").replaceAll("*", "");
   }
 
   private async prepareSystemPrompt(agent: Agent | undefined, userId: string): Promise<string> {

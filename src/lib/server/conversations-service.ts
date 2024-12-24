@@ -61,10 +61,12 @@ export async function getConversations(
       createdAt: conversations.createdAt,
       updatedAt: conversations.updatedAt,
       currentNode: conversations.currentNode,
-      isImporting: conversations.isImporting
+      isImporting: conversations.isImporting,
+      sharedConversationId: sharedConversations.id
     })
     .from(conversations)
     .innerJoin(conversationUsers, eq(conversations.id, conversationUsers.conversationId))
+    .leftJoin(sharedConversations, eq(conversations.id, sharedConversations.conversationId))
     .where(
       sql`(${conversationUsers.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
     )
@@ -503,6 +505,12 @@ export async function shareConversation(conversationId: string, userId: string) 
     throw new Error("Conversation not found");
   }
 
+  const existingConversation = await getSharedConversationByConversationId(conversationId);
+
+  if (existingConversation) {
+    return existingConversation;
+  }
+
   const sharedConversation = (
     await db
       .insert(sharedConversations)
@@ -510,7 +518,8 @@ export async function shareConversation(conversationId: string, userId: string) 
         userId,
         conversationId,
         name: conversation.name,
-        sharedAt: new Date()
+        sharedAt: new Date(),
+        agentId: conversation.agentId
       })
       .returning()
   ).at(0);
@@ -541,4 +550,64 @@ export async function getSharedConversation(conversationId: string) {
   });
 
   return conversation;
+}
+
+async function getSharedConversationByConversationId(conversationId: string) {
+  const conversation = await db.query.sharedConversations.findFirst({
+    where: eq(sharedConversations.conversationId, conversationId)
+  });
+
+  return conversation;
+}
+
+export async function getSharedConversations(
+  userId: string,
+  limit: number = 10,
+  offset: number = 0,
+  sortBy: string = "sharedConversation.updatedAt DESC",
+  search?: string
+) {
+  const result = await db
+    .select({
+      id: sharedConversations.id,
+      name: sharedConversations.name,
+      agentId: sharedConversations.agentId,
+      createdAt: sharedConversations.createdAt,
+      updatedAt: sharedConversations.updatedAt,
+      sharedAt: sharedConversations.sharedAt
+    })
+    .from(sharedConversations)
+    .where(
+      sql`(${sharedConversations.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
+    )
+    .orderBy(sql`${sql.raw(sortBy)}`)
+    .limit(limit)
+    .offset(offset);
+
+  const total = (
+    await db
+      .select({
+        count: sql`COUNT(*)`.mapWith(Number)
+      })
+      .from(sharedConversations)
+      .where(
+        sql`(${sharedConversations.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
+      )
+  ).at(0);
+
+  return { conversations: result, total: total?.count };
+}
+
+export async function deleteSharedConversation(conversationId: string, userId: string) {
+  const conversation = await getSharedConversation(conversationId);
+
+  if (!conversation) {
+    throw new Error("Conversation not found");
+  }
+
+  if (conversation.userId !== userId) {
+    throw new Error("You do not have permission to delete this conversation");
+  }
+
+  await db.delete(sharedConversations).where(eq(sharedConversations.id, conversationId));
 }

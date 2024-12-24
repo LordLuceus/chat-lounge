@@ -1,0 +1,1 @@
+ALTER TABLE `sharedConversation` ADD `agentId` text REFERENCES agent(id);

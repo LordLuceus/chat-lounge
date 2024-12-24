@@ -1,9 +1,26 @@
 <script lang="ts">
+  import { page } from "$app/stores";
   import Chat from "$lib/components/Chat.svelte";
   import CheckApiKeys from "$lib/components/CheckApiKeys.svelte";
+  import type { Message } from "$lib/helpers";
+  import { onMount } from "svelte";
   import type { PageData } from "./$types";
 
   export let data: PageData;
+
+  let initialMessages: Message[] | undefined = undefined;
+
+  onMount(async () => {
+    if ($page.url.searchParams.get("shareId")) {
+      const response = await fetch(
+        `/api/conversations/shared/${$page.url.searchParams.get("shareId")}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        initialMessages = data.sharedMessages;
+      }
+    }
+  });
 </script>
 
 <svelte:head>
@@ -17,5 +34,5 @@
 <h1>ChatLounge</h1>
 
 <CheckApiKeys {data}>
-  <Chat apiKeys={data.keys} models={data.models} />
+  <Chat apiKeys={data.keys} models={data.models} {initialMessages} />
 </CheckApiKeys>

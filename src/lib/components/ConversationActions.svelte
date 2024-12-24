@@ -12,6 +12,7 @@
 
   export let id: string;
   export let name: string;
+  export let sharedConversationId: string | undefined;
 
   const client = useQueryClient();
 
@@ -53,17 +54,33 @@
       ).json(),
     onSuccess: ({ id }) => {
       // Copy the shared conversation link to the clipboard
-      const url = `${window.location.origin}/conversations/${id}/share`;
+      const url = `${window.location.origin}/conversations/shared/${id}`;
       navigator.clipboard.writeText(url);
       toast.success(Toast, {
         componentProps: { text: "Conversation shared successfully. Copied link to clipboard." }
       });
+      client.invalidateQueries({ queryKey: ["sharedConversations"] });
+      client.invalidateQueries({ queryKey: ["conversations"] });
+    }
+  });
+
+  const unshareConversationMutation = createMutation({
+    mutationFn: async (id: string) =>
+      (
+        await fetch(`/api/conversations/shared/${id}`, {
+          method: "DELETE"
+        })
+      ).json(),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ["sharedConversations"] });
+      client.invalidateQueries({ queryKey: ["conversations"] });
     }
   });
 
   let renameDialogOpen = false;
   let deleteDialogOpen = false;
   let shareDialogOpen = false;
+  let unshareDialogOpen = false;
   let newName = "";
 
   $: newName = name;
@@ -78,6 +95,10 @@
 
   function shareClick() {
     shareDialogOpen = true;
+  }
+
+  function unshareClick() {
+    unshareDialogOpen = true;
   }
 
   function handleRename() {
@@ -108,6 +129,15 @@
       }
     });
   }
+
+  function handleUnshare() {
+    if (!sharedConversationId) return;
+    $unshareConversationMutation.mutate(sharedConversationId, {
+      onSuccess: () => {
+        unshareDialogOpen = false;
+      }
+    });
+  }
 </script>
 
 <Dialog.Root bind:open={renameDialogOpen}>
@@ -135,6 +165,21 @@
   </AlertDialog.Content>
 </AlertDialog.Root>
 
+<AlertDialog.Root bind:open={unshareDialogOpen}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Unshare conversation</AlertDialog.Title>
+      <AlertDialog.Description
+        >Are you sure you want to stop sharing {name}?</AlertDialog.Description
+      >
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+      <AlertDialog.Action on:click={handleUnshare}>Unshare</AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>
+
 <Dialog.Root bind:open={shareDialogOpen}>
   <Dialog.Content>
     <Dialog.Header>
@@ -145,7 +190,6 @@
       >
     </Dialog.Header>
     <Dialog.Footer>
-      <Button on:click={() => (shareDialogOpen = false)}>Cancel</Button>
       <Button on:click={handleShare}>Share</Button>
     </Dialog.Footer>
   </Dialog.Content>
@@ -155,7 +199,11 @@
   <DropdownMenu.Trigger>Actions</DropdownMenu.Trigger>
   <DropdownMenu.Content>
     <DropdownMenu.Item on:click={renameClick}>Rename</DropdownMenu.Item>
-    <DropdownMenu.Item on:click={shareClick}>Share</DropdownMenu.Item>
+    {#if sharedConversationId}
+      <DropdownMenu.Item on:click={unshareClick}>Unshare</DropdownMenu.Item>
+    {:else}
+      <DropdownMenu.Item on:click={shareClick}>Share</DropdownMenu.Item>
+    {/if}
     <DropdownMenu.Item on:click={deleteClick}>Delete</DropdownMenu.Item>
   </DropdownMenu.Content>
 </DropdownMenu.Root>

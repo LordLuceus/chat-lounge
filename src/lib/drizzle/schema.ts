@@ -210,6 +210,7 @@ export const sharedConversations = sqliteTable("sharedConversation", {
     .notNull()
     .references(() => conversations.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
+  agentId: text("agentId").references(() => agents.id, { onDelete: "set null" }),
   sharedAt: integer("sharedAt", { mode: "timestamp_ms" })
     .notNull()
     .$default(() => new Date()),
@@ -309,7 +310,8 @@ export const sharedConversationsRelations = relations(sharedConversations, ({ ma
     references: [conversations.id]
   }),
   user: one(users, { fields: [sharedConversations.userId], references: [users.id] }),
-  sharedMessages: many(sharedMessages)
+  sharedMessages: many(sharedMessages),
+  agent: one(agents, { fields: [sharedConversations.agentId], references: [agents.id] })
 }));
 
 export const sharedMessagesRelations = relations(sharedMessages, ({ one }) => ({

@@ -10,7 +10,9 @@ export const handle: Handle = sequence(
         if (
           url.pathname.startsWith("/api/webhooks") ||
           url.pathname.startsWith("/auth") ||
-          url.pathname.startsWith("/changelog")
+          url.pathname.startsWith("/changelog") ||
+          url.pathname.startsWith("/conversations/shared") ||
+          url.pathname.startsWith("/api/conversations/shared")
         ) {
           return false;
         }

@@ -44,6 +44,9 @@
   let controller: AbortController;
   let signal: AbortSignal;
 
+  const initialMessageCount = 20;
+  let visibleMessageCount = initialMessageCount;
+
   const client = useQueryClient();
 
   const createConversationMutation = createMutation<ConversationWithMessageMap>({
@@ -98,6 +101,13 @@
       },
       initialMessages
     });
+
+  $: visibleMessages = $messages.slice(-visibleMessageCount);
+
+  function loadMoreMessages() {
+    const newVisibleCount = visibleMessageCount + 20; // Load 20 more messages each time
+    visibleMessageCount = Math.min(newVisibleCount, $messages.length); // Prevent exceeding total
+  }
 
   function handleMessageSubmit(event: KeyboardEvent) {
     if (event.key === "Enter" && !event.shiftKey) {
@@ -210,8 +220,9 @@
     }
   }
 
-  afterNavigate(() => {
+  afterNavigate(async () => {
     if (!$newConversation) resetConversation();
+    await tick();
     focusChatInput();
   });
 
@@ -312,7 +323,17 @@
 
 <section>
   <div class="chat-list">
-    {#each $messages as message}
+    {#if visibleMessageCount < $messages.length}
+      <Button
+        class="load-more-button"
+        on:click={loadMoreMessages}
+        aria-label="Load previous messages"
+      >
+        Load More Messages
+      </Button>
+    {/if}
+
+    {#each visibleMessages as message (message.id)}
       <Message
         {message}
         siblings={getMessageSiblings($conversationStore?.messages, message.id)}
@@ -383,3 +404,13 @@
     </div>
   {/if}
 </section>
+
+<style>
+  .chat-list {
+    display: flex;
+    flex-direction: column;
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 1rem;
+  }
+</style>

@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 29 Dec, 2024
+
+We now only load the most recent 20 messages when you navigate to a conversation. This will improve performance for long threads. You can load older messages by clicking the "load more" button at the top of the chat list. We've also fixed a bug where the search query for conversations was not working correctly.
+
 ## 24 Dec, 2024
 
 Shared conversations are here! 🎉 You can now share conversations with other users. Just click the Share button in the conversation menu, and the share link will be copied to your clipboard. You can then share the link with anyone you want. Anyone with the link will be able to continue the conversation from where you left off (each user will have their own, separate copy of the conversation). Note that shared conversations do not update as you add new messages to the original conversation, i.e. they are fixed at the point of creation. This will be addressed in a future update, but for now you can unshare and reshare the conversation to update it.

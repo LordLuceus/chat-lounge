@@ -19,7 +19,7 @@ export const GET = (async ({ locals, url }) => {
   const paramsProcessor = new QueryParamsProcessor(Object.fromEntries(url.searchParams));
 
   const { limit, offset } = paramsProcessor.getPagination();
-  const search = paramsProcessor.getSearchQuery(["name"]);
+  const search = paramsProcessor.getSearchQuery(["conversation.name"]);
   const sortBy = paramsProcessor.getSorting("conversation");
 
   const result = await getConversations(userId, limit, offset, sortBy, search);

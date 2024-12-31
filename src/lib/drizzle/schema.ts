@@ -12,7 +12,8 @@ export enum AIProvider {
   Mistral = "mistral",
   OpenAI = "openai",
   ElevenLabs = "elevenlabs",
-  Google = "google"
+  Google = "google",
+  Anthropic = "anthropic"
 }
 
 export enum Visibility {

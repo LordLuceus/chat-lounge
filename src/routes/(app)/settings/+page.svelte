@@ -55,6 +55,14 @@
       <p>You haven't set your Google API key yet.</p>
       <ApiKeyForm provider={AIProvider.Google} openText="Set" {form} />
     {/if}
+    <h3>Anthropic</h3>
+    {#if data.keys?.anthropic}
+      <p>Your Anthropic API key is set.</p>
+      <ApiKeyForm provider={AIProvider.Anthropic} openText="Change" {form} />
+    {:else}
+      <p>You haven't set your Anthropic API key yet.</p>
+      <ApiKeyForm provider={AIProvider.Anthropic} openText="Set" {form} />
+    {/if}
   </SignedIn>
 </section>
 

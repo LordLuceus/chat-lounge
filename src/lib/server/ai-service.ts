@@ -12,6 +12,7 @@ import {
   getLastSummary
 } from "$lib/server/conversations-service";
 import { getUser } from "$lib/server/users-service";
+import { createAnthropic, type AnthropicProvider } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI, type GoogleGenerativeAIProvider } from "@ai-sdk/google";
 import { createMistral, type MistralProvider } from "@ai-sdk/mistral";
 import { createOpenAI, type OpenAIProvider } from "@ai-sdk/openai";
@@ -38,7 +39,7 @@ interface GoogleSettings {
 }
 
 class AIService {
-  private client: MistralProvider | OpenAIProvider | GoogleGenerativeAIProvider;
+  private client: MistralProvider | OpenAIProvider | GoogleGenerativeAIProvider | AnthropicProvider;
   private readonly LIMIT_MULTIPLIER = 0.9; // We use 90% of the token limit to give us some headroom
   private readonly GOOGLE_SETTINGS: GoogleSettings = {
     safetySettings: [
@@ -59,6 +60,8 @@ class AIService {
       this.client = createOpenAI({ apiKey: apiKey });
     } else if (provider === "google") {
       this.client = createGoogleGenerativeAI({ apiKey: apiKey });
+    } else if (provider === "anthropic") {
+      this.client = createAnthropic({ apiKey: apiKey });
     } else {
       throw new Error("Unsupported AI provider");
     }
@@ -160,7 +163,10 @@ class AIService {
     }
 
     let processedMessages = agent?.instructions
-      ? [{ role: "system", content: await this.prepareSystemPrompt(agent, userId) }, ...messages]
+      ? [
+          { role: "system", content: (await this.prepareSystemPrompt(agent, userId)) ?? "" },
+          ...messages
+        ]
       : messages;
 
     if (this.isWithinLimit(processedMessages, model.tokenLimit * this.LIMIT_MULTIPLIER)) {
@@ -212,7 +218,10 @@ class AIService {
     }
 
     const messagesWithSystemPrompt = agent?.instructions
-      ? [{ role: "system", content: await this.prepareSystemPrompt(agent, userId) }, ...messages]
+      ? [
+          { role: "system", content: (await this.prepareSystemPrompt(agent, userId)) ?? "" },
+          ...messages
+        ]
       : messages;
 
     if (this.isWithinLimit(messagesWithSystemPrompt, model.tokenLimit * this.LIMIT_MULTIPLIER)) {
@@ -254,11 +263,14 @@ class AIService {
     return text.trim().replaceAll('"', "").replaceAll("*", "");
   }
 
-  private async prepareSystemPrompt(agent: Agent | undefined, userId: string): Promise<string> {
-    if (!agent) return "";
+  private async prepareSystemPrompt(
+    agent: Agent | undefined,
+    userId: string
+  ): Promise<string | undefined> {
+    if (!agent) return undefined;
     const user = await getUser(userId);
 
-    if (!user) return "";
+    if (!user) return undefined;
 
     if (agent.type === AgentType.Default) {
       return agent.instructions;

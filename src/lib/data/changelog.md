@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 1 Jan, 2025
+
+Added support for Anthropic's Claude 3.5 family of models. You can set your API key in the settings page and start chatting with Anthropic models right away! Happy New Year!
+
 ## 29 Dec, 2024
 
 We now only load the most recent 20 messages when you navigate to a conversation. This will improve performance for long threads. You can load older messages by clicking the "load more" button at the top of the chat list. We've also fixed a bug where the search query for conversations was not working correctly.

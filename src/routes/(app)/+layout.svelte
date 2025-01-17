@@ -17,6 +17,7 @@
   import { createInfiniteQuery, createQuery, type CreateQueryResult } from "@tanstack/svelte-query";
   import ClerkLoaded from "clerk-sveltekit/client/ClerkLoaded.svelte";
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
+  import SignedOut from "clerk-sveltekit/client/SignedOut.svelte";
   import { SunMoon } from "lucide-svelte";
   import { resetMode, setMode } from "mode-watcher";
   import { toast } from "svelte-sonner";
@@ -58,7 +59,7 @@
   });
 
   let voicesQuery: CreateQueryResult<Voice[], Error>;
-  $: if (data.keys.eleven)
+  $: if (data.keys?.eleven)
     voicesQuery = createQuery<Voice[]>({
       queryKey: ["voices"],
       queryFn: async () => (await fetch("/api/voices")).json(),
@@ -196,7 +197,20 @@
   <footer>
     <a href="/changelog">Changelog</a>
   </footer>
-
-  <Toaster />
-  <NewVersionPopup />
 </SignedIn>
+
+<SignedOut>
+  <header class="flex items-center justify-between p-4">
+    <a href="/auth/sign-in">Sign in</a>
+    <a href="/auth/sign-up">Sign up</a>
+  </header>
+  <main class="flex flex-col items-center">
+    <slot />
+  </main>
+  <footer>
+    <a href="/changelog">Changelog</a>
+  </footer>
+</SignedOut>
+
+<Toaster />
+<NewVersionPopup />

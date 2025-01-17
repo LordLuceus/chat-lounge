@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 17 Jan, 2025
+
+Fixed public pages, like shared conversations, so they're actually, you know, public. Whoops. 😅
+
 ## 1 Jan, 2025
 
 Added support for Anthropic's Claude 3.5 family of models. You can set your API key in the settings page and start chatting with Anthropic models right away! Happy New Year!

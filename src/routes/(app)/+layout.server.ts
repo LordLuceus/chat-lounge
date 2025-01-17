@@ -3,8 +3,12 @@ import { getApiKeys } from "$lib/server/api-keys-service";
 import type { LayoutServerLoad } from "./$types";
 
 export const load = (async ({ locals }) => {
-  const { userId } = locals.session!;
-  const storedKeys = await getApiKeys(userId!);
+  if (!locals.session?.userId) {
+    return {};
+  }
+
+  const { userId } = locals.session;
+  const storedKeys = await getApiKeys(userId);
 
   const keys = {
     mistral: storedKeys.some((key) => key.provider === AIProvider.Mistral),

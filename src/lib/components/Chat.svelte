@@ -230,26 +230,41 @@
     setMessages(initialMessages);
   }
 
-  async function handleEdit(id: string, content: string) {
+  async function handleEdit(id: string, content: string, regenerate: boolean = true) {
     const messageIndex = $messages.findIndex((message) => message.id === id);
 
     if (messageIndex === -1) return;
 
     const updatedMessages = $messages.slice(0, messageIndex);
-    updatedMessages.push({ role: "user", content, id: uuidv4() });
+    updatedMessages.push({ role: "user", content, id: regenerate ? uuidv4() : id });
 
     setMessages(updatedMessages);
 
     await tick();
 
-    reload({
-      body: {
-        modelId: selectedModel?.value,
-        agentId: agent?.id,
-        conversationId: $conversationStore?.id,
-        messageId: id
+    if (regenerate) {
+      reload({
+        body: {
+          modelId: selectedModel?.value,
+          agentId: agent?.id,
+          conversationId: $conversationStore?.id,
+          messageId: id
+        }
+      });
+    } else {
+      const res = await fetch(`/api/conversations/${$conversationStore?.id}/messages/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ content })
+      });
+
+      if (!res.ok) {
+        toast.error(Toast, {
+          componentProps: { text: "Failed to update message." }
+        });
       }
-    });
+
+      client.invalidateQueries({ queryKey: ["conversations"] });
+    }
   }
 
   function importConversation() {

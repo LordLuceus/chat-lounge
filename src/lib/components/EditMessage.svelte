@@ -5,7 +5,7 @@
 
   export let id: string;
   export let content: string;
-  export let onSubmit: (id: string, content: string) => void;
+  export let onSubmit: (id: string, content: string, regenerate: boolean) => void;
 
   let open = false;
   $: value = content;
@@ -17,9 +17,15 @@
     <Textarea bind:value placeholder="Type your message..." rows={1} cols={200} autofocus />
     <Button
       on:click={() => {
-        onSubmit(id, value);
+        onSubmit(id, value, true);
         open = false;
-      }}>Save</Button
+      }}>Edit</Button
+    >
+    <Button
+      on:click={() => {
+        onSubmit(id, value, false);
+        open = false;
+      }}>Edit (no regeneration)</Button
     >
   </Dialog.Content>
 </Dialog.Root>

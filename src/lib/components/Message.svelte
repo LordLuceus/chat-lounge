@@ -21,7 +21,7 @@
 
   export let message: Message;
   export let siblings: Message[] = [];
-  export let onEdit: (id: string, content: string) => void;
+  export let onEdit: (id: string, content: string, regenerate: boolean) => void;
   export let isLoading: boolean | undefined;
   export let isLastMessage: boolean | undefined;
 

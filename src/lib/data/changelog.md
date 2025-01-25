@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 25 Jan, 2025
+
+Added the ability to edit a message without regenerating the AI's response. This is useful for fixing typos and other minor edits.
+
 ## 17 Jan, 2025
 
 Fixed public pages, like shared conversations, so they're actually, you know, public. Whoops. 😅

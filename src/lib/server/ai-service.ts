@@ -162,47 +162,77 @@ class AIService {
       return messages;
     }
 
-    let processedMessages = agent?.instructions
-      ? [
-          { role: "system", content: (await this.prepareSystemPrompt(agent, userId)) ?? "" },
-          ...messages
-        ]
-      : messages;
+    // First, see if we fit as-is (with agent instructions if any)
+    const systemPrompt = agent?.instructions
+      ? [{ role: "system", content: (await this.prepareSystemPrompt(agent, userId)) ?? "" }]
+      : [];
+    let testFull = [...systemPrompt, ...messages];
 
-    if (this.isWithinLimit(processedMessages, model.tokenLimit * this.LIMIT_MULTIPLIER)) {
+    if (this.isWithinLimit(testFull, model.tokenLimit * this.LIMIT_MULTIPLIER)) {
       return messages;
     }
 
+    // We only do the chunking logic if there's a summary
     const summary = await getLastSummary(conversationId);
-
     if (!summary) {
       return messages;
     }
 
-    if (!summary.parentId) {
-      return [{ role: summary.role, content: summary.content }, messages.at(-1)];
+    let parentIndex = -1;
+    if (summary.parentId) {
+      const parentMsg = await getConversationMessage(conversationId, summary.parentId);
+      if (!parentMsg) {
+        throw new Error("Parent message not found");
+      }
+      // Find where that parent message appears in the local messages array
+      parentIndex = messages.findLastIndex(
+        (message) => message.content === parentMsg.content && message.role === parentMsg.role
+      );
+      if (parentIndex === -1) {
+        throw new Error("Message not found");
+      }
+    } else {
+      // If there's a summary but no parentId, treat it as summarizing everything
+      // except possibly the very last user message
+      parentIndex = messages.length - 2; // i.e., up to second last message
     }
 
-    const parentMessage = await getConversationMessage(conversationId, summary.parentId);
+    // We'll try to keep the last up to 20 messages before the summary
+    const messagesBeforeSummary = messages.slice(0, parentIndex + 1);
+    const messagesAfterSummary = messages.slice(parentIndex + 1);
 
-    if (!parentMessage) {
-      throw new Error("Parent message not found");
+    let chunkSize = Math.min(20, messagesBeforeSummary.length);
+    let finalMessages: Message[] = [];
+
+    // Try decreasing chunkSize by 2 until we fit
+    while (chunkSize >= 0) {
+      // Gather only the last `chunkSize` messages before the summary
+      const contextSlice = messagesBeforeSummary.slice(messagesBeforeSummary.length - chunkSize);
+
+      // Insert the summary as a message just after that context
+      finalMessages = [
+        { role: summary.role, content: summary.content },
+        ...contextSlice,
+        ...messagesAfterSummary
+      ];
+
+      // Re-check with agent instructions
+      testFull = agent?.instructions
+        ? [
+            { role: "system", content: (await this.prepareSystemPrompt(agent, userId)) ?? "" },
+            ...finalMessages
+          ]
+        : finalMessages;
+
+      if (this.isWithinLimit(testFull, model.tokenLimit * this.LIMIT_MULTIPLIER)) {
+        return finalMessages;
+      }
+      chunkSize -= 2;
     }
 
-    const index = messages.findLastIndex(
-      (message) => message.content === parentMessage.content && message.role === parentMessage.role
-    );
-
-    if (index === -1) {
-      throw new Error("Message not found");
-    }
-
-    processedMessages = [
-      { role: summary.role, content: summary.content },
-      ...messages.slice(index + 1)
-    ];
-
-    return processedMessages;
+    // As a fallback, if we cannot get under the limit at all,
+    // just return the summary plus the very last message
+    return [{ role: summary.role, content: summary.content }, messages.at(-1)!];
   }
 
   private async postProcess(

@@ -116,6 +116,9 @@ export const conversations = sqliteTable("conversation", {
   isImporting: integer("isImporting", { mode: "boolean" })
     .notNull()
     .default(sql`0`),
+  isPinned: integer("isPinned", { mode: "boolean" })
+    .notNull()
+    .default(sql`0`),
   createdAt: integer("createdAt", { mode: "timestamp_ms" })
     .notNull()
     .$default(() => new Date()),

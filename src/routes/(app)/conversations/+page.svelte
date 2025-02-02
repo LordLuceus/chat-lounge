@@ -81,6 +81,7 @@
         id={item.id}
         name={item.name}
         sharedConversationId={item.sharedConversationId}
+        isPinned={item.isPinned}
       />
     </Card.Footer>
   </Card.Root>

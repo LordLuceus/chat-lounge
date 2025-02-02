@@ -1,7 +1,7 @@
 ## Bugfixes
 
 - [x] Fix bug with editing a message that is not the last message in the conversation.
-- [ ] Fix bug where typing in the chat input does not work when switching between conversations or agents.
+- [?] Fix bug where typing in the chat input does not work when switching between conversations or agents.
 
 ## Conversations:
 
@@ -21,7 +21,7 @@
 - [x] Make the agents list at the top dynamic with Query just like the conversations list.
 - [x] Always show the current agent and conversation at the top of the page. (Done with infiniteQuery.)
 - [ ] Add preferred model and voice to agents.
-- [ ] Add ability to pin agents and conversations to the top of the list.
+- [x] Add ability to pin agents and conversations to the top of the list.
 - [x] Cache voices because they don't change often and there's no need to call the ElevenLabs API every time we change a page. This will also make the app faster. We can use Query.
 - [ ] Add custom instructions.
 - [x] Use the user's API key for title generation.
@@ -36,7 +36,7 @@
 
 ## Long term
 
-- [ ] Implement conversation sharing.
+- [x] Implement conversation sharing.
 - [ ] Add a way to talk to other agents in the same conversation.
 - [ ] Add multi-user conversation support.
 - [ ] Add image, audio, and video support.

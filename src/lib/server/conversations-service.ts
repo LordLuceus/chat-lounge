@@ -22,6 +22,7 @@ export interface ConversationCreateOptions {
   messages: { role: "user" | "assistant"; content: string }[];
   currentNode?: string;
   isImporting?: boolean;
+  isPinned?: boolean;
 }
 
 interface Message {
@@ -62,7 +63,8 @@ export async function getConversations(
       updatedAt: conversations.updatedAt,
       currentNode: conversations.currentNode,
       isImporting: conversations.isImporting,
-      sharedConversationId: sharedConversations.id
+      sharedConversationId: sharedConversations.id,
+      isPinned: conversations.isPinned
     })
     .from(conversations)
     .innerJoin(conversationUsers, eq(conversations.id, conversationUsers.conversationId))
@@ -70,7 +72,7 @@ export async function getConversations(
     .where(
       sql`(${conversationUsers.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
     )
-    .orderBy(sql`${sql.raw(sortBy)}`)
+    .orderBy(sql`${sql.raw(`conversation.isPinned DESC, ${sortBy}`)}`)
     .limit(limit)
     .offset(offset);
 
@@ -405,11 +407,13 @@ async function generateConversationName(
   if (!apiKey) return null;
 
   if (apiKey.provider === AIProvider.Mistral) {
-    modelId = "open-mistral-nemo";
+    modelId = "mistral-small-latest";
   } else if (apiKey.provider === AIProvider.OpenAI) {
     modelId = "gpt-4o-mini";
   } else if (apiKey.provider === AIProvider.Google) {
     modelId = "models/gemini-1.5-flash-latest";
+  } else if (apiKey.provider === AIProvider.Anthropic) {
+    modelId = "claude-3-5-haiku-20241022";
   }
 
   const service = new AIService(apiKey.provider as AIProvider, apiKey.key);

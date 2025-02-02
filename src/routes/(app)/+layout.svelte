@@ -108,6 +108,7 @@
               id={item.id}
               name={item.name}
               sharedConversationId={item.sharedConversationId}
+              isPinned={item.isPinned}
             />
           </div>
         </NavList>

@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 2 Feb, 2025
+
+Added the ability to pin conversations to the top of the list, making them easier to find. You can pin a conversation by clicking the "Pin to top" option in the conversation menu. Also added support for OpenAI's reasoning models: O3 Mini, O1, and O1 Mini. Enjoy! 🚀
+
 ## 25 Jan, 2025
 
 Added the ability to edit a message without regenerating the AI's response. This is useful for fixing typos and other minor edits.

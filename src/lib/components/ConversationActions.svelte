@@ -12,6 +12,7 @@
 
   export let id: string;
   export let name: string;
+  export let isPinned: boolean;
   export let sharedConversationId: string | undefined;
 
   const client = useQueryClient();
@@ -74,6 +75,21 @@
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ["sharedConversations"] });
       client.invalidateQueries({ queryKey: ["conversations"] });
+    }
+  });
+
+  const togglePinnedConversationMutation = createMutation({
+    mutationFn: async (id: string) =>
+      (
+        await fetch(`/api/conversations/${id}/toggle-pin`, {
+          method: "PUT"
+        })
+      ).json(),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ["conversations"] });
+      toast.success(Toast, {
+        componentProps: { text: `Conversation ${isPinned ? "unpinned" : "pinned"} successfully.` }
+      });
     }
   });
 
@@ -199,6 +215,9 @@
   <DropdownMenu.Trigger>Actions</DropdownMenu.Trigger>
   <DropdownMenu.Content>
     <DropdownMenu.Item on:click={renameClick}>Rename</DropdownMenu.Item>
+    <DropdownMenu.Item on:click={() => $togglePinnedConversationMutation.mutate(id)}
+      >{isPinned ? "Unpin" : "Pin to top"}</DropdownMenu.Item
+    >
     {#if sharedConversationId}
       <DropdownMenu.Item on:click={unshareClick}>Unshare</DropdownMenu.Item>
     {:else}

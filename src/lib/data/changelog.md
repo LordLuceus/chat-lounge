@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 6 Feb, 2025
+
+Added support for Google's new Gemini 2.0 Flash model. You can set your Google API key in the settings page and start chatting with Gemini 2.0 Flash right away!
+
 ## 2 Feb, 2025
 
 Added the ability to pin conversations to the top of the list, making them easier to find. You can pin a conversation by clicking the "Pin to top" option in the conversation menu. Also added support for OpenAI's reasoning models: O3 Mini, O1, and O1 Mini. Enjoy! 🚀

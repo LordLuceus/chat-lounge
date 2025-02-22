@@ -395,7 +395,8 @@
           modelId: selectedModel?.value,
           agentId: agent?.id,
           conversationId: $conversationStore?.id
-        }
+        },
+        allowEmptySubmit: true
       })}
     bind:this={chatForm}
   >

@@ -102,7 +102,7 @@
       initialMessages
     });
 
-  $: visibleMessages = $messages.slice(-visibleMessageCount);
+  $: visibleMessages = $messages.slice(-visibleMessageCount).filter((message) => message.content);
 
   function loadMoreMessages() {
     const newVisibleCount = visibleMessageCount + 20; // Load 20 more messages each time

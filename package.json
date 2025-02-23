@@ -82,8 +82,11 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "svelte-preprocess",
-      "esbuild"
+      "browser-tabs-lock",
+      "core-js",
+      "esbuild",
+      "msgpackr-extract",
+      "svelte-preprocess"
     ]
   }
 }

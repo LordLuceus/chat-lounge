@@ -119,6 +119,7 @@ export const conversations = sqliteTable("conversation", {
   isPinned: integer("isPinned", { mode: "boolean" })
     .notNull()
     .default(sql`0`),
+  folderId: text("folderId").references(() => folders.id, { onDelete: "set null" }),
   createdAt: integer("createdAt", { mode: "timestamp_ms" })
     .notNull()
     .$default(() => new Date()),
@@ -247,6 +248,20 @@ export const sharedMessages = sqliteTable("sharedMessage", {
     .$onUpdate(() => new Date())
 });
 
+export const folders = sqliteTable("folder", {
+  id: text("id")
+    .notNull()
+    .primaryKey()
+    .$default(() => uuidv4()),
+  name: text("name").notNull(),
+  createdAt: integer("createdAt", { mode: "timestamp_ms" })
+    .notNull()
+    .$default(() => new Date()),
+  updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
+    .notNull()
+    .$onUpdate(() => new Date())
+});
+
 export const conversationsRelations = relations(conversations, ({ many, one }) => ({
   messages: many(messages),
   agent: one(agents, { fields: [conversations.agentId], references: [agents.id] }),
@@ -255,7 +270,8 @@ export const conversationsRelations = relations(conversations, ({ many, one }) =
   currentNode: one(messages, {
     fields: [conversations.currentNode],
     references: [messages.id]
-  })
+  }),
+  folder: one(folders, { fields: [conversations.folderId], references: [folders.id] })
 }));
 
 export const agentsRelations = relations(agents, ({ many, one }) => ({
@@ -350,3 +366,5 @@ export type User = InferSelectModel<typeof users>;
 export type SharedConversation = InferSelectModel<typeof sharedConversations>;
 
 export type SharedMessage = InferSelectModel<typeof sharedMessages>;
+
+export type Folder = InferSelectModel<typeof folders>;

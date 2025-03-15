@@ -254,6 +254,9 @@ export const folders = sqliteTable("folder", {
     .primaryKey()
     .$default(() => uuidv4()),
   name: text("name").notNull(),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   createdAt: integer("createdAt", { mode: "timestamp_ms" })
     .notNull()
     .$default(() => new Date()),
@@ -286,7 +289,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   messages: many(messages),
   agents: many(agents),
   agentUsers: many(agentUsers),
-  sharedConversations: many(sharedConversations)
+  sharedConversations: many(sharedConversations),
+  folders: many(folders)
 }));
 
 export const modelsRelations = relations(models, ({ many }) => ({
@@ -344,6 +348,11 @@ export const sharedMessagesRelations = relations(sharedMessages, ({ one }) => ({
     references: [sharedMessages.id],
     relationName: "parent"
   })
+}));
+
+export const foldersRelations = relations(folders, ({ many, one }) => ({
+  conversations: many(conversations),
+  user: one(users, { fields: [folders.userId], references: [users.id] })
 }));
 
 export type Conversation = InferSelectModel<typeof conversations>;

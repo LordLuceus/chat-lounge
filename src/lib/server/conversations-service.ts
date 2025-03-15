@@ -13,6 +13,7 @@ import AIService from "$lib/server/ai-service";
 import { getApiKey } from "$lib/server/api-keys-service";
 import { getModel } from "$lib/server/models-service";
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { getFolder } from "./folders-service";
 
 export interface ConversationCreateOptions {
   name?: string;
@@ -51,7 +52,8 @@ export async function getConversations(
   limit: number = 10,
   offset: number = 0,
   sortBy: string = "conversation.updatedAt DESC",
-  search?: string
+  search?: string,
+  folderId?: string
 ) {
   const result = await db
     .select({
@@ -70,7 +72,7 @@ export async function getConversations(
     .innerJoin(conversationUsers, eq(conversations.id, conversationUsers.conversationId))
     .leftJoin(sharedConversations, eq(conversations.id, sharedConversations.conversationId))
     .where(
-      sql`(${conversationUsers.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
+      sql`(${folderId ? sql`${conversations.folderId} = ${folderId}` : sql`${conversations.folderId} IS NULL`}) AND (${conversationUsers.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
     )
     .orderBy(sql`${sql.raw(`conversation.isPinned DESC, ${sortBy}`)}`)
     .limit(limit)
@@ -84,7 +86,7 @@ export async function getConversations(
       .from(conversations)
       .innerJoin(conversationUsers, eq(conversations.id, conversationUsers.conversationId))
       .where(
-        sql`(${conversationUsers.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
+        sql`(${folderId ? sql`${conversations.folderId} = ${folderId}` : sql`${conversations.folderId} IS NULL`}) AND (${conversationUsers.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
       )
   ).at(0);
 
@@ -614,4 +616,27 @@ export async function deleteSharedConversation(conversationId: string, userId: s
   }
 
   await db.delete(sharedConversations).where(eq(sharedConversations.id, conversationId));
+}
+
+export async function addToFolder(userId: string, conversationId: string, folderId: string) {
+  const folder = await getFolder(userId, folderId);
+
+  if (!folder) {
+    throw new Error("Folder not found");
+  }
+
+  return db.update(conversations).set({ folderId }).where(eq(conversations.id, conversationId));
+}
+
+export async function removeFromFolder(userId: string, conversationId: string, folderId: string) {
+  const folder = await getFolder(userId, folderId);
+
+  if (!folder) {
+    throw new Error("Folder not found");
+  }
+
+  return db
+    .update(conversations)
+    .set({ folderId: null })
+    .where(eq(conversations.id, conversationId));
 }

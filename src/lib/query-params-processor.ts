@@ -9,6 +9,7 @@ export interface RequestParams {
   search?: string;
   visibility?: Visibility;
   ownerOnly?: boolean;
+  folderId?: string;
 }
 
 export class QueryParamsProcessor {
@@ -83,5 +84,9 @@ export class QueryParamsProcessor {
 
   public getOwnerOnly() {
     return this.params.ownerOnly;
+  }
+
+  public getFolderId() {
+    return this.params.folderId;
   }
 }

@@ -66,7 +66,8 @@ export async function getConversations(
       currentNode: conversations.currentNode,
       isImporting: conversations.isImporting,
       sharedConversationId: sharedConversations.id,
-      isPinned: conversations.isPinned
+      isPinned: conversations.isPinned,
+      folderId: conversations.folderId
     })
     .from(conversations)
     .innerJoin(conversationUsers, eq(conversations.id, conversationUsers.conversationId))

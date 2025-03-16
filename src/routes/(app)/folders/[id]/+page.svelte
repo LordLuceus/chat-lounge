@@ -11,10 +11,13 @@
   import { onDestroy } from "svelte";
   import Time from "svelte-time";
   import { derived } from "svelte/store";
+  import type { PageData } from "./$types";
+
+  export let data: PageData;
 
   const fetchConversations = async (
     { pageParam = 1 },
-    { search, sortBy, sortOrder }: SearchParams
+    { search, sortBy, sortOrder, folderId }: SearchParams
   ) => {
     const url = new URL("/api/conversations", $page.url.origin);
 
@@ -27,6 +30,9 @@
     }
     if (sortOrder) {
       url.searchParams.set("sortOrder", sortOrder);
+    }
+    if (folderId) {
+      url.searchParams.set("folderId", folderId);
     }
 
     return await fetch(url.toString()).then((res) => res.json());
@@ -49,18 +55,22 @@
   );
 
   onDestroy(() => {
-    if (browser) searchParams.set({ search: "", sortBy: "", sortOrder: "" });
+    if (browser) searchParams.set({ search: "", sortBy: "", sortOrder: "", folderId: undefined });
   });
+
+  $: if (data.folder) {
+    searchParams.set({ ...$searchParams, folderId: data.folder.id });
+  }
 </script>
 
 <svelte:head>
-  <title>Conversations | ChatLounge</title>
-  <meta name="description" content="Your ChatLounge conversations" />
+  <title>{data.folder?.name} | ChatLounge</title>
+  <meta name="description" content={data.folder?.name} />
 </svelte:head>
 
-<h1>Conversations</h1>
+<h1>{data.folder?.name}</h1>
 
-<DataList query={conversationsQuery} let:item searchLabel="Search conversations">
+<DataList query={conversationsQuery} let:item searchLabel="Search conversations in folder">
   <p slot="no-results">No conversations found.</p>
   <Card.Root>
     <Card.Header>

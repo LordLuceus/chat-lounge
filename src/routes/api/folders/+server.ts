@@ -1,10 +1,6 @@
-import type { Conversation } from "$lib/drizzle/schema";
+import type { Folder } from "$lib/drizzle/schema";
 import { QueryParamsProcessor } from "$lib/query-params-processor";
-import {
-  createConversation,
-  getConversations,
-  type ConversationCreateOptions
-} from "$lib/server/conversations-service";
+import { createFolder, getFolders } from "$lib/server/folders-service";
 import type { PagedResponse } from "$lib/types/api";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
@@ -19,24 +15,23 @@ export const GET = (async ({ locals, url }) => {
   const paramsProcessor = new QueryParamsProcessor(Object.fromEntries(url.searchParams));
 
   const { limit, offset } = paramsProcessor.getPagination();
-  const search = paramsProcessor.getSearchQuery(["conversation.name"]);
-  const sortBy = paramsProcessor.getSorting("conversation");
-  const folderId = paramsProcessor.getFolderId();
+  const search = paramsProcessor.getSearchQuery(["name"]);
+  const sortBy = paramsProcessor.getSorting("folder");
 
-  const result = await getConversations(userId, limit, offset, sortBy, search, folderId);
+  const result = await getFolders(userId, limit, offset, sortBy, search);
 
   return json({
-    data: result.conversations,
+    data: result.folders,
     meta: { page, pageSize, total: result.total, totalPages: Math.ceil(result.total! / pageSize) }
-  } as PagedResponse<Conversation>);
+  } as PagedResponse<Folder>);
 }) satisfies RequestHandler;
 
 export const POST = (async ({ locals, request }) => {
   if (!locals.session?.userId) return error(401, "Unauthorized");
 
   const { userId } = locals.session;
-  const data: ConversationCreateOptions = await request.json();
+  const data = await request.json();
   data.userId = userId;
 
-  return json(await createConversation(data), { status: 201 });
+  return json(await createFolder(data), { status: 201 });
 }) satisfies RequestHandler;

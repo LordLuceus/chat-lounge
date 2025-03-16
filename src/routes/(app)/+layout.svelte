@@ -2,6 +2,7 @@
   import { goto } from "$app/navigation";
   import AgentActions from "$lib/components/AgentActions.svelte";
   import ConversationActions from "$lib/components/ConversationActions.svelte";
+  import FolderActions from "$lib/components/FolderActions.svelte";
   import NewVersionPopup from "$lib/components/NewVersionPopup.svelte";
   import Toast from "$lib/components/Toast.svelte";
   import * as Avatar from "$lib/components/ui/avatar";
@@ -9,7 +10,7 @@
   import * as Collapsible from "$lib/components/ui/collapsible";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Toaster } from "$lib/components/ui/sonner";
-  import type { Agent, Conversation } from "$lib/drizzle/schema";
+  import type { Agent, Conversation, Folder } from "$lib/drizzle/schema";
   import { generateTTS } from "$lib/services/tts-service";
   import { audioFilename, currentAudioUrl, downloadUrl, ttsProps, voices } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
@@ -32,6 +33,9 @@
   const fetchAgents = async ({ pageParam = 1 }) =>
     await fetch(`/api/agents?page=${pageParam}&limit=20`).then((res) => res.json());
 
+  const fetchFolders = async ({ pageParam = 1 }) =>
+    await fetch(`/api/folders?page=${pageParam}&limit=20`).then((res) => res.json());
+
   const conversationsQuery = createInfiniteQuery<PagedResponse<Conversation>>({
     queryKey: ["conversations"],
     queryFn: ({ pageParam }) => fetchConversations({ pageParam: pageParam as number }),
@@ -48,6 +52,19 @@
   const agentsQuery = createInfiniteQuery<PagedResponse<Agent>>({
     queryKey: ["agents"],
     queryFn: ({ pageParam }) => fetchAgents({ pageParam: pageParam as number }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.meta.page < lastPage.meta.totalPages) {
+        return lastPage.meta.page + 1;
+      }
+
+      return undefined;
+    }
+  });
+
+  const foldersQuery = createInfiniteQuery<PagedResponse<Folder>>({
+    queryKey: ["folders"],
+    queryFn: ({ pageParam }) => fetchFolders({ pageParam: pageParam as number }),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
       if (lastPage.meta.page < lastPage.meta.totalPages) {
@@ -109,6 +126,7 @@
               name={item.name}
               sharedConversationId={item.sharedConversationId}
               isPinned={item.isPinned}
+              folderId={item.folderId}
             />
           </div>
         </NavList>
@@ -126,6 +144,18 @@
         </NavList>
       {:else}
         <a href="/agents">Agents</a>
+      {/if}
+      {#if $foldersQuery.isSuccess && $foldersQuery.data.pages[0].meta.total > 0}
+        <NavList query={foldersQuery} itemType="Folders">
+          <div slot="link" let:item>
+            <a href={`/folders/${item.id}`}>{item.name}</a>
+          </div>
+          <div slot="menu" let:item>
+            <FolderActions id={item.id} name={item.name} />
+          </div>
+        </NavList>
+      {:else}
+        <a href="/folders">Folders</a>
       {/if}
       {#if data?.keys?.eleven}
         <Collapsible.Root bind:open={ttsOpen}>

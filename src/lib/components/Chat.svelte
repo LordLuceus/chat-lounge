@@ -61,7 +61,10 @@
           })
         })
       ).json(),
-    onSuccess: () => client.invalidateQueries({ queryKey: ["conversations"] })
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ["conversations"] });
+      client.invalidateQueries({ queryKey: ["agents"] });
+    }
   });
 
   const { append, error, handleSubmit, input, isLoading, messages, reload, setMessages, stop } =
@@ -236,7 +239,12 @@
     if (messageIndex === -1) return;
 
     const updatedMessages = $messages.slice(0, messageIndex);
-    updatedMessages.push({ role: "user", content, id: regenerate ? uuidv4() : id });
+    updatedMessages.push({
+      role: "user",
+      content,
+      id: regenerate ? uuidv4() : id,
+      parts: [{ type: "text", text: content }]
+    });
 
     setMessages(updatedMessages);
 

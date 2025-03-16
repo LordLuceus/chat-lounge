@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 16 Mar, 2025
+
+Added folders. You can now organize your conversations into folders, making it easier to find and manage them. Start by creating a new folder on the folders page. You can then add conversations to the folder by clicking the "Add to folder" button in the conversation menu. Hope you enjoy the new feature! 🚀
+
 ## 6 Feb, 2025
 
 Added support for Google's new Gemini 2.0 Flash model. You can set your Google API key in the settings page and start chatting with Gemini 2.0 Flash right away!

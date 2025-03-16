@@ -6,6 +6,7 @@ export interface SearchParams {
   sortOrder?: string;
   visibility?: string;
   ownerOnly?: boolean;
+  folderId?: string;
 }
 
 export const searchParams = writable<SearchParams>({

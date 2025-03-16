@@ -5,4 +5,4 @@ CREATE TABLE `folder` (
 	`updatedAt` integer NOT NULL
 );
 --> statement-breakpoint
-ALTER TABLE `conversation` ADD `folderId` text REFERENCES folder(id);
+ALTER TABLE `conversation` ADD `folderId` text REFERENCES folder(id) ON DELETE SET NULL;

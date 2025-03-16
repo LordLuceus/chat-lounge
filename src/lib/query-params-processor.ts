@@ -33,7 +33,8 @@ export class QueryParamsProcessor {
       sortOrder: this.validateSortOrder(params.sortOrder),
       search: params.search || "",
       visibility: params.visibility,
-      ownerOnly: params.ownerOnly === "true"
+      ownerOnly: params.ownerOnly === "true",
+      folderId: params.folderId
     };
   }
 

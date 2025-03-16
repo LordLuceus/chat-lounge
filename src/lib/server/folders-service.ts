@@ -18,9 +18,7 @@ export async function getFolders(
       updatedAt: folders.updatedAt
     })
     .from(folders)
-    .where(
-      sql`(${folders.userId} IS NULL OR ${folders.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
-    )
+    .where(sql`(${folders.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`)
     .orderBy(sql`${sql.raw(sortBy)}`)
     .limit(limit)
     .offset(offset);
@@ -32,7 +30,7 @@ export async function getFolders(
       })
       .from(folders)
       .where(
-        sql`(${folders.userId} IS NULL OR ${folders.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
+        sql`(${folders.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
       )
   ).at(0);
 
@@ -54,7 +52,10 @@ export async function getFolder(userId: string, folderId: string) {
   ).at(0);
 }
 
-export async function createFolder({ userId, name }: Omit<Folder, "id">) {
+export async function createFolder({
+  userId,
+  name
+}: Omit<Folder, "id" | "createdAt" | "updatedAt">) {
   const folder = (await db.insert(folders).values({ userId, name }).returning()).at(0);
 
   if (!folder) {

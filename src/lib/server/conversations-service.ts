@@ -51,7 +51,7 @@ export async function getConversations(
   userId: string,
   limit: number = 10,
   offset: number = 0,
-  sortBy: string = "conversation.updatedAt DESC",
+  sortBy: string = "lastUpdated DESC",
   search?: string,
   folderId?: string
 ) {
@@ -62,7 +62,7 @@ export async function getConversations(
       modelId: conversations.modelId,
       agentId: conversations.agentId,
       createdAt: conversations.createdAt,
-      updatedAt: conversations.updatedAt,
+      lastUpdated: sql`COALESCE(MAX(${messages.updatedAt}), ${conversations.updatedAt}) AS lastUpdated`,
       currentNode: conversations.currentNode,
       isImporting: conversations.isImporting,
       sharedConversationId: sharedConversations.id,
@@ -72,17 +72,30 @@ export async function getConversations(
     .from(conversations)
     .innerJoin(conversationUsers, eq(conversations.id, conversationUsers.conversationId))
     .leftJoin(sharedConversations, eq(conversations.id, sharedConversations.conversationId))
+    .leftJoin(messages, eq(conversations.id, messages.conversationId))
     .where(
       sql`(${folderId ? sql`${conversations.folderId} = ${folderId}` : sql`${conversations.folderId} IS NULL`}) AND (${conversationUsers.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
     )
-    .orderBy(sql`${sql.raw(`conversation.isPinned DESC, ${sortBy}`)}`)
+    .groupBy(
+      conversations.id,
+      conversations.name,
+      conversations.modelId,
+      conversations.agentId,
+      conversations.createdAt,
+      conversations.currentNode,
+      conversations.isImporting,
+      sharedConversations.id,
+      conversations.isPinned,
+      conversations.folderId
+    )
+    .orderBy(sql`${conversations.isPinned} DESC, ${sql.raw(sortBy)}`)
     .limit(limit)
     .offset(offset);
 
   const total = (
     await db
       .select({
-        count: sql`COUNT(*)`.mapWith(Number)
+        count: sql`COUNT(DISTINCT ${conversations.id})`.mapWith(Number)
       })
       .from(conversations)
       .innerJoin(conversationUsers, eq(conversations.id, conversationUsers.conversationId))

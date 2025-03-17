@@ -70,7 +70,12 @@
 
 <h1>{data.folder?.name}</h1>
 
-<DataList query={conversationsQuery} let:item searchLabel="Search conversations in folder">
+<DataList
+  query={conversationsQuery}
+  let:item
+  searchLabel="Search conversations in folder"
+  {searchParams}
+>
   <p slot="no-results">No conversations found.</p>
   <Card.Root>
     <Card.Header>

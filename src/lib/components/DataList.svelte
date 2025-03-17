@@ -1,14 +1,16 @@
 <script lang="ts">
   import InfiniteScroll from "$lib/components/InfiniteScroll.svelte";
   import { Button } from "$lib/components/ui/button";
-  import { searchParams } from "$lib/stores";
+  import { type SearchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
   import type { CreateInfiniteQueryResult, InfiniteData } from "@tanstack/svelte-query";
   import { Loader } from "lucide-svelte";
   import Search from "svelte-search";
+  import type { Writable } from "svelte/store";
 
   export let query: CreateInfiniteQueryResult<InfiniteData<PagedResponse<any>, unknown>, Error>;
   export let searchLabel: string;
+  export let searchParams: Writable<SearchParams>;
 
   let value = "";
 

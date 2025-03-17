@@ -75,7 +75,7 @@
 <CreateFolderDialog />
 
 <SignedIn let:user>
-  <DataList query={foldersQuery} let:item searchLabel="Search folders">
+  <DataList query={foldersQuery} let:item searchLabel="Search folders" {searchParams}>
     <p slot="no-results">No folders found.</p>
     <Card.Root>
       <Card.Header>

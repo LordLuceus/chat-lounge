@@ -104,7 +104,7 @@
 </ToggleGroup.Root>
 
 <SignedIn let:user>
-  <DataList query={agentsQuery} let:item searchLabel="Search agents">
+  <DataList query={agentsQuery} let:item searchLabel="Search agents" {searchParams}>
     <p slot="no-results">No agents found.</p>
     <Card.Root>
       <Card.Header>

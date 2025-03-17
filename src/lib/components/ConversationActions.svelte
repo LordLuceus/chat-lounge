@@ -10,18 +10,24 @@
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Input } from "$lib/components/ui/input";
   import type { Folder } from "$lib/drizzle/schema";
-  import { searchParams, type SearchParams } from "$lib/stores";
+  import type { SearchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
   import { createInfiniteQuery, createMutation, useQueryClient } from "@tanstack/svelte-query";
   import { onDestroy } from "svelte";
   import { toast } from "svelte-sonner";
-  import { derived } from "svelte/store";
+  import { derived, writable } from "svelte/store";
 
   export let id: string;
   export let name: string;
   export let isPinned: boolean;
   export let sharedConversationId: string | undefined;
   export let folderId: string | undefined;
+
+  const searchParams = writable<SearchParams>({
+    search: "",
+    sortBy: "",
+    sortOrder: ""
+  });
 
   const client = useQueryClient();
 
@@ -336,7 +342,7 @@
     <Dialog.Header>
       <Dialog.Title>Add conversation to folder</Dialog.Title>
       <Dialog.Description>Add this conversation to a folder.</Dialog.Description>
-      <DataList query={foldersQuery} let:item searchLabel="Search folders">
+      <DataList query={foldersQuery} let:item searchLabel="Search folders" {searchParams}>
         <p slot="no-results">No folders found.</p>
         <div>
           <Button

@@ -1,6 +1,6 @@
 import { env } from "$env/dynamic/public";
-import { AIProvider } from "$lib/drizzle/schema";
 import { getApiKey } from "$lib/server/api-keys-service";
+import { AIProvider } from "$lib/server/db";
 import { getUser } from "$lib/server/users-service";
 import type { ElevenLabsError } from "$lib/types/elevenlabs";
 import { ModelID } from "$lib/types/elevenlabs";

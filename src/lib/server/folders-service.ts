@@ -1,5 +1,4 @@
-import { db } from "$lib/drizzle/db";
-import { folders, type Folder } from "$lib/drizzle/schema";
+import { db, folders, type Folder } from "$lib/server/db";
 import { and, eq, sql } from "drizzle-orm";
 
 export async function getFolders(
@@ -56,13 +55,15 @@ export async function createFolder({
   userId,
   name
 }: Omit<Folder, "id" | "createdAt" | "updatedAt">) {
-  const folder = (await db.insert(folders).values({ userId, name }).returning()).at(0);
+  const result = await db.insert(folders).values({ userId, name }).$returningId();
 
-  if (!folder) {
+  if (!result[0]?.id) {
     throw new Error("Failed to create folder");
   }
 
-  return folder;
+  const { id } = result[0];
+
+  return id;
 }
 
 export async function updateFolder(
@@ -77,7 +78,7 @@ export async function updateFolder(
       throw new Error("Folder not found");
     }
   }
-  return db.update(folders).set(data).where(eq(folders.id, folderId)).returning();
+  return db.update(folders).set(data).where(eq(folders.id, folderId));
 }
 
 export async function deleteFolder(userId: string, folderId: string) {

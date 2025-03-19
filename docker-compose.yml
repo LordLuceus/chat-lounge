@@ -9,8 +9,7 @@ services:
     restart: unless-stopped
     depends_on:
       - valkey
-    volumes:
-      - db-data:/app/data
+      - db
 
   valkey:
     image: valkey/valkey:latest # Use the official Valkey image
@@ -19,6 +18,17 @@ services:
     command: [ "valkey-server", "/usr/local/etc/redis.conf" ]
     volumes:
       - ./redis.conf:/usr/local/etc/redis.conf
+
+  db:
+    image: mariadb:11.4
+    container_name: chat-lounge-db
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - 3306:3306
+    volumes:
+      - db-data:/var/lib/mysql
 
 volumes:
   db-data:

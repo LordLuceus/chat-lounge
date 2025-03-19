@@ -1,16 +1,10 @@
 import charPrompt from "$lib/data/character_prompt.txt?raw";
 import {
-  AgentType,
-  AIProvider,
-  type Agent,
-  type AgentWithUsage,
-  type Model
-} from "$lib/drizzle/schema";
-import {
   addConversationMessage,
   getConversationMessage,
   getLastSummary
 } from "$lib/server/conversations-service";
+import { AgentType, AIProvider, type Agent, type AgentWithUsage, type Model } from "$lib/server/db";
 import { getUser } from "$lib/server/users-service";
 import { createAnthropic, type AnthropicProvider } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI, type GoogleGenerativeAIProvider } from "@ai-sdk/google";

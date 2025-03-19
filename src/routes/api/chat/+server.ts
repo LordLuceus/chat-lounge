@@ -1,8 +1,8 @@
-import { AIProvider } from "$lib/drizzle/schema";
 import { getAgent, updateLastUsed } from "$lib/server/agents-service";
 import AIService from "$lib/server/ai-service";
 import { getApiKey } from "$lib/server/api-keys-service";
 import { getConversation, updateConversation } from "$lib/server/conversations-service";
+import { AIProvider } from "$lib/server/db";
 import { getModel } from "$lib/server/models-service";
 import { getUser } from "$lib/server/users-service";
 import { error, type RequestHandler } from "@sveltejs/kit";

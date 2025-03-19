@@ -1,11 +1,14 @@
 import { relations, sql, type InferSelectModel } from "drizzle-orm";
 import {
-  integer,
+  boolean,
+  int,
+  mysqlTable,
   primaryKey,
-  sqliteTable,
   text,
-  type AnySQLiteColumn
-} from "drizzle-orm/sqlite-core";
+  timestamp,
+  varchar,
+  type AnyMySqlColumn
+} from "drizzle-orm/mysql-core";
 import { v4 as uuidv4 } from "uuid";
 
 export enum AIProvider {
@@ -27,122 +30,133 @@ export enum AgentType {
   Character = "character"
 }
 
-export const users = sqliteTable("user", {
-  id: text("id").notNull().primaryKey(),
-  username: text("username").notNull().unique(),
-  email: text("email"),
+export const users = mysqlTable("user", {
+  id: varchar("id", { length: 100 }).notNull().primaryKey(),
+  username: varchar("username", { length: 50 }).notNull().unique(),
+  email: varchar("email", { length: 100 }),
   image: text("image"),
-  createdAt: integer("createdAt", { mode: "timestamp_ms" })
+  createdAt: timestamp("createdAt")
     .notNull()
-    .$default(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updatedAt")
     .notNull()
-    .$onUpdate(() => new Date())
+    .default(sql`CURRENT_TIMESTAMP`)
+    .onUpdateNow()
 });
 
-export const apiKeys = sqliteTable("apiKey", {
-  id: text("id")
+export const apiKeys = mysqlTable("apiKey", {
+  id: varchar("id", { length: 36 })
     .notNull()
     .primaryKey()
     .$default(() => uuidv4()),
-  userId: text("userId")
+  userId: varchar("userId", { length: 100 })
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  provider: text("provider").notNull().$type<AIProvider>(),
-  key: text("key").notNull().unique(),
-  createdAt: integer("createdAt", { mode: "timestamp_ms" })
+  provider: varchar("provider", { length: 50 }).notNull().$type<AIProvider>(),
+  key: varchar("key", { length: 255 }).notNull().unique(),
+  createdAt: timestamp("createdAt")
     .notNull()
-    .$default(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updatedAt")
     .notNull()
-    .$onUpdate(() => new Date())
+    .default(sql`CURRENT_TIMESTAMP`)
+    .onUpdateNow()
 });
 
-export const agents = sqliteTable("agent", {
-  id: text("id")
+export const agents = mysqlTable("agent", {
+  id: varchar("id", { length: 36 })
     .notNull()
     .primaryKey()
     .$default(() => uuidv4()),
-  userId: text("userId")
+  userId: varchar("userId", { length: 100 })
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  description: text("description"),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: varchar("description", { length: 255 }),
   instructions: text("instructions").notNull(),
-  visibility: text("visibility")
+  visibility: varchar("visibility", { length: 20 })
     .notNull()
     .$type<Visibility>()
     .default(sql`'private'`),
-  type: text("type")
+  type: varchar("type", { length: 20 })
     .notNull()
     .$type<AgentType>()
     .default(sql`'default'`),
   greeting: text("greeting"),
-  createdAt: integer("createdAt", { mode: "timestamp_ms" })
+  createdAt: timestamp("createdAt")
     .notNull()
-    .$default(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updatedAt")
     .notNull()
-    .$onUpdate(() => new Date())
+    .default(sql`CURRENT_TIMESTAMP`)
+    .onUpdateNow()
 });
 
-export const models = sqliteTable("model", {
-  id: text("id").notNull().primaryKey(),
-  name: text("name").notNull(),
-  provider: text("provider").notNull(),
-  tokenLimit: integer("tokenLimit").notNull(),
-  createdAt: integer("createdAt", { mode: "timestamp_ms" })
+export const models = mysqlTable("model", {
+  id: varchar("id", { length: 100 }).notNull().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  provider: varchar("provider", { length: 50 }).notNull(),
+  tokenLimit: int("tokenLimit").notNull(),
+  createdAt: timestamp("createdAt")
     .notNull()
-    .$default(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updatedAt")
     .notNull()
-    .$onUpdate(() => new Date())
+    .default(sql`CURRENT_TIMESTAMP`)
+    .onUpdateNow()
 });
 
-export const conversations = sqliteTable("conversation", {
-  id: text("id")
+export const conversations = mysqlTable("conversation", {
+  id: varchar("id", { length: 36 })
     .notNull()
     .primaryKey()
     .$default(() => uuidv4()),
-  agentId: text("agentId").references(() => agents.id, { onDelete: "set null" }),
-  modelId: text("modelId").references(() => models.id, {
+  agentId: varchar("agentId", { length: 36 }).references(() => agents.id, { onDelete: "set null" }),
+  modelId: varchar("modelId", { length: 100 }).references(() => models.id, {
     onDelete: "set null",
     onUpdate: "cascade"
   }),
-  name: text("name").notNull(),
-  currentNode: text("currentNode").references((): AnySQLiteColumn => messages.id, {
+  name: varchar("name", { length: 255 }).notNull(),
+  currentNode: varchar("currentNode", { length: 36 }).references(
+    (): AnyMySqlColumn => messages.id,
+    {
+      onDelete: "set null"
+    }
+  ),
+  isImporting: boolean("isImporting")
+    .notNull()
+    .default(sql`false`),
+  isPinned: boolean("isPinned")
+    .notNull()
+    .default(sql`false`),
+  folderId: varchar("folderId", { length: 36 }).references(() => folders.id, {
     onDelete: "set null"
   }),
-  isImporting: integer("isImporting", { mode: "boolean" })
+  createdAt: timestamp("createdAt")
     .notNull()
-    .default(sql`0`),
-  isPinned: integer("isPinned", { mode: "boolean" })
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updatedAt")
     .notNull()
-    .default(sql`0`),
-  folderId: text("folderId").references(() => folders.id, { onDelete: "set null" }),
-  createdAt: integer("createdAt", { mode: "timestamp_ms" })
-    .notNull()
-    .$default(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
-    .notNull()
-    .$onUpdate(() => new Date())
+    .default(sql`CURRENT_TIMESTAMP`)
+    .onUpdateNow()
 });
 
-export const conversationUsers = sqliteTable(
+export const conversationUsers = mysqlTable(
   "conversationUser",
   {
-    conversationId: text("conversationId")
+    conversationId: varchar("conversationId", { length: 36 })
       .notNull()
       .references(() => conversations.id, { onDelete: "cascade" }),
-    userId: text("userId")
+    userId: varchar("userId", { length: 100 })
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    createdAt: integer("createdAt", { mode: "timestamp_ms" })
+    createdAt: timestamp("createdAt")
       .notNull()
-      .$default(() => new Date()),
-    updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
+      .default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: timestamp("updatedAt")
       .notNull()
-      .$onUpdate(() => new Date())
+      .default(sql`CURRENT_TIMESTAMP`)
+      .onUpdateNow()
   },
   (table) => {
     return {
@@ -151,50 +165,52 @@ export const conversationUsers = sqliteTable(
   }
 );
 
-export const messages = sqliteTable("message", {
-  id: text("id")
+export const messages = mysqlTable("message", {
+  id: varchar("id", { length: 36 })
     .notNull()
     .primaryKey()
     .$default(() => uuidv4()),
-  conversationId: text("conversationId")
+  conversationId: varchar("conversationId", { length: 36 })
     .notNull()
     .references(() => conversations.id, { onDelete: "cascade" }),
-  userId: text("userId").references(() => users.id, { onDelete: "set null" }),
+  userId: varchar("userId", { length: 100 }).references(() => users.id, { onDelete: "set null" }),
   content: text("content").notNull(),
-  role: text("role").notNull().$type<"user" | "assistant">(),
-  parentId: text("parentId").references((): AnySQLiteColumn => messages.id, {
+  role: varchar("role", { length: 20 }).notNull().$type<"user" | "assistant">(),
+  parentId: varchar("parentId", { length: 36 }).references((): AnyMySqlColumn => messages.id, {
     onDelete: "cascade"
   }),
-  isInternal: integer("isInternal", { mode: "boolean" })
+  isInternal: boolean("isInternal")
     .notNull()
     .default(sql`false`),
-  createdAt: integer("createdAt", { mode: "timestamp_ms" })
+  createdAt: timestamp("createdAt")
     .notNull()
-    .$default(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updatedAt")
     .notNull()
-    .$onUpdate(() => new Date())
+    .default(sql`CURRENT_TIMESTAMP`)
+    .onUpdateNow()
 });
 
-export const agentUsers = sqliteTable(
+export const agentUsers = mysqlTable(
   "agentUser",
   {
-    agentId: text("agentId")
+    agentId: varchar("agentId", { length: 36 })
       .notNull()
       .references(() => agents.id, { onDelete: "cascade" }),
-    userId: text("userId")
+    userId: varchar("userId", { length: 100 })
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    lastUsedAt: integer("lastUsedAt", { mode: "timestamp_ms" }),
-    isOwner: integer("isOwner", { mode: "boolean" })
+    lastUsedAt: timestamp("lastUsedAt"),
+    isOwner: boolean("isOwner")
       .notNull()
       .default(sql`false`),
-    createdAt: integer("createdAt", { mode: "timestamp_ms" })
+    createdAt: timestamp("createdAt")
       .notNull()
-      .$default(() => new Date()),
-    updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
+      .default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: timestamp("updatedAt")
       .notNull()
-      .$onUpdate(() => new Date())
+      .default(sql`CURRENT_TIMESTAMP`)
+      .onUpdateNow()
   },
   (table) => {
     return {
@@ -203,66 +219,72 @@ export const agentUsers = sqliteTable(
   }
 );
 
-export const sharedConversations = sqliteTable("sharedConversation", {
-  id: text("id")
+export const sharedConversations = mysqlTable("sharedConversation", {
+  id: varchar("id", { length: 36 })
     .notNull()
     .primaryKey()
     .$default(() => uuidv4()),
-  userId: text("userId")
+  userId: varchar("userId", { length: 100 })
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  conversationId: text("conversationId")
+  conversationId: varchar("conversationId", { length: 36 })
     .notNull()
     .references(() => conversations.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  agentId: text("agentId").references(() => agents.id, { onDelete: "set null" }),
-  sharedAt: integer("sharedAt", { mode: "timestamp_ms" })
+  name: varchar("name", { length: 255 }).notNull(),
+  agentId: varchar("agentId", { length: 36 }).references(() => agents.id, { onDelete: "set null" }),
+  sharedAt: timestamp("sharedAt")
     .notNull()
-    .$default(() => new Date()),
-  createdAt: integer("createdAt", { mode: "timestamp_ms" })
+    .default(sql`CURRENT_TIMESTAMP`),
+  createdAt: timestamp("createdAt")
     .notNull()
-    .$default(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updatedAt")
     .notNull()
-    .$onUpdate(() => new Date())
+    .default(sql`CURRENT_TIMESTAMP`)
+    .onUpdateNow()
 });
 
-export const sharedMessages = sqliteTable("sharedMessage", {
-  id: text("id")
+export const sharedMessages = mysqlTable("sharedMessage", {
+  id: varchar("id", { length: 36 })
     .notNull()
     .primaryKey()
     .$default(() => uuidv4()),
-  sharedConversationId: text("sharedConversationId")
+  sharedConversationId: varchar("sharedConversationId", { length: 36 })
     .notNull()
     .references(() => sharedConversations.id, { onDelete: "cascade" }),
   content: text("content").notNull(),
-  role: text("role").notNull().$type<"user" | "assistant">(),
-  parentId: text("parentId").references((): AnySQLiteColumn => sharedMessages.id, {
-    onDelete: "cascade"
-  }),
-  createdAt: integer("createdAt", { mode: "timestamp_ms" })
+  role: varchar("role", { length: 20 }).notNull().$type<"user" | "assistant">(),
+  parentId: varchar("parentId", { length: 36 }).references(
+    (): AnyMySqlColumn => sharedMessages.id,
+    {
+      onDelete: "cascade"
+    }
+  ),
+  createdAt: timestamp("createdAt")
     .notNull()
-    .$default(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updatedAt")
     .notNull()
-    .$onUpdate(() => new Date())
+    .default(sql`CURRENT_TIMESTAMP`)
+    .onUpdateNow()
 });
 
-export const folders = sqliteTable("folder", {
-  id: text("id")
+export const folders = mysqlTable("folder", {
+  id: varchar("id", { length: 36 })
     .notNull()
     .primaryKey()
     .$default(() => uuidv4()),
-  name: text("name").notNull(),
-  userId: text("userId")
+  name: varchar("name", { length: 255 }).notNull(),
+  userId: varchar("userId", { length: 100 })
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  createdAt: integer("createdAt", { mode: "timestamp_ms" })
+  createdAt: timestamp("createdAt")
     .notNull()
-    .$default(() => new Date()),
-  updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updatedAt")
     .notNull()
-    .$onUpdate(() => new Date())
+    .default(sql`CURRENT_TIMESTAMP`)
+    .onUpdateNow()
 });
 
 export const conversationsRelations = relations(conversations, ({ many, one }) => ({

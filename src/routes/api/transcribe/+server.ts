@@ -1,5 +1,5 @@
-import { AIProvider } from "$lib/drizzle/schema";
 import { getApiKey } from "$lib/server/api-keys-service";
+import { AIProvider } from "$lib/server/db";
 import { getUser } from "$lib/server/users-service";
 import { error, text, type RequestHandler } from "@sveltejs/kit";
 import { OpenAI } from "openai";

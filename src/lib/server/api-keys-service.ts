@@ -1,5 +1,4 @@
-import { db } from "$lib/drizzle/db";
-import { AIProvider, apiKeys } from "$lib/drizzle/schema";
+import { AIProvider, apiKeys, db } from "$lib/server/db";
 import { and, eq } from "drizzle-orm";
 
 export const saveApiKey = async (key: string, userId: string, provider: AIProvider) => {

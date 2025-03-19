@@ -1,5 +1,4 @@
-import { db } from "$lib/drizzle/db";
-import { AgentType, Visibility, agentUsers, agents } from "$lib/drizzle/schema";
+import { AgentType, Visibility, agentUsers, agents, db } from "$lib/server/db";
 import { and, eq, or, sql } from "drizzle-orm";
 
 export interface AgentCreateOptions {
@@ -97,20 +96,19 @@ export async function createAgent({
   type,
   greeting
 }: AgentCreateOptions) {
-  const agent = (
-    await db
-      .insert(agents)
-      .values({ userId, name, description, instructions, visibility, type, greeting })
-      .returning()
-  ).at(0);
-
-  if (!agent) {
+  const result = await db
+    .insert(agents)
+    .values({ userId, name, description, instructions, visibility, type, greeting })
+    .$returningId();
+  if (!result[0]?.id) {
     throw new Error("Failed to create agent");
   }
 
-  await addAgentUser(agent.id, userId, true);
+  const { id: agentId } = result[0];
 
-  return agent;
+  await addAgentUser(agentId, userId, true);
+
+  return agentId;
 }
 
 export async function updateAgent(
@@ -125,7 +123,7 @@ export async function updateAgent(
       throw new Error("Agent not found");
     }
   }
-  return db.update(agents).set(data).where(eq(agents.id, agentId)).returning();
+  return db.update(agents).set(data).where(eq(agents.id, agentId));
 }
 
 export async function updateLastUsed(userId: string, agentId: string) {

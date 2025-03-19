@@ -1,5 +1,4 @@
-import { db } from "$lib/drizzle/db";
-import { users } from "$lib/drizzle/schema";
+import { db, users } from "$lib/server/db";
 import type { UserJSON } from "@clerk/backend";
 import { desc, eq } from "drizzle-orm";
 

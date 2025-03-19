@@ -26,11 +26,11 @@ export const actions: Actions = {
     }
 
     const { name } = form.data;
-    const folder = await createFolder({
+    const folderId = await createFolder({
       userId: userId!,
       name
     });
 
-    return message(form, { folderId: folder.id, created: true });
+    return message(form, { folderId, created: true });
   }
 };

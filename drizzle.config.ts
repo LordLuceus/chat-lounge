@@ -1,12 +1,19 @@
+import dotenv from "dotenv";
 import type { Config } from "drizzle-kit";
 
+dotenv.config();
+
 export default {
-  out: "./src/lib/drizzle",
-  schema: "./src/lib/drizzle/schema.ts",
+  out: "./src/lib/server/db",
+  schema: "./src/lib/server/db/schema.ts",
   dbCredentials: {
-    url: "file:data/chat-lounge.db"
+    host: process.env.MARIADB_HOST!,
+    port: Number(process.env.MARIADB_PORT!),
+    user: process.env.MARIADB_USER!,
+    password: process.env.MARIADB_PASSWORD!,
+    database: process.env.MARIADB_DATABASE!
   },
-  dialect: "turso",
+  dialect: "mysql",
   strict: true,
   verbose: true
 } satisfies Config;

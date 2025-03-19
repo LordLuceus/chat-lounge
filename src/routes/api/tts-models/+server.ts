@@ -1,6 +1,6 @@
 import { env } from "$env/dynamic/public";
-import { AIProvider } from "$lib/drizzle/schema";
 import { getApiKey } from "$lib/server/api-keys-service";
+import { AIProvider } from "$lib/server/db";
 import { getUser } from "$lib/server/users-service";
 import type { ElevenLabsError, ElevenLabsModel } from "$lib/types/elevenlabs";
 import { error, json, type RequestHandler } from "@sveltejs/kit";

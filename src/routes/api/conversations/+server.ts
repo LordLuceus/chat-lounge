@@ -1,10 +1,10 @@
-import type { Conversation } from "$lib/drizzle/schema";
 import { QueryParamsProcessor } from "$lib/query-params-processor";
 import {
   createConversation,
   getConversations,
   type ConversationCreateOptions
 } from "$lib/server/conversations-service";
+import type { Conversation } from "$lib/server/db";
 import type { PagedResponse } from "$lib/types/api";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 

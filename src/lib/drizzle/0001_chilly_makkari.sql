@@ -1,1 +1,0 @@
-ALTER TABLE `conversation` ADD `isShared` integer DEFAULT 0 NOT NULL;

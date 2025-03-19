@@ -1,6 +1,5 @@
-import { db } from "$lib/drizzle/db";
-import { models } from "$lib/drizzle/schema";
 import { getApiKeys } from "$lib/server/api-keys-service";
+import { db, models } from "$lib/server/db";
 import { desc, eq, inArray } from "drizzle-orm";
 
 export async function getModels() {

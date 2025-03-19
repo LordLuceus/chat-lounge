@@ -1,16 +1,16 @@
-import { db } from "$lib/drizzle/db";
+import { getConversationMessages as getMessages } from "$lib/helpers";
+import AIService from "$lib/server/ai-service";
+import { getApiKey } from "$lib/server/api-keys-service";
 import {
   AIProvider,
   conversationUsers,
   conversations,
+  db,
   messages,
   sharedConversations,
   sharedMessages,
   type ConversationWithMessages
-} from "$lib/drizzle/schema";
-import { getConversationMessages as getMessages } from "$lib/helpers";
-import AIService from "$lib/server/ai-service";
-import { getApiKey } from "$lib/server/api-keys-service";
+} from "$lib/server/db";
 import { getModel } from "$lib/server/models-service";
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { getFolder } from "./folders-service";
@@ -62,6 +62,7 @@ export async function getConversations(
       modelId: conversations.modelId,
       agentId: conversations.agentId,
       createdAt: conversations.createdAt,
+      updatedAt: conversations.updatedAt,
       lastUpdated: sql`COALESCE(MAX(${messages.updatedAt}), ${conversations.updatedAt}) AS lastUpdated`,
       currentNode: conversations.currentNode,
       isImporting: conversations.isImporting,
@@ -148,36 +149,35 @@ export async function createConversation({
   messages,
   isImporting
 }: ConversationCreateOptions) {
-  const conversation = (
-    await db
-      .insert(conversations)
-      .values({
-        name: name ? name : "New Chat",
-        agentId,
-        modelId,
-        isImporting: isImporting ? true : false
-      })
-      .returning()
-  ).at(0);
+  const result = await db
+    .insert(conversations)
+    .values({
+      name: name ? name : "New Chat",
+      agentId,
+      modelId,
+      isImporting: isImporting ? true : false
+    })
+    .$returningId();
+  if (!result[0]?.id) throw new Error("Failed to create conversation");
 
-  if (!conversation) throw new Error("Failed to create conversation");
+  const { id: conversationId } = result[0];
 
-  await addConversationUser(conversation.id, userId);
+  await addConversationUser(conversationId, userId);
 
   for (const message of messages) {
     await addConversationMessage(
-      conversation.id,
+      conversationId,
       message.content,
       message.role,
       message.role === "user" ? userId : undefined
     );
   }
 
-  if (messages.length === 0) return getConversation(userId, conversation.id);
+  if (messages.length === 0) return getConversation(userId, conversationId);
   const title = await generateConversationName(messages, modelId, userId);
-  if (title) await updateConversation(conversation.id, { name: title });
+  if (title) await updateConversation(conversationId, { name: title });
 
-  return getConversation(userId, conversation.id);
+  return getConversation(userId, conversationId);
 }
 
 export async function updateConversation(
@@ -193,9 +193,7 @@ export async function updateConversation(
     }
   }
 
-  return (
-    await db.update(conversations).set(data).where(eq(conversations.id, conversationId)).returning()
-  ).at(0);
+  return await db.update(conversations).set(data).where(eq(conversations.id, conversationId));
 }
 
 export async function deleteConversation(userId: string, conversationId: string) {
@@ -211,7 +209,7 @@ export async function deleteConversation(userId: string, conversationId: string)
 }
 
 export async function addConversationUser(conversationId: string, userId: string) {
-  return db.insert(conversationUsers).values({ conversationId, userId }).returning();
+  return db.insert(conversationUsers).values({ conversationId, userId });
 }
 
 export async function removeConversationUser(conversationId: string, userId: string) {
@@ -241,19 +239,18 @@ export async function addConversationMessage(
   isInternal: boolean = false,
   regenerate: boolean = false
 ) {
-  const message = (
-    await db
-      .insert(messages)
-      .values({ conversationId, userId, content, role, isInternal })
-      .returning()
-  ).at(0);
+  const result = await db
+    .insert(messages)
+    .values({ conversationId, userId, content, role, isInternal })
+    .$returningId();
+  if (!result[0]?.id) throw new Error("Failed to add message");
 
-  if (!message) throw new Error("Failed to add message");
+  const { id } = result[0];
 
   const parent = await findParent(role, messageId, conversationId, regenerate);
 
   if (parent) {
-    await updateConversationMessage(conversationId, message.id, { parentId: parent.message.id });
+    await updateConversationMessage(conversationId, id, { parentId: parent.message.id });
   }
 
   if (userId) {
@@ -269,7 +266,7 @@ export async function addConversationMessage(
     }
   }
 
-  if (!isInternal) await updateConversation(conversationId, { currentNode: message.id });
+  if (!isInternal) await updateConversation(conversationId, { currentNode: id });
 }
 
 async function findParent(
@@ -390,8 +387,7 @@ export async function updateConversationMessage(
   return db
     .update(messages)
     .set(data)
-    .where(and(eq(messages.id, messageId), eq(messages.conversationId, conversationId)))
-    .returning();
+    .where(and(eq(messages.id, messageId), eq(messages.conversationId, conversationId)));
 }
 
 export async function deleteConversationMessage(conversationId: string, messageId: string) {
@@ -531,34 +527,33 @@ export async function shareConversation(conversationId: string, userId: string) 
     return existingConversation;
   }
 
-  const sharedConversation = (
-    await db
-      .insert(sharedConversations)
-      .values({
-        userId,
-        conversationId,
-        name: conversation.name,
-        sharedAt: new Date(),
-        agentId: conversation.agentId
-      })
-      .returning()
-  ).at(0);
-
-  if (!sharedConversation) {
+  const sharedConversationResult = await db
+    .insert(sharedConversations)
+    .values({
+      userId,
+      conversationId,
+      name: conversation.name,
+      sharedAt: new Date(),
+      agentId: conversation.agentId
+    })
+    .$returningId();
+  if (!sharedConversationResult[0]?.id) {
     throw new Error("Failed to share conversation");
   }
+
+  const { id: sharedConversationId } = sharedConversationResult[0];
 
   const messages = getMessages(conversation);
 
   await db.insert(sharedMessages).values(
     messages.map((message) => ({
-      sharedConversationId: sharedConversation.id,
+      sharedConversationId,
       content: message.content,
       role: message.role
     }))
   );
 
-  return sharedConversation;
+  return sharedConversationId;
 }
 
 export async function getSharedConversation(conversationId: string) {

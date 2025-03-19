@@ -1,1 +1,0 @@
-ALTER TABLE `conversation` ADD `isPinned` integer DEFAULT 0 NOT NULL;

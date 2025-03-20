@@ -10,10 +10,10 @@
   import * as Collapsible from "$lib/components/ui/collapsible";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Toaster } from "$lib/components/ui/sonner";
-  import type { Agent, Conversation, Folder } from "$lib/drizzle/schema";
   import { generateTTS } from "$lib/services/tts-service";
   import { audioFilename, currentAudioUrl, downloadUrl, ttsProps, voices } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
+  import type { Agent, Conversation, Folder } from "$lib/types/db";
   import type { Voice } from "$lib/types/elevenlabs";
   import { createInfiniteQuery, createQuery, type CreateQueryResult } from "@tanstack/svelte-query";
   import ClerkLoaded from "clerk-sveltekit/client/ClerkLoaded.svelte";

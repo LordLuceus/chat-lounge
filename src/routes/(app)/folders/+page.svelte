@@ -5,9 +5,9 @@
   import DataList from "$lib/components/DataList.svelte";
   import FolderActions from "$lib/components/FolderActions.svelte";
   import * as Card from "$lib/components/ui/card";
-  import { type Folder } from "$lib/drizzle/schema";
   import { searchParams, type SearchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
+  import { type Folder } from "$lib/types/db";
   import { createInfiniteQuery } from "@tanstack/svelte-query";
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
   import { onDestroy } from "svelte";

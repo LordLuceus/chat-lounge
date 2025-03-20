@@ -4,8 +4,8 @@ import {
   getConversationMessage,
   getLastSummary
 } from "$lib/server/conversations-service";
-import { AgentType, AIProvider, type Agent, type AgentWithUsage, type Model } from "$lib/server/db";
 import { getUser } from "$lib/server/users-service";
+import { AgentType, AIProvider, type Agent, type AgentWithUsage, type Model } from "$lib/types/db";
 import { createAnthropic, type AnthropicProvider } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI, type GoogleGenerativeAIProvider } from "@ai-sdk/google";
 import { createMistral, type MistralProvider } from "@ai-sdk/mistral";

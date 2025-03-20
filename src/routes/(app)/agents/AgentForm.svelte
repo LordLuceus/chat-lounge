@@ -4,7 +4,7 @@
   import { Input } from "$lib/components/ui/input";
   import * as RadioGroup from "$lib/components/ui/radio-group";
   import { Textarea } from "$lib/components/ui/textarea";
-  import { AgentType } from "$lib/drizzle/schema";
+  import { AgentType } from "$lib/types/db";
   import { useQueryClient } from "@tanstack/svelte-query";
   import { superForm, type Infer, type SuperValidated } from "sveltekit-superforms";
   import { zodClient } from "sveltekit-superforms/adapters";

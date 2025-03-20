@@ -1,4 +1,5 @@
-import { relations, sql, type InferSelectModel } from "drizzle-orm";
+import type { AgentType, AIProvider, Visibility } from "$lib/types/db";
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   int,
@@ -10,25 +11,6 @@ import {
   type AnyMySqlColumn
 } from "drizzle-orm/mysql-core";
 import { v4 as uuidv4 } from "uuid";
-
-export enum AIProvider {
-  Mistral = "mistral",
-  OpenAI = "openai",
-  ElevenLabs = "elevenlabs",
-  Google = "google",
-  Anthropic = "anthropic"
-}
-
-export enum Visibility {
-  Public = "public",
-  Private = "private",
-  Hidden = "hidden"
-}
-
-export enum AgentType {
-  Default = "default",
-  Character = "character"
-}
 
 export const users = mysqlTable("user", {
   id: varchar("id", { length: 100 }).notNull().primaryKey(),
@@ -376,26 +358,3 @@ export const foldersRelations = relations(folders, ({ many, one }) => ({
   conversations: many(conversations),
   user: one(users, { fields: [folders.userId], references: [users.id] })
 }));
-
-export type Conversation = InferSelectModel<typeof conversations>;
-export type ConversationWithMessages = Conversation & {
-  messages: Array<InferSelectModel<typeof messages> & { childIds?: string[] }>;
-};
-
-export type Model = InferSelectModel<typeof models>;
-
-export type Agent = InferSelectModel<typeof agents>;
-
-export type AgentWithUsage = Agent & {
-  lastUsedAt: Date | null;
-};
-
-export type ApiKey = InferSelectModel<typeof apiKeys>;
-
-export type User = InferSelectModel<typeof users>;
-
-export type SharedConversation = InferSelectModel<typeof sharedConversations>;
-
-export type SharedMessage = InferSelectModel<typeof sharedMessages>;
-
-export type Folder = InferSelectModel<typeof folders>;

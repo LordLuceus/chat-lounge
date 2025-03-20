@@ -4,7 +4,7 @@
   import * as Dialog from "$lib/components/ui/dialog";
   import { Input } from "$lib/components/ui/input";
   import { Label } from "$lib/components/ui/label";
-  import { AIProvider } from "$lib/drizzle/schema";
+  import { AIProvider } from "$lib/types/db";
   import type { ActionData } from "./$types";
 
   export let provider: AIProvider;

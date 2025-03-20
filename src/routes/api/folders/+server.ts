@@ -1,7 +1,7 @@
 import { QueryParamsProcessor } from "$lib/query-params-processor";
-import type { Folder } from "$lib/server/db";
 import { createFolder, getFolders } from "$lib/server/folders-service";
 import type { PagedResponse } from "$lib/types/api";
+import type { Folder } from "$lib/types/db";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const GET = (async ({ locals, url }) => {

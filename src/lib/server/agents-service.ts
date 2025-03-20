@@ -1,4 +1,5 @@
-import { AgentType, Visibility, agentUsers, agents, db } from "$lib/server/db";
+import { agentUsers, agents, db } from "$lib/server/db";
+import { AgentType, Visibility } from "$lib/types/db";
 import { and, eq, or, sql } from "drizzle-orm";
 
 export interface AgentCreateOptions {

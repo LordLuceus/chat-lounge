@@ -1,4 +1,4 @@
-import type { Visibility } from "$lib/server/db";
+import type { Visibility } from "$lib/types/db";
 
 export type SortOrder = "ASC" | "DESC";
 export interface RequestParams {

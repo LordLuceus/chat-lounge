@@ -1,6 +1,6 @@
 import { getApiKey } from "$lib/server/api-keys-service";
-import { AIProvider } from "$lib/server/db";
 import { getUser } from "$lib/server/users-service";
+import { AIProvider } from "$lib/types/db";
 import { error, text, type RequestHandler } from "@sveltejs/kit";
 import { OpenAI } from "openai";
 

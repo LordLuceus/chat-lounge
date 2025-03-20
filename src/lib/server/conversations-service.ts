@@ -2,16 +2,15 @@ import { getConversationMessages as getMessages } from "$lib/helpers";
 import AIService from "$lib/server/ai-service";
 import { getApiKey } from "$lib/server/api-keys-service";
 import {
-  AIProvider,
   conversationUsers,
   conversations,
   db,
   messages,
   sharedConversations,
-  sharedMessages,
-  type ConversationWithMessages
+  sharedMessages
 } from "$lib/server/db";
 import { getModel } from "$lib/server/models-service";
+import { AIProvider, type ConversationWithMessages } from "$lib/types/db";
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { getFolder } from "./folders-service";
 
@@ -561,7 +560,8 @@ export async function getSharedConversation(conversationId: string) {
     with: {
       sharedMessages: { where: eq(sharedMessages.sharedConversationId, conversationId) }
     },
-    where: eq(sharedConversations.id, conversationId)
+    where: eq(sharedConversations.id, conversationId),
+    orderBy: [asc(sharedMessages.createdAt), desc(sharedMessages.role)]
   });
 
   return conversation;

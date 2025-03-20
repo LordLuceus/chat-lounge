@@ -9,9 +9,9 @@
   import * as Dialog from "$lib/components/ui/dialog";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Input } from "$lib/components/ui/input";
-  import type { Folder } from "$lib/drizzle/schema";
   import type { SearchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
+  import type { Folder } from "$lib/types/db";
   import { createInfiniteQuery, createMutation, useQueryClient } from "@tanstack/svelte-query";
   import { onDestroy } from "svelte";
   import { toast } from "svelte-sonner";

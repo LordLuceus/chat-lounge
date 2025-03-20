@@ -4,9 +4,9 @@
   import ConversationActions from "$lib/components/ConversationActions.svelte";
   import DataList from "$lib/components/DataList.svelte";
   import * as Card from "$lib/components/ui/card";
-  import type { Conversation } from "$lib/drizzle/schema";
   import { searchParams, type SearchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
+  import type { Conversation } from "$lib/types/db";
   import { createInfiniteQuery } from "@tanstack/svelte-query";
   import { onDestroy } from "svelte";
   import Time from "svelte-time";

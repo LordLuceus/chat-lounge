@@ -1,5 +1,5 @@
 import { createAgent } from "$lib/server/agents-service";
-import { AgentType, Visibility } from "$lib/server/db";
+import { AgentType, Visibility } from "$lib/types/db";
 import { fail } from "@sveltejs/kit";
 import { message, superValidate } from "sveltekit-superforms";
 import { zod } from "sveltekit-superforms/adapters";

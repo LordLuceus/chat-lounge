@@ -1,4 +1,5 @@
-import { db, folders, type Folder } from "$lib/server/db";
+import { db, folders } from "$lib/server/db";
+import { type Folder } from "$lib/types/db";
 import { and, eq, sql } from "drizzle-orm";
 
 export async function getFolders(
@@ -63,7 +64,7 @@ export async function createFolder({
 
   const { id } = result[0];
 
-  return id;
+  return await getFolder(userId, id);
 }
 
 export async function updateFolder(

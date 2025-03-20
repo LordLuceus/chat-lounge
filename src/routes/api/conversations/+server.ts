@@ -4,8 +4,8 @@ import {
   getConversations,
   type ConversationCreateOptions
 } from "$lib/server/conversations-service";
-import type { Conversation } from "$lib/server/db";
 import type { PagedResponse } from "$lib/types/api";
+import type { Conversation } from "$lib/types/db";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const GET = (async ({ locals, url }) => {

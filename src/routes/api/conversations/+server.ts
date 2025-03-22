@@ -5,7 +5,7 @@ import {
   type ConversationCreateOptions
 } from "$lib/server/conversations-service";
 import type { PagedResponse } from "$lib/types/api";
-import type { Conversation } from "$lib/types/db";
+import type { Conversation } from "@prisma/client";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const GET = (async ({ locals, url }) => {

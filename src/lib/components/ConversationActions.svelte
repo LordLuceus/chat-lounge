@@ -11,7 +11,7 @@
   import { Input } from "$lib/components/ui/input";
   import type { SearchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
-  import type { Folder } from "$lib/types/db";
+  import type { Folder } from "@prisma/client";
   import { createInfiniteQuery, createMutation, useQueryClient } from "@tanstack/svelte-query";
   import { onDestroy } from "svelte";
   import { toast } from "svelte-sonner";

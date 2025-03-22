@@ -1,7 +1,12 @@
 import { QueryParamsProcessor } from "$lib/query-params-processor";
-import { createAgent, getAgents, type AgentCreateOptions } from "$lib/server/agents-service";
+import {
+  createAgent,
+  getAgents,
+  type AgentCreateOptions,
+  type AgentWithUsage
+} from "$lib/server/agents-service";
 import type { PagedResponse } from "$lib/types/api";
-import { Visibility, type AgentWithUsage } from "$lib/types/db";
+import { Visibility } from "$lib/types/db";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const GET = (async ({ locals, url }) => {

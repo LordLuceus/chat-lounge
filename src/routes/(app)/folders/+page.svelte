@@ -7,7 +7,7 @@
   import * as Card from "$lib/components/ui/card";
   import { searchParams, type SearchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
-  import { type Folder } from "$lib/types/db";
+  import type { Folder } from "@prisma/client";
   import { createInfiniteQuery } from "@tanstack/svelte-query";
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
   import { onDestroy } from "svelte";

@@ -1,7 +1,7 @@
 import { QueryParamsProcessor } from "$lib/query-params-processor";
 import { getSharedConversations } from "$lib/server/conversations-service";
 import type { PagedResponse } from "$lib/types/api";
-import type { SharedConversation } from "$lib/types/db";
+import type { SharedConversation } from "@prisma/client";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const GET = (async ({ locals, url }) => {

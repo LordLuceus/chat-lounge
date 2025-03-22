@@ -1,5 +1,6 @@
 import { agentUsers, agents, db, prisma } from "$lib/server/db";
 import { AgentType, Visibility } from "$lib/types/db";
+import type { Agent } from "@prisma/client";
 import { and, eq, sql } from "drizzle-orm";
 
 export interface AgentCreateOptions {
@@ -11,6 +12,10 @@ export interface AgentCreateOptions {
   type: AgentType;
   greeting?: string | null;
 }
+
+export type AgentWithUsage = Agent & {
+  lastUsedAt: Date | null;
+};
 
 export async function getAgents(
   userId: string,

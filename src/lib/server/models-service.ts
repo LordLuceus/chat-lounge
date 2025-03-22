@@ -1,5 +1,6 @@
 import { getApiKeys } from "$lib/server/api-keys-service";
 import { prisma } from "$lib/server/db";
+import type { AIProvider } from "@prisma/client";
 
 export async function getModels() {
   const models = await prisma.model.findMany({
@@ -13,7 +14,7 @@ export async function getModels() {
   }));
 }
 
-export async function getProviderModels(providers: string[]) {
+export async function getProviderModels(providers: AIProvider[]) {
   const models = await prisma.model.findMany({
     where: {
       provider: { in: providers }

@@ -6,7 +6,7 @@
   import * as Card from "$lib/components/ui/card";
   import { searchParams, type SearchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
-  import type { Conversation } from "$lib/types/db";
+  import type { Conversation } from "@prisma/client";
   import { createInfiniteQuery } from "@tanstack/svelte-query";
   import { onDestroy } from "svelte";
   import Time from "svelte-time";

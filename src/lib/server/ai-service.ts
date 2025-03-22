@@ -1,11 +1,12 @@
 import charPrompt from "$lib/data/character_prompt.txt?raw";
+import type { AgentWithUsage } from "$lib/server/agents-service";
 import {
   addConversationMessage,
   getConversationMessage,
   getLastSummary
 } from "$lib/server/conversations-service";
 import { getUser } from "$lib/server/users-service";
-import { AgentType, AIProvider, type AgentWithUsage } from "$lib/types/db";
+import { AgentType, AIProvider } from "$lib/types/db";
 import { createAnthropic, type AnthropicProvider } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI, type GoogleGenerativeAIProvider } from "@ai-sdk/google";
 import { createMistral, type MistralProvider } from "@ai-sdk/mistral";

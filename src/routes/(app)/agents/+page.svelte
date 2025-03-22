@@ -8,7 +8,8 @@
   import * as ToggleGroup from "$lib/components/ui/toggle-group";
   import { searchParams, type SearchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
-  import { Visibility, type Agent } from "$lib/types/db";
+  import { Visibility } from "$lib/types/db";
+  import type { Agent } from "@prisma/client";
   import { createInfiniteQuery } from "@tanstack/svelte-query";
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
   import { onDestroy } from "svelte";

@@ -13,8 +13,8 @@
   import { generateTTS } from "$lib/services/tts-service";
   import { audioFilename, currentAudioUrl, downloadUrl, ttsProps, voices } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
-  import type { Agent, Conversation, Folder } from "$lib/types/db";
   import type { Voice } from "$lib/types/elevenlabs";
+  import type { Agent, Conversation, Folder } from "@prisma/client";
   import { createInfiniteQuery, createQuery, type CreateQueryResult } from "@tanstack/svelte-query";
   import ClerkLoaded from "clerk-sveltekit/client/ClerkLoaded.svelte";
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";

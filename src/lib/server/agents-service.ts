@@ -1,6 +1,6 @@
-import { agentUsers, agents, db } from "$lib/server/db";
+import { agentUsers, agents, db, prisma } from "$lib/server/db";
 import { AgentType, Visibility } from "$lib/types/db";
-import { and, eq, or, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 export interface AgentCreateOptions {
   userId: string;
@@ -58,34 +58,53 @@ export async function getAgents(
 }
 
 export async function getAgent(userId: string, agentId: string) {
-  return (
-    await db
-      .select({
-        id: agents.id,
-        userId: agents.userId,
-        name: agents.name,
-        description: agents.description,
-        instructions: agents.instructions,
-        createdAt: agents.createdAt,
-        updatedAt: agents.updatedAt,
-        lastUsedAt: agentUsers.lastUsedAt,
-        visibility: agents.visibility,
-        type: agents.type,
-        greeting: agents.greeting
-      })
-      .from(agents)
-      .innerJoin(agentUsers, eq(agents.id, agentUsers.agentId))
-      .where(
-        and(
-          eq(agents.id, agentId),
-          or(
-            eq(agentUsers.userId, userId),
-            eq(agents.visibility, Visibility.Public),
-            eq(agents.visibility, Visibility.Hidden)
-          )
-        )
-      )
-  ).at(0);
+  const agent = await prisma.agent.findFirst({
+    where: {
+      id: agentId,
+      OR: [
+        {
+          agentUsers: {
+            some: {
+              userId
+            }
+          }
+        },
+        { visibility: Visibility.Public },
+        { visibility: Visibility.Hidden }
+      ]
+    },
+    select: {
+      id: true,
+      userId: true,
+      name: true,
+      description: true,
+      instructions: true,
+      createdAt: true,
+      updatedAt: true,
+      visibility: true,
+      type: true,
+      greeting: true,
+      agentUsers: {
+        where: {
+          userId
+        },
+        select: {
+          lastUsedAt: true
+        },
+        take: 1
+      }
+    }
+  });
+
+  const result = agent
+    ? {
+        ...agent,
+        lastUsedAt: agent.agentUsers[0]?.lastUsedAt,
+        agentUsers: undefined // Remove the agentUsers array from the result
+      }
+    : null;
+
+  return result;
 }
 
 export async function createAgent({
@@ -97,15 +116,19 @@ export async function createAgent({
   type,
   greeting
 }: AgentCreateOptions) {
-  const result = await db
-    .insert(agents)
-    .values({ userId, name, description, instructions, visibility, type, greeting })
-    .$returningId();
-  if (!result[0]?.id) {
-    throw new Error("Failed to create agent");
-  }
+  const result = await prisma.agent.create({
+    data: {
+      userId,
+      name,
+      description,
+      instructions,
+      visibility,
+      type,
+      greeting
+    }
+  });
 
-  const { id: agentId } = result[0];
+  const { id: agentId } = result;
 
   await addAgentUser(agentId, userId, true);
 
@@ -124,28 +147,52 @@ export async function updateAgent(
       throw new Error("Agent not found");
     }
   }
-  return db.update(agents).set(data).where(eq(agents.id, agentId));
+  return prisma.agent.update({
+    where: { id: agentId },
+    data
+  });
 }
 
 export async function updateLastUsed(userId: string, agentId: string) {
-  const agentUser = await db.query.agentUsers.findFirst({
-    where: and(eq(agentUsers.userId, userId), eq(agentUsers.agentId, agentId))
+  const agentUser = await prisma.agentUser.findFirst({
+    where: {
+      userId,
+      agentId
+    }
   });
 
   if (!agentUser) {
     await addAgentUser(agentId, userId, false);
   }
 
-  return db
-    .update(agentUsers)
-    .set({ lastUsedAt: new Date() })
-    .where(and(eq(agentUsers.userId, userId), eq(agentUsers.agentId, agentId)));
+  return prisma.agentUser.update({
+    where: {
+      agentId_userId: {
+        agentId,
+        userId
+      }
+    },
+    data: {
+      lastUsedAt: new Date()
+    }
+  });
 }
 
 export async function deleteAgent(userId: string, agentId: string) {
-  return db.delete(agents).where(and(eq(agents.userId, userId), eq(agents.id, agentId)));
+  return prisma.agent.delete({
+    where: {
+      userId,
+      id: agentId
+    }
+  });
 }
 
 export async function addAgentUser(agentId: string, userId: string, isOwner: boolean) {
-  return db.insert(agentUsers).values({ agentId, userId, isOwner });
+  return prisma.agentUser.create({
+    data: {
+      agentId,
+      userId,
+      isOwner
+    }
+  });
 }

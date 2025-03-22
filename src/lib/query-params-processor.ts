@@ -44,6 +44,8 @@ export class QueryParamsProcessor {
     return upperCaseOrder === "DESC" ? "DESC" : this.defaultSortOrder;
   }
 
+  // --- DRIZZLE SPECIFIC METHODS ---
+
   // Can be used to generate SQL query limits and offsets
   public getPagination() {
     const offset = (this.params.page - 1) * this.params.limit;
@@ -53,6 +55,7 @@ export class QueryParamsProcessor {
     };
   }
 
+  // Generates SQL ORDER BY clause
   public getSorting(table: string) {
     if (this.params.sortBy) {
       const sanitizedSortBy = this.params.sortBy.replace(/[^a-zA-Z0-9_,]/g, "");
@@ -67,6 +70,7 @@ export class QueryParamsProcessor {
     return undefined;
   }
 
+  // Generates SQL search condition
   public getSearchQuery(columnNames: string[]) {
     if (!this.params.search) {
       return undefined;
@@ -78,6 +82,92 @@ export class QueryParamsProcessor {
       .join(" OR ");
     return `(${searchQuery})`;
   }
+
+  // --- PRISMA SPECIFIC METHODS ---
+
+  // Returns Prisma pagination parameters
+  public getPrismaPagination() {
+    const skip = (this.params.page - 1) * this.params.limit;
+    return {
+      take: this.params.limit,
+      skip
+    };
+  }
+
+  // Returns Prisma orderBy object
+  public getPrismaOrderBy() {
+    if (!this.params.sortBy) {
+      return undefined;
+    }
+
+    const sanitizedSortBy = this.params.sortBy.replace(/[^a-zA-Z0-9_,]/g, "");
+    const direction = this.params.sortOrder.toLowerCase() as "asc" | "desc";
+
+    if (sanitizedSortBy.includes(",")) {
+      // Multi-field sorting
+      const sortColumns = sanitizedSortBy.split(",");
+      const orderBy: Record<string, "asc" | "desc">[] = sortColumns.map((column) => ({
+        [column]: direction
+      }));
+      return orderBy;
+    }
+
+    // Single field sorting
+    return {
+      [sanitizedSortBy]: direction
+    };
+  }
+
+  // Returns Prisma search conditions for WHERE clause
+  public getPrismaSearchFilter(columnNames: string[]) {
+    if (!this.params.search || !this.params.search.trim()) {
+      return {};
+    }
+
+    const sanitizedSearch = this.params.search.replace(/[^a-zA-Z0-9_ ]/g, "");
+
+    // Create an OR condition for each column
+    const searchConditions = columnNames.map((column) => ({
+      [column]: {
+        contains: sanitizedSearch,
+        mode: "insensitive"
+      }
+    }));
+
+    return {
+      OR: searchConditions
+    };
+  }
+
+  // Returns a complete Prisma where object with all filters
+  public getPrismaWhereCondition(columnNames: string[], userId?: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: Record<string, any> = {};
+
+    // Add search if specified
+    if (this.params.search) {
+      Object.assign(where, this.getPrismaSearchFilter(columnNames));
+    }
+
+    // Add visibility if specified
+    if (this.params.visibility) {
+      where.visibility = this.params.visibility;
+    }
+
+    // Add folder filter if specified
+    if (this.params.folderId) {
+      where.folderId = this.params.folderId;
+    }
+
+    // Add owner filter if specified
+    if (this.params.ownerOnly && userId) {
+      where.userId = userId;
+    }
+
+    return where;
+  }
+
+  // --- COMMON METHODS ---
 
   public getVisibility() {
     return this.params.visibility || null;

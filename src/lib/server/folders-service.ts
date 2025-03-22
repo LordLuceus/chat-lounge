@@ -1,6 +1,6 @@
-import { db, folders } from "$lib/server/db";
-import { type Folder } from "$lib/types/db";
-import { and, eq, sql } from "drizzle-orm";
+import { db, folders, prisma } from "$lib/server/db";
+import { Prisma } from "@prisma/client";
+import { sql } from "drizzle-orm";
 
 export async function getFolders(
   userId: string,
@@ -38,50 +38,42 @@ export async function getFolders(
 }
 
 export async function getFolder(userId: string, folderId: string) {
-  return (
-    await db
-      .select({
-        id: folders.id,
-        userId: folders.userId,
-        name: folders.name,
-        createdAt: folders.createdAt,
-        updatedAt: folders.updatedAt
-      })
-      .from(folders)
-      .where(and(eq(folders.id, folderId), eq(folders.userId, userId)))
-  ).at(0);
+  const folder = await prisma.folder.findUniqueOrThrow({
+    where: {
+      id: folderId,
+      userId
+    }
+  });
+
+  return folder;
 }
 
-export async function createFolder({
-  userId,
-  name
-}: Omit<Folder, "id" | "createdAt" | "updatedAt">) {
-  const result = await db.insert(folders).values({ userId, name }).$returningId();
+export async function createFolder({ userId, name }: Prisma.FolderUncheckedCreateInput) {
+  const folder = await prisma.folder.create({
+    data: {
+      userId,
+      name
+    }
+  });
 
-  if (!result[0]?.id) {
-    throw new Error("Failed to create folder");
-  }
-
-  const { id } = result[0];
-
-  return await getFolder(userId, id);
+  return folder;
 }
 
 export async function updateFolder(
   folderId: string,
-  data: Partial<Omit<Folder, "id">>,
+  data: Prisma.FolderUpdateInput,
   userId?: string
 ) {
-  if (userId) {
-    const folder = await getFolder(userId, folderId);
-
-    if (!folder) {
-      throw new Error("Folder not found");
-    }
-  }
-  return db.update(folders).set(data).where(eq(folders.id, folderId));
+  return prisma.folder.update({
+    where: { id: folderId, user: { id: userId } },
+    data
+  });
 }
 
 export async function deleteFolder(userId: string, folderId: string) {
-  return db.delete(folders).where(and(eq(folders.userId, userId), eq(folders.id, folderId)));
+  const deleteFolder = await prisma.folder.delete({
+    where: { id: folderId, userId }
+  });
+
+  return deleteFolder;
 }

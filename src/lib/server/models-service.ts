@@ -1,24 +1,42 @@
 import { getApiKeys } from "$lib/server/api-keys-service";
-import { db, models } from "$lib/server/db";
-import { desc, eq, inArray } from "drizzle-orm";
+import { prisma } from "$lib/server/db";
 
 export async function getModels() {
-  return db
-    .select({ value: models.id, label: models.name, provider: models.provider })
-    .from(models)
-    .orderBy(desc(models.updatedAt));
+  const models = await prisma.model.findMany({
+    orderBy: { updatedAt: "desc" }
+  });
+
+  return models.map((model) => ({
+    label: model.name,
+    value: model.id,
+    provider: model.provider
+  }));
 }
 
 export async function getProviderModels(providers: string[]) {
-  return db
-    .select({ value: models.id, label: models.name })
-    .from(models)
-    .where(inArray(models.provider, providers))
-    .orderBy(desc(models.updatedAt));
+  const models = await prisma.model.findMany({
+    where: {
+      provider: { in: providers }
+    },
+    orderBy: { updatedAt: "desc" }
+  });
+
+  return models.map((model) => ({
+    label: model.name,
+    value: model.id
+  }));
 }
 
 export async function getModel(id: string) {
-  return db.query.models.findFirst({ where: eq(models.id, id) });
+  const model = await prisma.model.findUnique({
+    where: { id }
+  });
+
+  if (!model) {
+    throw new Error("Model not found");
+  }
+
+  return model;
 }
 
 export async function getUserModels(userId: string) {

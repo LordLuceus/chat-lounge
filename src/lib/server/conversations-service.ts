@@ -1,4 +1,4 @@
-import { getConversationMessages as getMessages } from "$lib/helpers";
+import { findLastNodeInBranch, getConversationMessages as getMessages } from "$lib/helpers";
 import AIService from "$lib/server/ai-service";
 import { getApiKey } from "$lib/server/api-keys-service";
 import {
@@ -6,12 +6,13 @@ import {
   conversations,
   db,
   messages,
-  sharedConversations,
-  sharedMessages
+  prisma,
+  sharedConversations
 } from "$lib/server/db";
 import { getModel } from "$lib/server/models-service";
-import { AIProvider, type ConversationWithMessages } from "$lib/types/db";
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { AIProvider } from "$lib/types/db";
+import type { Prisma } from "@prisma/client";
+import { eq, sql } from "drizzle-orm";
 import { getFolder } from "./folders-service";
 
 export interface ConversationCreateOptions {
@@ -33,7 +34,9 @@ interface Message {
   childIds: string[];
 }
 
-export type ConversationWithMessageMap = ConversationWithMessages & {
+export type ConversationWithMessageMap = Prisma.ConversationGetPayload<{
+  include: { messages: true };
+}> & {
   messageMap: Record<string, Message>;
 };
 
@@ -108,23 +111,12 @@ export async function getConversations(
 }
 
 export async function getConversation(userId: string, conversationId: string) {
-  const conversation: ConversationWithMessages | undefined = await db.query.conversations.findFirst(
-    {
-      with: {
-        messages: { where: eq(messages.isInternal, false) }
-      },
-      where: eq(conversations.id, conversationId),
-      orderBy: [asc(messages.createdAt)]
+  const conversation = await prisma.conversation.findUniqueOrThrow({
+    where: { id: conversationId, conversationUsers: { some: { userId } } },
+    include: {
+      messages: { where: { isInternal: false }, orderBy: { createdAt: "asc" } }
     }
-  );
-
-  if (!conversation) return undefined;
-
-  const users = await getConversationUsers(conversationId);
-
-  if (!users.find((user) => user.userId === userId)) {
-    throw new Error("User is not a member of the conversation");
-  }
+  });
 
   const messagesWithChildIds = conversation.messages.map((message) => ({
     ...message,
@@ -148,40 +140,39 @@ export async function createConversation({
   messages,
   isImporting
 }: ConversationCreateOptions) {
-  const result = await db
-    .insert(conversations)
-    .values({
+  const conversation = await prisma.conversation.create({
+    data: {
       name: name ? name : "New Chat",
       agentId,
       modelId,
-      isImporting: isImporting ? true : false
-    })
-    .$returningId();
-  if (!result[0]?.id) throw new Error("Failed to create conversation");
-
-  const { id: conversationId } = result[0];
-
-  await addConversationUser(conversationId, userId);
+      isImporting: isImporting ? true : false,
+      conversationUsers: {
+        create: {
+          userId
+        }
+      }
+    }
+  });
 
   for (const message of messages) {
     await addConversationMessage(
-      conversationId,
+      conversation.id,
       message.content,
       message.role,
       message.role === "user" ? userId : undefined
     );
   }
 
-  if (messages.length === 0) return getConversation(userId, conversationId);
+  if (messages.length === 0) return getConversation(userId, conversation.id);
   const title = await generateConversationName(messages, modelId, userId);
-  if (title) await updateConversation(conversationId, { name: title });
+  if (title) await updateConversation(conversation.id, { name: title });
 
-  return getConversation(userId, conversationId);
+  return getConversation(userId, conversation.id);
 }
 
 export async function updateConversation(
   conversationId: string,
-  data: Partial<ConversationCreateOptions>,
+  data: Prisma.ConversationUncheckedUpdateInput,
   userId?: string
 ) {
   if (userId) {
@@ -192,7 +183,27 @@ export async function updateConversation(
     }
   }
 
-  return await db.update(conversations).set(data).where(eq(conversations.id, conversationId));
+  if (data.currentNode) {
+    // Get the conversation with its message map
+    const conversation = await getConversation(userId!, conversationId);
+
+    if (conversation) {
+      // Check if the current node has children, if yes, set to the last one in the branch
+      const lastNodeId = findLastNodeInBranch(conversation, data.currentNode.toString());
+
+      // Only update if needed
+      if (lastNodeId !== data.currentNode) {
+        data.currentNode = lastNodeId;
+      }
+    }
+  }
+
+  const result = await prisma.conversation.update({
+    where: { id: conversationId },
+    data
+  });
+
+  return result;
 }
 
 export async function deleteConversation(userId: string, conversationId: string) {
@@ -202,31 +213,17 @@ export async function deleteConversation(userId: string, conversationId: string)
     throw new Error("User is not a member of the conversation");
   }
 
-  await db.delete(conversations).where(eq(conversations.id, conversationId));
+  await prisma.conversation.delete({ where: { id: conversationId } });
 
   return { id: conversationId, deleted: true };
 }
 
 export async function addConversationUser(conversationId: string, userId: string) {
-  return db.insert(conversationUsers).values({ conversationId, userId });
-}
-
-export async function removeConversationUser(conversationId: string, userId: string) {
-  return db
-    .delete(conversationUsers)
-    .where(
-      and(
-        eq(conversationUsers.conversationId, conversationId),
-        eq(conversationUsers.userId, userId)
-      )
-    );
+  return prisma.conversationUser.create({ data: { conversationId, userId } });
 }
 
 export async function getConversationUsers(conversationId: string) {
-  return db
-    .select()
-    .from(conversationUsers)
-    .where(eq(conversationUsers.conversationId, conversationId));
+  return prisma.conversationUser.findMany({ where: { conversationId } });
 }
 
 export async function addConversationMessage(
@@ -238,26 +235,30 @@ export async function addConversationMessage(
   isInternal: boolean = false,
   regenerate: boolean = false
 ) {
-  const result = await db
-    .insert(messages)
-    .values({ conversationId, userId, content, role, isInternal })
-    .$returningId();
-  if (!result[0]?.id) throw new Error("Failed to add message");
+  const message = await prisma.message.create({
+    data: {
+      conversationId,
+      userId,
+      content,
+      role,
+      isInternal
+    }
+  });
 
-  const { id } = result[0];
+  const { id } = message;
 
   const parent = await findParent(role, messageId, conversationId, regenerate);
 
   if (parent) {
-    await updateConversationMessage(conversationId, id, { parentId: parent.message.id });
+    await updateConversationMessage(conversationId, id, { parentId: parent.id });
   }
 
   if (userId) {
-    const user = await db.query.conversationUsers.findFirst({
-      where: and(
-        eq(conversationUsers.conversationId, conversationId),
-        eq(conversationUsers.userId, userId)
-      )
+    const user = await prisma.conversationUser.findFirst({
+      where: {
+        conversationId,
+        userId
+      }
     });
 
     if (!user) {
@@ -274,76 +275,66 @@ async function findParent(
   conversationId: string,
   regenerate: boolean
 ) {
+  const conversation = await prisma.conversation.findUnique({
+    where: { id: conversationId }
+  });
+
+  if (!conversation) {
+    throw new Error("Conversation not found");
+  }
+
   if (role === "user") {
     if (messageId) {
       const currentMessage = await getConversationMessage(conversationId, messageId);
 
       if (currentMessage?.parentId) {
-        const parent = (
-          await db
-            .select()
-            .from(messages)
-            .innerJoin(conversations, eq(messages.conversationId, conversations.id))
-            .where(
-              and(
-                eq(messages.id, currentMessage.parentId),
-                eq(messages.conversationId, conversationId)
-              )
-            )
-        ).at(0);
+        const parent = await prisma.message.findFirstOrThrow({
+          where: {
+            id: currentMessage.parentId,
+            conversationId
+          }
+        });
 
         return parent;
       }
       return null;
     }
 
-    const parent = (
-      await db
-        .select()
-        .from(messages)
-        .innerJoin(conversations, eq(messages.conversationId, conversations.id))
-        .where(
-          and(
-            eq(messages.conversationId, conversationId),
-            eq(messages.id, conversations.currentNode)
-          )
-        )
-    ).at(0);
+    if (!conversation.currentNode) return null;
 
+    const parent = await prisma.message.findFirst({
+      where: {
+        conversationId,
+        id: conversation.currentNode
+      }
+    });
     return parent;
   }
 
-  const currentNode = (
-    await db
-      .select()
-      .from(messages)
-      .innerJoin(conversations, eq(messages.conversationId, conversations.id))
-      .where(
-        and(eq(messages.conversationId, conversationId), eq(messages.id, conversations.currentNode))
-      )
-  ).at(0);
+  if (!conversation.currentNode) return null;
+
+  const currentNode = await prisma.message.findFirst({
+    where: {
+      conversationId,
+      id: conversation.currentNode
+    }
+  });
 
   if (currentNode) {
-    if (currentNode?.message.role === "user") {
+    if (currentNode.role === "user") {
       return currentNode;
-    } else if (currentNode.message.parentId && regenerate) {
-      const previousMessage = (
-        await db
-          .select()
-          .from(messages)
-          .innerJoin(conversations, eq(messages.conversationId, conversations.id))
-          .where(
-            and(
-              eq(messages.conversationId, conversationId),
-              eq(messages.id, currentNode.message.parentId)
-            )
-          )
-      ).at(0);
+    } else if (currentNode.parentId && regenerate) {
+      const previousMessage = await prisma.message.findFirst({
+        where: {
+          conversationId,
+          id: currentNode.parentId
+        }
+      });
 
       if (previousMessage) {
         return previousMessage;
       }
-    } else if (currentNode.message.parentId && !regenerate) {
+    } else if (currentNode.parentId && !regenerate) {
       return currentNode;
     }
   }
@@ -351,31 +342,32 @@ async function findParent(
 }
 
 export async function getConversationMessages(conversationId: string) {
-  return db
-    .select()
-    .from(messages)
-    .where(eq(messages.conversationId, conversationId))
-    .orderBy(messages.createdAt);
+  return prisma.message.findMany({
+    where: { conversationId },
+    orderBy: { createdAt: "asc" }
+  });
 }
 
 export async function getConversationMessage(conversationId: string, messageId: string) {
-  return db.query.messages.findFirst({
-    where: and(eq(messages.id, messageId), eq(messages.conversationId, conversationId))
+  return prisma.message.findFirst({
+    where: { id: messageId, conversationId }
   });
 }
 
 export async function getInternalMessages(conversationId: string) {
-  return db
-    .select()
-    .from(messages)
-    .where(and(eq(messages.conversationId, conversationId), eq(messages.isInternal, true)));
+  return prisma.message.findMany({
+    where: { conversationId, isInternal: true },
+    orderBy: { createdAt: "asc" }
+  });
 }
 
 export async function getLastSummary(conversationId: string) {
-  return db.query.messages.findFirst({
-    where: and(eq(messages.conversationId, conversationId), eq(messages.isInternal, true)),
-    orderBy: [desc(messages.createdAt)]
+  const message = await prisma.message.findFirst({
+    where: { conversationId, isInternal: true },
+    orderBy: { createdAt: "desc" }
   });
+
+  return message;
 }
 
 export async function updateConversationMessage(
@@ -383,16 +375,16 @@ export async function updateConversationMessage(
   messageId: string,
   data: { content?: string; parentId?: string }
 ) {
-  return db
-    .update(messages)
-    .set(data)
-    .where(and(eq(messages.id, messageId), eq(messages.conversationId, conversationId)));
+  return prisma.message.update({
+    where: { id: messageId, conversationId },
+    data
+  });
 }
 
 export async function deleteConversationMessage(conversationId: string, messageId: string) {
-  return db
-    .delete(messages)
-    .where(and(eq(messages.id, messageId), eq(messages.conversationId, conversationId)));
+  return prisma.message.delete({
+    where: { id: messageId, conversationId }
+  });
 }
 
 function createMessageMap(messages: Message[]): Record<string, Message> {
@@ -503,14 +495,19 @@ export async function rewindConversation(
   conversation.currentNode = messageId;
   const childMessageIds = collectChildMessageIds(conversation);
 
-  await db
-    .delete(messages)
-    .where(and(eq(messages.conversationId, conversationId), inArray(messages.id, childMessageIds)));
+  await prisma.message.deleteMany({
+    where: {
+      conversationId,
+      id: {
+        in: childMessageIds
+      }
+    }
+  });
 
-  await db
-    .update(conversations)
-    .set({ currentNode: messageId })
-    .where(eq(conversations.id, conversationId));
+  await prisma.conversation.update({
+    where: { id: conversationId },
+    data: { currentNode: messageId }
+  });
 }
 
 export async function shareConversation(conversationId: string, userId: string) {
@@ -526,50 +523,41 @@ export async function shareConversation(conversationId: string, userId: string) 
     return existingConversation;
   }
 
-  const sharedConversationResult = await db
-    .insert(sharedConversations)
-    .values({
-      userId,
+  const result = await prisma.sharedConversation.create({
+    data: {
       conversationId,
       name: conversation.name,
+      userId,
       sharedAt: new Date(),
       agentId: conversation.agentId
-    })
-    .$returningId();
-  if (!sharedConversationResult[0]?.id) {
-    throw new Error("Failed to share conversation");
-  }
-
-  const { id: sharedConversationId } = sharedConversationResult[0];
+    }
+  });
 
   const messages = getMessages(conversation);
 
-  await db.insert(sharedMessages).values(
-    messages.map((message) => ({
-      sharedConversationId,
+  await prisma.sharedMessage.createMany({
+    data: messages.map((message) => ({
+      sharedConversationId: result.id,
       content: message.content,
       role: message.role
     }))
-  );
+  });
 
-  return sharedConversationId;
+  return result.id;
 }
 
 export async function getSharedConversation(conversationId: string) {
-  const conversation = await db.query.sharedConversations.findFirst({
-    with: {
-      sharedMessages: { where: eq(sharedMessages.sharedConversationId, conversationId) }
-    },
-    where: eq(sharedConversations.id, conversationId),
-    orderBy: [asc(sharedMessages.createdAt), desc(sharedMessages.role)]
+  const conversation = await prisma.sharedConversation.findUnique({
+    where: { id: conversationId },
+    include: { sharedMessages: { orderBy: { createdAt: "asc" } } }
   });
 
   return conversation;
 }
 
 async function getSharedConversationByConversationId(conversationId: string) {
-  const conversation = await db.query.sharedConversations.findFirst({
-    where: eq(sharedConversations.conversationId, conversationId)
+  const conversation = await prisma.sharedConversation.findFirst({
+    where: { conversationId }
   });
 
   return conversation;
@@ -624,7 +612,7 @@ export async function deleteSharedConversation(conversationId: string, userId: s
     throw new Error("You do not have permission to delete this conversation");
   }
 
-  await db.delete(sharedConversations).where(eq(sharedConversations.id, conversationId));
+  await prisma.sharedConversation.delete({ where: { id: conversationId } });
 }
 
 export async function addToFolder(userId: string, conversationId: string, folderId: string) {
@@ -634,7 +622,10 @@ export async function addToFolder(userId: string, conversationId: string, folder
     throw new Error("Folder not found");
   }
 
-  return db.update(conversations).set({ folderId }).where(eq(conversations.id, conversationId));
+  return prisma.conversation.update({
+    where: { id: conversationId },
+    data: { folderId }
+  });
 }
 
 export async function removeFromFolder(userId: string, conversationId: string, folderId: string) {
@@ -644,8 +635,8 @@ export async function removeFromFolder(userId: string, conversationId: string, f
     throw new Error("Folder not found");
   }
 
-  return db
-    .update(conversations)
-    .set({ folderId: null })
-    .where(eq(conversations.id, conversationId));
+  return prisma.conversation.update({
+    where: { id: conversationId },
+    data: { folderId: null }
+  });
 }

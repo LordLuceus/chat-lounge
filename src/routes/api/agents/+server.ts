@@ -20,11 +20,20 @@ export const GET = (async ({ locals, url }) => {
 
   const { limit, offset } = paramsProcessor.getPagination();
   const search = paramsProcessor.getSearchQuery();
-  const sortBy = paramsProcessor.getSorting("agent");
+  const sorting = paramsProcessor.getSorting();
   const visibility = paramsProcessor.getVisibility();
   const ownerOnly = paramsProcessor.getOwnerOnly();
 
-  const result = await getAgents(userId, limit, offset, sortBy, search, visibility, ownerOnly);
+  const result = await getAgents(
+    userId,
+    limit,
+    offset,
+    sorting?.sortBy || "lastUsedAt",
+    sorting?.sortOrder || "DESC",
+    search,
+    visibility,
+    ownerOnly
+  );
 
   return json({
     data: result.agents,

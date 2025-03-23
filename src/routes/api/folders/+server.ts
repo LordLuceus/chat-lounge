@@ -16,9 +16,16 @@ export const GET = (async ({ locals, url }) => {
 
   const { limit, offset } = paramsProcessor.getPagination();
   const search = paramsProcessor.getSearchQuery();
-  const sortBy = paramsProcessor.getSorting("folder");
+  const sorting = paramsProcessor.getSorting();
 
-  const result = await getFolders(userId, limit, offset, sortBy, search);
+  const result = await getFolders(
+    userId,
+    limit,
+    offset,
+    sorting?.sortBy || "updatedAt",
+    sorting?.sortOrder || "DESC",
+    search
+  );
 
   return json({
     data: result.folders,

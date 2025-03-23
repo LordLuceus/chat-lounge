@@ -20,11 +20,30 @@ export async function getAgents(
   userId: string,
   limit: number = 10,
   offset: number = 0,
-  sortBy: string = "agentUser.lastUsedAt DESC",
+  sortBy: string = "lastUsedAt",
+  sortDirection: string = "DESC",
   search?: string,
   visibility: Visibility | null = null,
   ownerOnly: boolean = false
 ) {
+  let orderByClause;
+
+  switch (sortBy) {
+    case "name":
+      orderByClause = Prisma.sql`a.name ${Prisma.raw(sortDirection)}`;
+      break;
+    case "createdAt":
+      orderByClause = Prisma.sql`a.createdAt ${Prisma.raw(sortDirection)}`;
+      break;
+    case "updatedAt":
+      orderByClause = Prisma.sql`a.updatedAt ${Prisma.raw(sortDirection)}`;
+      break;
+    case "lastUsedAt":
+    default:
+      orderByClause = Prisma.sql`au.lastUsedAt ${Prisma.raw(sortDirection)}`;
+      break;
+  }
+
   const result = await prisma.$queryRaw<AgentWithUsage[]>(
     Prisma.sql`
       SELECT DISTINCT a.id, a.userId, a.name, a.description, a.instructions, 
@@ -34,7 +53,7 @@ export async function getAgents(
       WHERE ${ownerOnly ? Prisma.sql`(au.userId = ${userId} AND au.isOwner = true)` : Prisma.sql`(au.userId = ${userId} OR ${visibility} = ${Visibility.Public})`}
         AND ${visibility ? Prisma.sql`a.visibility = ${visibility}` : Prisma.sql`true`} 
         AND ${search ? Prisma.sql`(a.name LIKE ${"%" + search + "%"} OR a.description LIKE ${"%" + search + "%"})` : Prisma.sql`true`} 
-      ORDER BY ${Prisma.sql`${sortBy}`}
+      ORDER BY ${orderByClause}
       LIMIT ${limit} OFFSET ${offset}
     `
   );

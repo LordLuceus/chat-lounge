@@ -1,18 +1,10 @@
 import { findLastNodeInBranch, getConversationMessages as getMessages } from "$lib/helpers";
 import AIService from "$lib/server/ai-service";
 import { getApiKey } from "$lib/server/api-keys-service";
-import {
-  conversationUsers,
-  conversations,
-  db,
-  messages,
-  prisma,
-  sharedConversations
-} from "$lib/server/db";
+import { prisma } from "$lib/server/db";
 import { getModel } from "$lib/server/models-service";
 import { AIProvider } from "$lib/types/db";
-import type { Prisma } from "@prisma/client";
-import { eq, sql } from "drizzle-orm";
+import { Prisma, type Conversation, type SharedConversation } from "@prisma/client";
 import { getFolder } from "./folders-service";
 
 export interface ConversationCreateOptions {
@@ -49,65 +41,101 @@ export interface MessageImport {
   name: string | null;
 }
 
+export type ConversationsResponse = Conversation & {
+  lastUpdated: Date | null;
+  sharedConversationId: string | null;
+};
+
 export async function getConversations(
   userId: string,
   limit: number = 10,
   offset: number = 0,
-  sortBy: string = "lastUpdated DESC",
+  sortBy: string = "lastUpdated",
+  sortDirection: string = "DESC",
   search?: string,
   folderId?: string
 ) {
-  const result = await db
-    .select({
-      id: conversations.id,
-      name: conversations.name,
-      modelId: conversations.modelId,
-      agentId: conversations.agentId,
-      createdAt: conversations.createdAt,
-      updatedAt: conversations.updatedAt,
-      lastUpdated: sql`COALESCE(MAX(${messages.updatedAt}), ${conversations.updatedAt}) AS lastUpdated`,
-      currentNode: conversations.currentNode,
-      isImporting: conversations.isImporting,
-      sharedConversationId: sharedConversations.id,
-      isPinned: conversations.isPinned,
-      folderId: conversations.folderId
-    })
-    .from(conversations)
-    .innerJoin(conversationUsers, eq(conversations.id, conversationUsers.conversationId))
-    .leftJoin(sharedConversations, eq(conversations.id, sharedConversations.conversationId))
-    .leftJoin(messages, eq(conversations.id, messages.conversationId))
-    .where(
-      sql`(${folderId ? sql`${conversations.folderId} = ${folderId}` : sql`${conversations.folderId} IS NULL`}) AND (${conversationUsers.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
-    )
-    .groupBy(
-      conversations.id,
-      conversations.name,
-      conversations.modelId,
-      conversations.agentId,
-      conversations.createdAt,
-      conversations.currentNode,
-      conversations.isImporting,
-      sharedConversations.id,
-      conversations.isPinned,
-      conversations.folderId
-    )
-    .orderBy(sql`${conversations.isPinned} DESC, ${sql.raw(sortBy)}`)
-    .limit(limit)
-    .offset(offset);
+  let orderBySql;
+  switch (sortBy) {
+    case "name":
+      orderBySql = Prisma.sql`c.name ${Prisma.raw(sortDirection)}`;
+      break;
+    case "createdAt":
+      orderBySql = Prisma.sql`c.createdAt ${Prisma.raw(sortDirection)}`;
+      break;
+    case "updatedAt":
+      orderBySql = Prisma.sql`c.updatedAt ${Prisma.raw(sortDirection)}`;
+      break;
+    case "lastUpdated":
+    default:
+      orderBySql = Prisma.sql`lastUpdated ${Prisma.raw(sortDirection)}`;
+      break;
+  }
 
-  const total = (
-    await db
-      .select({
-        count: sql`COUNT(DISTINCT ${conversations.id})`.mapWith(Number)
-      })
-      .from(conversations)
-      .innerJoin(conversationUsers, eq(conversations.id, conversationUsers.conversationId))
-      .where(
-        sql`(${folderId ? sql`${conversations.folderId} = ${folderId}` : sql`${conversations.folderId} IS NULL`}) AND (${conversationUsers.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
-      )
-  ).at(0);
+  // Create search condition
+  const searchCondition = search
+    ? Prisma.sql`(c.name LIKE ${"%" + search + "%"})`
+    : Prisma.sql`TRUE`;
 
-  return { conversations: result, total: total?.count };
+  // Create folder condition
+  const folderCondition = folderId
+    ? Prisma.sql`c.folderId = ${folderId}`
+    : Prisma.sql`c.folderId IS NULL`;
+
+  // Main query with parameter binding
+  const result = await prisma.$queryRaw<ConversationsResponse[]>(
+    Prisma.sql`
+      SELECT 
+        c.id,
+        c.name,
+        c.modelId,
+        c.agentId,
+        c.createdAt,
+        c.updatedAt,
+        COALESCE(MAX(m.updatedAt), c.updatedAt) AS lastUpdated,
+        c.currentNode,
+        c.isImporting,
+        sc.id as sharedConversationId,
+        c.isPinned,
+        c.folderId
+      FROM conversation c
+      INNER JOIN conversationUser cu ON c.id = cu.conversationId
+      LEFT JOIN sharedConversation sc ON c.id = sc.conversationId
+      LEFT JOIN message m ON c.id = m.conversationId
+      WHERE ${folderCondition}
+        AND cu.userId = ${userId}
+        AND ${searchCondition}
+      GROUP BY
+        c.id,
+        c.name,
+        c.modelId,
+        c.agentId,
+        c.createdAt,
+        c.updatedAt,
+        c.currentNode,
+        c.isImporting,
+        sc.id,
+        c.isPinned,
+        c.folderId
+      ORDER BY c.isPinned DESC, ${orderBySql}
+      LIMIT ${limit} OFFSET ${offset}
+    `
+  );
+
+  const countResult = await prisma.$queryRaw<[{ count: bigint }]>(
+    Prisma.sql`
+      SELECT COUNT(DISTINCT c.id) as count
+      FROM conversation c
+      INNER JOIN conversationUser cu ON c.id = cu.conversationId
+      WHERE ${folderCondition}
+        AND cu.userId = ${userId}
+        AND ${searchCondition}
+    `
+  );
+
+  const total = Number(countResult[0].count);
+
+  return { conversations: result, total };
 }
 
 export async function getConversation(userId: string, conversationId: string) {
@@ -567,38 +595,54 @@ export async function getSharedConversations(
   userId: string,
   limit: number = 10,
   offset: number = 0,
-  sortBy: string = "sharedConversation.updatedAt DESC",
+  sortBy: string = "updatedAt",
+  sortDirection: string = "DESC",
   search?: string
 ) {
-  const result = await db
-    .select({
-      id: sharedConversations.id,
-      name: sharedConversations.name,
-      agentId: sharedConversations.agentId,
-      createdAt: sharedConversations.createdAt,
-      updatedAt: sharedConversations.updatedAt,
-      sharedAt: sharedConversations.sharedAt
-    })
-    .from(sharedConversations)
-    .where(
-      sql`(${sharedConversations.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
-    )
-    .orderBy(sql`${sql.raw(sortBy)}`)
-    .limit(limit)
-    .offset(offset);
+  let orderByClause;
 
-  const total = (
-    await db
-      .select({
-        count: sql`COUNT(*)`.mapWith(Number)
-      })
-      .from(sharedConversations)
-      .where(
-        sql`(${sharedConversations.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
-      )
-  ).at(0);
+  switch (sortBy) {
+    case "name":
+      orderByClause = Prisma.sql`sc.name ${Prisma.raw(sortDirection)}`;
+      break;
+    case "createdAt":
+      orderByClause = Prisma.sql`sc.createdAt ${Prisma.raw(sortDirection)}`;
+      break;
+    case "updatedAt":
+    default:
+      orderByClause = Prisma.sql`sc.updatedAt ${Prisma.raw(sortDirection)}`;
+      break;
+  }
 
-  return { conversations: result, total: total?.count };
+  const result = await prisma.$queryRaw<SharedConversation[]>(
+    Prisma.sql`
+      SELECT 
+        sc.id,
+        sc.name,
+        sc.agentId,
+        sc.createdAt,
+        sc.updatedAt,
+        sc.sharedAt
+      FROM sharedConversation sc
+      WHERE sc.userId = ${userId}
+      AND ${search ? Prisma.sql`(sc.name LIKE ${"%" + search + "%"})` : Prisma.sql`true`}
+      ORDER BY ${orderByClause}
+      LIMIT ${limit} OFFSET ${offset}
+    `
+  );
+
+  const totalResult = await prisma.$queryRaw<[{ count: bigint }]>(
+    Prisma.sql`
+      SELECT COUNT(DISTINCT sc.id) as count
+      FROM sharedConversation sc
+      WHERE sc.userId = ${userId}
+      AND ${search ? Prisma.sql`(sc.name LIKE ${"%" + search + "%"})` : Prisma.sql`true`}
+    `
+  );
+
+  const total = Number(totalResult[0].count);
+
+  return { conversations: result, total };
 }
 
 export async function deleteSharedConversation(conversationId: string, userId: string) {

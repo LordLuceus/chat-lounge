@@ -1,6 +1,5 @@
-import { db, folders, prisma } from "$lib/server/db";
-import { Prisma } from "@prisma/client";
-import { sql } from "drizzle-orm";
+import { prisma } from "$lib/server/db";
+import { Prisma, type Folder } from "@prisma/client";
 
 export async function getFolders(
   userId: string,
@@ -9,32 +8,28 @@ export async function getFolders(
   sortBy: string = "folder.updatedAt DESC",
   search?: string
 ) {
-  const result = await db
-    .selectDistinct({
-      id: folders.id,
-      userId: folders.userId,
-      name: folders.name,
-      createdAt: folders.createdAt,
-      updatedAt: folders.updatedAt
-    })
-    .from(folders)
-    .where(sql`(${folders.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`)
-    .orderBy(sql`${sql.raw(sortBy)}`)
-    .limit(limit)
-    .offset(offset);
+  const result = await prisma.$queryRaw<Folder[]>(
+    Prisma.sql`
+      SELECT DISTINCT f.id, f.userId, f.name, f.createdAt, f.updatedAt
+      FROM folder f
+      WHERE f.userId = ${userId}
+      AND ${search ? Prisma.sql`(f.name LIKE ${"%" + search + "%"})` : Prisma.sql`true`}
+      ORDER BY ${Prisma.sql`${sortBy}`}
+      LIMIT ${limit} OFFSET ${offset}
+    `
+  );
 
-  const total = (
-    await db
-      .selectDistinct({
-        count: sql`COUNT(*)`.mapWith(Number)
-      })
-      .from(folders)
-      .where(
-        sql`(${folders.userId} = ${userId}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
-      )
-  ).at(0);
+  const totalResult = await prisma.$queryRaw<[{ count: bigint }]>(
+    Prisma.sql`
+      SELECT COUNT(DISTINCT f.id) AS count FROM folder f
+      WHERE f.userId = ${userId}
+      AND ${search ? Prisma.sql`(f.name LIKE ${"%" + search + "%"})` : Prisma.sql`true`}
+    `
+  );
 
-  return { folders: result, total: total?.count };
+  const total = Number(totalResult[0].count);
+
+  return { folders: result, total };
 }
 
 export async function getFolder(userId: string, folderId: string) {

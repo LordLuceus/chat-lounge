@@ -15,7 +15,7 @@ export const GET = (async ({ locals, url }) => {
   const paramsProcessor = new QueryParamsProcessor(Object.fromEntries(url.searchParams));
 
   const { limit, offset } = paramsProcessor.getPagination();
-  const search = paramsProcessor.getSearchQuery(["name"]);
+  const search = paramsProcessor.getSearchQuery();
   const sortBy = paramsProcessor.getSorting("folder");
 
   const result = await getFolders(userId, limit, offset, sortBy, search);

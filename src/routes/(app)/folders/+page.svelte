@@ -86,7 +86,7 @@
       <Card.Content>
         <p>
           <strong>Last updated </strong>
-          <Time timestamp={item.UpdatedAt} relative />
+          <Time timestamp={item.updatedAt} relative />
         </p>
       </Card.Content>
       <Card.Footer>

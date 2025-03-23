@@ -71,16 +71,13 @@ export class QueryParamsProcessor {
   }
 
   // Generates SQL search condition
-  public getSearchQuery(columnNames: string[]) {
+  public getSearchQuery() {
     if (!this.params.search) {
       return undefined;
     }
 
     const sanitizedSearch = this.params.search.replace(/[^a-zA-Z0-9_ ]/g, "");
-    const searchQuery = columnNames
-      .map((column) => `lower(${column}) LIKE '%${sanitizedSearch}%'`)
-      .join(" OR ");
-    return `(${searchQuery})`;
+    return sanitizedSearch;
   }
 
   // --- PRISMA SPECIFIC METHODS ---

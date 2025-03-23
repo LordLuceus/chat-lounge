@@ -1,7 +1,6 @@
-import { agentUsers, agents, db, prisma } from "$lib/server/db";
+import { prisma } from "$lib/server/db";
 import { AgentType, Visibility } from "$lib/types/db";
-import type { Agent } from "@prisma/client";
-import { and, eq, sql } from "drizzle-orm";
+import { Prisma, type Agent } from "@prisma/client";
 
 export interface AgentCreateOptions {
   userId: string;
@@ -24,42 +23,35 @@ export async function getAgents(
   sortBy: string = "agentUser.lastUsedAt DESC",
   search?: string,
   visibility: Visibility | null = null,
-  ownerOnly: boolean = false,
-  usedOnly: boolean = true
+  ownerOnly: boolean = false
 ) {
-  const result = await db
-    .selectDistinct({
-      id: agents.id,
-      userId: agents.userId,
-      name: agents.name,
-      description: agents.description,
-      instructions: agents.instructions,
-      createdAt: agents.createdAt,
-      updatedAt: agents.updatedAt,
-      lastUsedAt: agentUsers.lastUsedAt
-    })
-    .from(agents)
-    .leftJoin(agentUsers, and(eq(agents.id, agentUsers.agentId), eq(agentUsers.userId, userId)))
-    .where(
-      sql`(${ownerOnly ? sql`${agentUsers.userId} = ${userId} AND ${agentUsers.isOwner}` : sql`${agentUsers.userId} IS NULL OR ${agentUsers.userId} = ${userId}`}) ${usedOnly ? sql`AND (${agentUsers.userId} IS NOT NULL)` : undefined} AND (${visibility} IS NULL OR ${agents.visibility} = ${visibility}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
-    )
-    .orderBy(sql`${sql.raw(sortBy)}`)
-    .limit(limit)
-    .offset(offset);
+  const result = await prisma.$queryRaw<AgentWithUsage[]>(
+    Prisma.sql`
+      SELECT DISTINCT a.id, a.userId, a.name, a.description, a.instructions, 
+             a.createdAt, a.updatedAt, a.visibility, a.type, a.greeting, au.lastUsedAt 
+      FROM agent a 
+      LEFT JOIN agentUser au on (a.id = au.agentId AND au.userId = ${userId})
+      WHERE ${ownerOnly ? Prisma.sql`(au.userId = ${userId} AND au.isOwner = true)` : Prisma.sql`(au.userId = ${userId} OR ${visibility} = ${Visibility.Public})`}
+        AND ${visibility ? Prisma.sql`a.visibility = ${visibility}` : Prisma.sql`true`} 
+        AND ${search ? Prisma.sql`(a.name LIKE ${"%" + search + "%"} OR a.description LIKE ${"%" + search + "%"})` : Prisma.sql`true`} 
+      ORDER BY ${Prisma.sql`${sortBy}`}
+      LIMIT ${limit} OFFSET ${offset}
+    `
+  );
 
-  const total = (
-    await db
-      .selectDistinct({
-        count: sql`COUNT(*)`.mapWith(Number)
-      })
-      .from(agents)
-      .leftJoin(agentUsers, and(eq(agents.id, agentUsers.agentId), eq(agentUsers.userId, userId)))
-      .where(
-        sql`(${ownerOnly ? sql`${agentUsers.userId} = ${userId} AND ${agentUsers.isOwner}` : sql`${agentUsers.userId} IS NULL OR ${agentUsers.userId} = ${userId}`}) ${usedOnly ? sql`AND (${agentUsers.userId} IS NOT NULL)` : undefined} AND (${visibility} IS NULL OR ${agents.visibility} = ${visibility}) AND ${search ? sql`${sql.raw(search)}` : sql`TRUE`}`
-      )
-  ).at(0);
+  const totalResult = await prisma.$queryRaw<[{ count: bigint }]>(
+    Prisma.sql`
+      SELECT COUNT(DISTINCT a.id) AS count FROM agent a 
+      LEFT JOIN agentUser au on (a.id = au.agentId AND au.userId = ${userId})
+      WHERE ${ownerOnly ? Prisma.sql`(au.userId = ${userId} AND au.isOwner = true)` : Prisma.sql`(au.userId = ${userId} OR ${visibility} = ${Visibility.Public})`}
+        AND ${visibility ? Prisma.sql`a.visibility = ${visibility}` : Prisma.sql`true`} 
+        AND ${search ? Prisma.sql`(a.name LIKE ${"%" + search + "%"} OR a.description LIKE ${"%" + search + "%"})` : Prisma.sql`true`} 
+    `
+  );
 
-  return { agents: result, total: total?.count };
+  const total = Number(totalResult[0].count);
+
+  return { agents: result, total };
 }
 
 export async function getAgent(userId: string, agentId: string) {

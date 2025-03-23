@@ -6,7 +6,6 @@ import {
   type AgentWithUsage
 } from "$lib/server/agents-service";
 import type { PagedResponse } from "$lib/types/api";
-import { Visibility } from "$lib/types/db";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const GET = (async ({ locals, url }) => {
@@ -20,21 +19,12 @@ export const GET = (async ({ locals, url }) => {
   const paramsProcessor = new QueryParamsProcessor(Object.fromEntries(url.searchParams));
 
   const { limit, offset } = paramsProcessor.getPagination();
-  const search = paramsProcessor.getSearchQuery(["name"]);
+  const search = paramsProcessor.getSearchQuery();
   const sortBy = paramsProcessor.getSorting("agent");
   const visibility = paramsProcessor.getVisibility();
   const ownerOnly = paramsProcessor.getOwnerOnly();
 
-  const result = await getAgents(
-    userId,
-    limit,
-    offset,
-    sortBy,
-    search,
-    visibility,
-    ownerOnly,
-    visibility !== Visibility.Public
-  );
+  const result = await getAgents(userId, limit, offset, sortBy, search, visibility, ownerOnly);
 
   return json({
     data: result.agents,

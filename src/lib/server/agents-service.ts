@@ -52,7 +52,7 @@ export async function getAgents(
       LEFT JOIN agentUser au on (a.id = au.agentId AND au.userId = ${userId})
       WHERE ${ownerOnly ? Prisma.sql`(au.userId = ${userId} AND au.isOwner = true)` : Prisma.sql`(au.userId = ${userId} OR ${visibility} = ${Visibility.Public})`}
         AND ${visibility ? Prisma.sql`a.visibility = ${visibility}` : Prisma.sql`true`} 
-        AND ${search ? Prisma.sql`(a.name LIKE ${"%" + search + "%"} OR a.description LIKE ${"%" + search + "%"})` : Prisma.sql`true`} 
+        AND ${search ? Prisma.sql`(MATCH(a.name, a.description) AGAINST(${"*" + search + "*"} IN BOOLEAN MODE))` : Prisma.sql`true`} 
       ORDER BY ${orderByClause}
       LIMIT ${limit} OFFSET ${offset}
     `
@@ -64,7 +64,7 @@ export async function getAgents(
       LEFT JOIN agentUser au on (a.id = au.agentId AND au.userId = ${userId})
       WHERE ${ownerOnly ? Prisma.sql`(au.userId = ${userId} AND au.isOwner = true)` : Prisma.sql`(au.userId = ${userId} OR ${visibility} = ${Visibility.Public})`}
         AND ${visibility ? Prisma.sql`a.visibility = ${visibility}` : Prisma.sql`true`} 
-        AND ${search ? Prisma.sql`(a.name LIKE ${"%" + search + "%"} OR a.description LIKE ${"%" + search + "%"})` : Prisma.sql`true`} 
+        AND ${search ? Prisma.sql`(MATCH(a.name, a.description) AGAINST(${"*" + search + "*"} IN BOOLEAN MODE))` : Prisma.sql`true`} 
     `
   );
 

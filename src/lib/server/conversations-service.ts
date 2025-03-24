@@ -74,7 +74,7 @@ export async function getConversations(
 
   // Create search condition
   const searchCondition = search
-    ? Prisma.sql`(c.name LIKE ${"%" + search + "%"})`
+    ? Prisma.sql`(MATCH(c.name) AGAINST(${"*" + search + "*"} IN BOOLEAN MODE) OR MATCH(m.content) AGAINST(${"*" + search + "*"} IN BOOLEAN MODE))`
     : Prisma.sql`TRUE`;
 
   // Create folder condition
@@ -82,10 +82,9 @@ export async function getConversations(
     ? Prisma.sql`c.folderId = ${folderId}`
     : Prisma.sql`c.folderId IS NULL`;
 
-  // Main query with parameter binding
   const result = await prisma.$queryRaw<ConversationsResponse[]>(
     Prisma.sql`
-      SELECT 
+      SELECT DISTINCT
         c.id,
         c.name,
         c.modelId,
@@ -127,6 +126,7 @@ export async function getConversations(
       SELECT COUNT(DISTINCT c.id) as count
       FROM conversation c
       INNER JOIN conversationUser cu ON c.id = cu.conversationId
+      LEFT JOIN message m ON c.id = m.conversationId
       WHERE ${folderCondition}
         AND cu.userId = ${userId}
         AND ${searchCondition}

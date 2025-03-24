@@ -25,6 +25,8 @@ model Agent {
 
   @@index([userId], map: "agent_userId_user_id_fk")
   @@fulltext([name])
+  @@fulltext([description])
+  @@fulltext([name, description])
   @@map("agent")
 }
 
@@ -79,6 +81,7 @@ model Conversation {
   @@index([currentNode], map: "conversation_currentNode_message_id_fk")
   @@index([folderId], map: "conversation_folderId_folder_id_fk")
   @@index([modelId], map: "conversation_modelId_model_id_fk")
+  @@fulltext([name])
   @@map("conversation")
 }
 
@@ -128,6 +131,7 @@ model Message {
   @@index([conversationId], map: "message_conversationId_conversation_id_fk")
   @@index([parentId], map: "message_parentId_message_id_fk")
   @@index([userId], map: "message_userId_user_id_fk")
+  @@fulltext([content])
   @@map("message")
 }
 

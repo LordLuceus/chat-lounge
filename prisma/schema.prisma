@@ -116,7 +116,7 @@ model Message {
   id             String         @id @default(uuid()) @db.VarChar(36)
   conversationId String         @db.VarChar(36)
   userId         String?        @db.VarChar(100)
-  content        String         @db.Text
+  content        String         @db.MediumText
   role           MessageRole
   parentId       String?        @db.VarChar(36)
   isInternal     Boolean        @default(false)
@@ -171,7 +171,7 @@ model SharedConversation {
 model SharedMessage {
   id                   String             @id @default(uuid()) @db.VarChar(36)
   sharedConversationId String             @db.VarChar(36)
-  content              String             @db.Text
+  content              String             @db.MediumText
   role                 String             @db.VarChar(20)
   parentId             String?            @db.VarChar(36)
   createdAt            DateTime           @default(now()) @db.Timestamp(3)

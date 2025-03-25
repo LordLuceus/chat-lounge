@@ -1,5 +1,5 @@
-import { AIProvider } from "$lib/drizzle/schema";
 import { getApiKeys } from "$lib/server/api-keys-service";
+import { AIProvider } from "$lib/types/db";
 import type { LayoutServerLoad } from "./$types";
 
 export const load = (async ({ locals }) => {

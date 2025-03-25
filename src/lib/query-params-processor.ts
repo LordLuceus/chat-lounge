@@ -1,4 +1,4 @@
-import type { Visibility } from "$lib/drizzle/schema";
+import type { Visibility } from "$lib/types/db";
 
 export type SortOrder = "ASC" | "DESC";
 export interface RequestParams {
@@ -53,30 +53,23 @@ export class QueryParamsProcessor {
     };
   }
 
-  public getSorting(table: string) {
+  public getSorting() {
     if (this.params.sortBy) {
       const sanitizedSortBy = this.params.sortBy.replace(/[^a-zA-Z0-9_,]/g, "");
-      if (sanitizedSortBy.includes(",")) {
-        const sortColumns = sanitizedSortBy.split(",");
-        return sortColumns
-          .map((column) => `${table}.${column} ${this.params.sortOrder}`)
-          .join(", ");
-      }
-      return `${table}.${sanitizedSortBy} ${this.params.sortOrder}`;
+
+      return { sortBy: sanitizedSortBy, sortOrder: this.params.sortOrder };
     }
     return undefined;
   }
 
-  public getSearchQuery(columnNames: string[]) {
+  // Generates SQL search condition
+  public getSearchQuery() {
     if (!this.params.search) {
       return undefined;
     }
 
     const sanitizedSearch = this.params.search.replace(/[^a-zA-Z0-9_ ]/g, "");
-    const searchQuery = columnNames
-      .map((column) => `lower(${column}) LIKE '%${sanitizedSearch}%'`)
-      .join(" OR ");
-    return `(${searchQuery})`;
+    return sanitizedSearch;
   }
 
   public getVisibility() {

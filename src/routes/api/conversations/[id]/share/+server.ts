@@ -14,9 +14,9 @@ export const POST = (async ({ locals, params }) => {
     return error(400, "No conversation ID provided");
   }
 
-  const sharedConversation = await shareConversation(id, userId);
+  const sharedConversationId = await shareConversation(id, userId);
 
-  return json(sharedConversation);
+  return json({ id: sharedConversationId });
 }) satisfies RequestHandler;
 
 export const GET = (async ({ params }) => {

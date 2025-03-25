@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AIProvider } from "$lib/drizzle/schema";
+  import { AIProvider } from "$lib/types/db";
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
   import type { ActionData, PageData } from "./$types";
   import ApiKeyForm from "./ApiKeyForm.svelte";

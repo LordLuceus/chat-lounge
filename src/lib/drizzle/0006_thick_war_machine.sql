@@ -1,1 +1,0 @@
-ALTER TABLE `folder` ADD `userId` text NOT NULL REFERENCES user(id);

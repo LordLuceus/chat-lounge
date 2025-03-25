@@ -1,7 +1,7 @@
-import type { SharedConversation } from "$lib/drizzle/schema";
 import { QueryParamsProcessor } from "$lib/query-params-processor";
 import { getSharedConversations } from "$lib/server/conversations-service";
 import type { PagedResponse } from "$lib/types/api";
+import type { SharedConversation } from "@prisma/client";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const GET = (async ({ locals, url }) => {
@@ -16,10 +16,17 @@ export const GET = (async ({ locals, url }) => {
   const paramsProcessor = new QueryParamsProcessor(Object.fromEntries(url.searchParams));
 
   const { limit, offset } = paramsProcessor.getPagination();
-  const search = paramsProcessor.getSearchQuery(["name"]);
-  const sortBy = paramsProcessor.getSorting("sharedConversation");
+  const search = paramsProcessor.getSearchQuery();
+  const sorting = paramsProcessor.getSorting();
 
-  const result = await getSharedConversations(userId, limit, offset, sortBy, search);
+  const result = await getSharedConversations(
+    userId,
+    limit,
+    offset,
+    sorting?.sortBy || "updatedAt",
+    sorting?.sortOrder || "DESC",
+    search
+  );
 
   return json({
     data: result.conversations,

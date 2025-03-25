@@ -1,0 +1,228 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Agent {
+  id                  String               @id @default(uuid()) @db.VarChar(36)
+  userId              String               @db.VarChar(100)
+  name                String               @db.VarChar(255)
+  description         String?              @db.VarChar(255)
+  instructions        String               @db.Text
+  visibility          AgentVisibility      @default(private)
+  type                AgentType            @default(default)
+  greeting            String?              @db.Text
+  createdAt           DateTime             @default(now()) @db.Timestamp(3)
+  updatedAt           DateTime             @default(now()) @updatedAt @db.Timestamp(3)
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "agent_userId_user_id_fk")
+  agentUsers          AgentUser[]
+  conversations       Conversation[]
+  sharedConversations SharedConversation[]
+
+  @@index([userId], map: "agent_userId_user_id_fk")
+  @@fulltext([name])
+  @@fulltext([description])
+  @@fulltext([name, description])
+  @@map("agent")
+}
+
+model AgentUser {
+  agentId    String    @db.VarChar(36)
+  userId     String    @db.VarChar(100)
+  lastUsedAt DateTime? @db.Timestamp(3)
+  isOwner    Boolean   @default(false)
+  createdAt  DateTime  @default(now()) @db.Timestamp(3)
+  updatedAt  DateTime  @default(now()) @updatedAt @db.Timestamp(3)
+  agent      Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "agentUser_agentId_agent_id_fk")
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "agentUser_userId_user_id_fk")
+
+  @@id([agentId, userId])
+  @@index([userId], map: "agentUser_userId_user_id_fk")
+  @@map("agentUser")
+}
+
+model ApiKey {
+  id        String     @id @default(uuid()) @db.VarChar(36)
+  userId    String     @db.VarChar(100)
+  provider  AIProvider
+  key       String     @unique(map: "apiKey_key_unique") @db.VarChar(255)
+  createdAt DateTime   @default(now()) @db.Timestamp(3)
+  updatedAt DateTime   @default(now()) @updatedAt @db.Timestamp(3)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "apiKey_userId_user_id_fk")
+
+  @@index([userId], map: "apiKey_userId_user_id_fk")
+  @@map("apiKey")
+}
+
+model Conversation {
+  id                  String               @id @default(uuid()) @db.VarChar(36)
+  agentId             String?              @db.VarChar(36)
+  modelId             String?              @db.VarChar(100)
+  name                String               @db.VarChar(255)
+  currentNode         String?              @db.VarChar(36)
+  isImporting         Boolean              @default(false)
+  isPinned            Boolean              @default(false)
+  folderId            String?              @db.VarChar(36)
+  createdAt           DateTime             @default(now()) @db.Timestamp(3)
+  updatedAt           DateTime             @default(now()) @updatedAt @db.Timestamp(3)
+  agent               Agent?               @relation(fields: [agentId], references: [id], onUpdate: NoAction, map: "conversation_agentId_agent_id_fk")
+  folder              Folder?              @relation(fields: [folderId], references: [id], onUpdate: NoAction, map: "conversation_folderId_folder_id_fk")
+  model               Model?               @relation(fields: [modelId], references: [id], map: "conversation_modelId_model_id_fk")
+  currentMessage      Message?             @relation(fields: [currentNode], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "conversation_currentNode_message_id_fk")
+  conversationUsers   ConversationUser[]
+  messages            Message[]            @relation("message_conversationIdToconversation")
+  sharedConversations SharedConversation[]
+
+  @@index([agentId], map: "conversation_agentId_agent_id_fk")
+  @@index([currentNode], map: "conversation_currentNode_message_id_fk")
+  @@index([folderId], map: "conversation_folderId_folder_id_fk")
+  @@index([modelId], map: "conversation_modelId_model_id_fk")
+  @@fulltext([name])
+  @@map("conversation")
+}
+
+model ConversationUser {
+  conversationId String       @db.VarChar(36)
+  userId         String       @db.VarChar(100)
+  createdAt      DateTime     @default(now()) @db.Timestamp(3)
+  updatedAt      DateTime     @default(now()) @updatedAt @db.Timestamp(3)
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "conversationUser_conversationId_conversation_id_fk")
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "conversationUser_userId_user_id_fk")
+
+  @@id([conversationId, userId])
+  @@index([userId], map: "conversationUser_userId_user_id_fk")
+  @@map("conversationUser")
+}
+
+model Folder {
+  id            String         @id @default(uuid()) @db.VarChar(36)
+  name          String         @db.VarChar(255)
+  userId        String         @db.VarChar(100)
+  createdAt     DateTime       @default(now()) @db.Timestamp(3)
+  updatedAt     DateTime       @default(now()) @updatedAt @db.Timestamp(3)
+  conversations Conversation[]
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "folder_userId_user_id_fk")
+
+  @@index([userId], map: "folder_userId_user_id_fk")
+  @@fulltext([name])
+  @@map("folder")
+}
+
+model Message {
+  id             String         @id @default(uuid()) @db.VarChar(36)
+  conversationId String         @db.VarChar(36)
+  userId         String?        @db.VarChar(100)
+  content        String         @db.MediumText
+  role           MessageRole
+  parentId       String?        @db.VarChar(36)
+  isInternal     Boolean        @default(false)
+  createdAt      DateTime       @default(now()) @db.Timestamp(3)
+  updatedAt      DateTime       @default(now()) @updatedAt @db.Timestamp(3)
+  conversation   Conversation   @relation("message_conversationIdToconversation", fields: [conversationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "message_conversationId_conversation_id_fk")
+  parent         Message?       @relation("messageTomessage", fields: [parentId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "message_parentId_message_id_fk")
+  children       Message[]      @relation("messageTomessage")
+  user           User?          @relation(fields: [userId], references: [id], onUpdate: NoAction, map: "message_userId_user_id_fk")
+  Conversation   Conversation[]
+
+  @@index([conversationId], map: "message_conversationId_conversation_id_fk")
+  @@index([parentId], map: "message_parentId_message_id_fk")
+  @@index([userId], map: "message_userId_user_id_fk")
+  @@fulltext([content])
+  @@map("message")
+}
+
+model Model {
+  id            String         @id @db.VarChar(100)
+  name          String         @db.VarChar(255)
+  provider      AIProvider
+  tokenLimit    Int
+  createdAt     DateTime       @default(now()) @db.Timestamp(3)
+  updatedAt     DateTime       @default(now()) @updatedAt @db.Timestamp(3)
+  conversations Conversation[]
+
+  @@map("model")
+}
+
+model SharedConversation {
+  id             String          @id @default(uuid()) @db.VarChar(36)
+  userId         String          @db.VarChar(100)
+  conversationId String          @db.VarChar(36)
+  name           String          @db.VarChar(255)
+  agentId        String?         @db.VarChar(36)
+  sharedAt       DateTime        @default(now()) @db.Timestamp(3)
+  createdAt      DateTime        @default(now()) @db.Timestamp(3)
+  updatedAt      DateTime        @default(now()) @updatedAt @db.Timestamp(3)
+  agent          Agent?          @relation(fields: [agentId], references: [id], onUpdate: NoAction, map: "sharedConversation_agentId_agent_id_fk")
+  conversation   Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "sharedConversation_conversationId_conversation_id_fk")
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "sharedConversation_userId_user_id_fk")
+  sharedMessages SharedMessage[]
+
+  @@index([agentId], map: "sharedConversation_agentId_agent_id_fk")
+  @@index([conversationId], map: "sharedConversation_conversationId_conversation_id_fk")
+  @@index([userId], map: "sharedConversation_userId_user_id_fk")
+  @@fulltext([name])
+  @@map("sharedConversation")
+}
+
+model SharedMessage {
+  id                   String             @id @default(uuid()) @db.VarChar(36)
+  sharedConversationId String             @db.VarChar(36)
+  content              String             @db.MediumText
+  role                 String             @db.VarChar(20)
+  parentId             String?            @db.VarChar(36)
+  createdAt            DateTime           @default(now()) @db.Timestamp(3)
+  updatedAt            DateTime           @default(now()) @updatedAt @db.Timestamp(3)
+  parent               SharedMessage?     @relation("sharedMessageTosharedMessage", fields: [parentId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "sharedMessage_parentId_sharedMessage_id_fk")
+  children             SharedMessage[]    @relation("sharedMessageTosharedMessage")
+  sharedConversation   SharedConversation @relation(fields: [sharedConversationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "sharedMessage_sharedConversationId_sharedConversation_id_fk")
+
+  @@index([parentId], map: "sharedMessage_parentId_sharedMessage_id_fk")
+  @@index([sharedConversationId], map: "sharedMessage_sharedConversationId_sharedConversation_id_fk")
+  @@map("sharedMessage")
+}
+
+model User {
+  id                  String               @id @db.VarChar(100)
+  username            String               @unique(map: "user_username_unique") @db.VarChar(50)
+  email               String?              @db.VarChar(100)
+  image               String?              @db.Text
+  createdAt           DateTime             @default(now()) @db.Timestamp(3)
+  updatedAt           DateTime             @default(now()) @updatedAt @db.Timestamp(3)
+  agents              Agent[]
+  agentUsers          AgentUser[]
+  apiKeys             ApiKey[]
+  conversationUsers   ConversationUser[]
+  folders             Folder[]
+  messages            Message[]
+  sharedConversations SharedConversation[]
+
+  @@map("user")
+}
+
+enum MessageRole {
+  user
+  assistant
+}
+
+enum AgentVisibility {
+  public
+  private
+  hidden
+}
+
+enum AgentType {
+  default
+  character
+}
+
+enum AIProvider {
+  mistral
+  openai
+  elevenlabs
+  google
+  anthropic
+}

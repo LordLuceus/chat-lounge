@@ -1,6 +1,4 @@
-import { browser } from "$app/environment";
 import type { ConversationWithMessageMap } from "$lib/server/conversations-service";
-import { useQueryClient } from "@tanstack/svelte-query";
 
 export interface Message {
   id: string;
@@ -42,18 +40,6 @@ export function getConversationMessages(conversation: ConversationWithMessageMap
     }
   }
 
-  if (node && node.id !== conversation.currentNode) {
-    // Update the current node to the last child node
-    if (browser) {
-      fetch(`/api/conversations/${conversation.id}`, {
-        method: "PUT",
-        body: JSON.stringify({ currentNode: node.id })
-      });
-      const client = useQueryClient();
-      client.invalidateQueries({ queryKey: ["conversations"] });
-    }
-  }
-
   // Helper function to format a node into Message type
   function formatMessage(node: Message): Message {
     return {
@@ -76,4 +62,25 @@ export function getMessageSiblings(messages: Message[] | undefined, messageId: s
   }
   const filter = messages.filter((m) => m.parentId === message.parentId);
   return filter;
+}
+
+export function findLastNodeInBranch(
+  conversation: ConversationWithMessageMap,
+  startNodeId: string
+): string {
+  let currentNodeId = startNodeId;
+  let node = conversation.messageMap[currentNodeId];
+
+  // Traverse downwards following the first child each time
+  while (node && node.childIds && node.childIds.length > 0) {
+    const firstChildId = node.childIds[0];
+    node = conversation.messageMap[firstChildId];
+    if (node) {
+      currentNodeId = node.id;
+    } else {
+      break;
+    }
+  }
+
+  return currentNodeId;
 }

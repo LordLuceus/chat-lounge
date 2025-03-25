@@ -1,6 +1,6 @@
-import { AIProvider } from "$lib/drizzle/schema";
 import { saveApiKey } from "$lib/server/api-keys-service";
 import { getUser } from "$lib/server/users-service";
+import { AIProvider } from "$lib/types/db";
 import { fail } from "@sveltejs/kit";
 import type { Actions } from "./$types";
 

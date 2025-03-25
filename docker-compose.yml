@@ -1,6 +1,7 @@
 services:
   app:
     image: ghcr.io/lordluceus/chat-lounge:master
+    # build: .
     ports:
       - 3000:3000
     env_file:
@@ -8,9 +9,10 @@ services:
     container_name: chat-lounge
     restart: unless-stopped
     depends_on:
-      - valkey
-    volumes:
-      - db-data:/app/data
+      db:
+        condition: service_healthy
+      valkey:
+        condition: service_started
 
   valkey:
     image: valkey/valkey:latest # Use the official Valkey image
@@ -19,6 +21,23 @@ services:
     command: [ "valkey-server", "/usr/local/etc/redis.conf" ]
     volumes:
       - ./redis.conf:/usr/local/etc/redis.conf
+
+  db:
+    image: mariadb:11.4
+    container_name: chat-lounge-db
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - 3306:3306
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 volumes:
   db-data:

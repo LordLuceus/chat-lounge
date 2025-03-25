@@ -1,6 +1,10 @@
-import { Visibility, type AgentWithUsage } from "$lib/drizzle/schema";
 import { QueryParamsProcessor } from "$lib/query-params-processor";
-import { createAgent, getAgents, type AgentCreateOptions } from "$lib/server/agents-service";
+import {
+  createAgent,
+  getAgents,
+  type AgentCreateOptions,
+  type AgentWithUsage
+} from "$lib/server/agents-service";
 import type { PagedResponse } from "$lib/types/api";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
@@ -15,8 +19,8 @@ export const GET = (async ({ locals, url }) => {
   const paramsProcessor = new QueryParamsProcessor(Object.fromEntries(url.searchParams));
 
   const { limit, offset } = paramsProcessor.getPagination();
-  const search = paramsProcessor.getSearchQuery(["name"]);
-  const sortBy = paramsProcessor.getSorting("agent");
+  const search = paramsProcessor.getSearchQuery();
+  const sorting = paramsProcessor.getSorting();
   const visibility = paramsProcessor.getVisibility();
   const ownerOnly = paramsProcessor.getOwnerOnly();
 
@@ -24,11 +28,11 @@ export const GET = (async ({ locals, url }) => {
     userId,
     limit,
     offset,
-    sortBy,
+    sorting?.sortBy || "lastUsedAt",
+    sorting?.sortOrder || "DESC",
     search,
     visibility,
-    ownerOnly,
-    visibility !== Visibility.Public
+    ownerOnly
   );
 
   return json({

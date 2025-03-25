@@ -4,9 +4,9 @@
   import DataList from "$lib/components/DataList.svelte";
   import SharedConversationActions from "$lib/components/SharedConversationActions.svelte";
   import * as Card from "$lib/components/ui/card";
-  import type { SharedConversation } from "$lib/drizzle/schema";
   import { searchParams, type SearchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
+  import type { SharedConversation } from "@prisma/client";
   import { createInfiniteQuery } from "@tanstack/svelte-query";
   import { onDestroy } from "svelte";
   import Time from "svelte-time";

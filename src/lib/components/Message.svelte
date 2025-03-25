@@ -44,7 +44,9 @@
           body: JSON.stringify({ currentNode: value })
         })
       ).json(),
-    onSuccess: () => client.invalidateQueries({ queryKey: ["conversations"] })
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ["conversations"] });
+    }
   });
 
   function setCurrentNode(id?: string) {

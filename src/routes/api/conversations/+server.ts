@@ -1,4 +1,3 @@
-import type { Conversation } from "$lib/drizzle/schema";
 import { QueryParamsProcessor } from "$lib/query-params-processor";
 import {
   createConversation,
@@ -6,6 +5,7 @@ import {
   type ConversationCreateOptions
 } from "$lib/server/conversations-service";
 import type { PagedResponse } from "$lib/types/api";
+import type { Conversation } from "@prisma/client";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const GET = (async ({ locals, url }) => {
@@ -19,11 +19,19 @@ export const GET = (async ({ locals, url }) => {
   const paramsProcessor = new QueryParamsProcessor(Object.fromEntries(url.searchParams));
 
   const { limit, offset } = paramsProcessor.getPagination();
-  const search = paramsProcessor.getSearchQuery(["conversation.name"]);
-  const sortBy = paramsProcessor.getSorting("conversation");
+  const search = paramsProcessor.getSearchQuery();
+  const sorting = paramsProcessor.getSorting();
   const folderId = paramsProcessor.getFolderId();
 
-  const result = await getConversations(userId, limit, offset, sortBy, search, folderId);
+  const result = await getConversations(
+    userId,
+    limit,
+    offset,
+    sorting?.sortBy || "lastUpdated",
+    sorting?.sortOrder || "DESC",
+    search,
+    folderId
+  );
 
   return json({
     data: result.conversations,

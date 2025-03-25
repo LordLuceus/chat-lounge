@@ -1,47 +1,61 @@
-import { db } from "$lib/drizzle/db";
-import { users } from "$lib/drizzle/schema";
+import { prisma } from "$lib/server/db";
 import type { UserJSON } from "@clerk/backend";
-import { desc, eq } from "drizzle-orm";
 
 export async function getUsers() {
-  return db.select().from(users).orderBy(desc(users.updatedAt));
+  return prisma.user.findMany({
+    orderBy: {
+      updatedAt: "desc"
+    }
+  });
 }
 
 export async function getUser(userId: string) {
-  return db.query.users.findFirst({
-    where: eq(users.id, userId)
+  return prisma.user.findUnique({
+    where: {
+      id: userId
+    }
   });
 }
 
 export async function getUserByName(username: string) {
-  return db.query.users.findFirst({
-    where: eq(users.username, username)
+  return prisma.user.findUnique({
+    where: {
+      username
+    }
   });
 }
 
 export async function createUser(user: UserJSON) {
-  return db.insert(users).values({
-    id: user.id,
-    username: user.username!,
-    email: user.email_addresses.find((email) => email.id === user.primary_email_address_id)
-      ?.email_address,
-    image: user.image_url
-  });
-}
-
-export async function updateUser(user: UserJSON) {
-  return db
-    .update(users)
-    .set({
+  return prisma.user.create({
+    data: {
+      id: user.id,
       username: user.username!,
       email: user.email_addresses.find((email) => email.id === user.primary_email_address_id)
         ?.email_address,
       image: user.image_url
-    })
-    .where(eq(users.id, user.id));
+    }
+  });
+}
+
+export async function updateUser(user: UserJSON) {
+  return prisma.user.update({
+    where: {
+      id: user.id
+    },
+    data: {
+      username: user.username!,
+      email: user.email_addresses.find((email) => email.id === user.primary_email_address_id)
+        ?.email_address,
+      image: user.image_url
+    }
+  });
 }
 
 export async function deleteUser(userId: string | undefined) {
   if (!userId) return;
-  return db.delete(users).where(eq(users.id, userId));
+  return prisma.user.delete({
+    where: {
+      id: userId
+    }
+  });
 }

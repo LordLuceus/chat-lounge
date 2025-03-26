@@ -24,6 +24,8 @@ interface Message {
   role: "user" | "assistant";
   parentId: string | null;
   childIds: string[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export type ConversationWithMessageMap = Prisma.ConversationGetPayload<{
@@ -567,7 +569,9 @@ export async function shareConversation(conversationId: string, userId: string) 
     data: messages.map((message) => ({
       sharedConversationId: result.id,
       content: message.content,
-      role: message.role
+      role: message.role,
+      createdAt: message.createdAt,
+      updatedAt: message.updatedAt
     }))
   });
 

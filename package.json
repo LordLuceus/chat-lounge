@@ -48,7 +48,7 @@
   "type": "module",
   "dependencies": {
     "@ai-sdk/anthropic": "^1.1.6",
-    "@ai-sdk/google": "^1.1.10",
+    "@ai-sdk/google": "^1.2.5",
     "@ai-sdk/mistral": "^1.1.6",
     "@ai-sdk/openai": "^1.1.9",
     "@ai-sdk/svelte": "1.1.19",

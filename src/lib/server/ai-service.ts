@@ -1,4 +1,5 @@
 import charPrompt from "$lib/data/character_prompt.txt?raw";
+import { errorHandler } from "$lib/helpers/ai-error-handler";
 import type { AgentWithUsage } from "$lib/server/agents-service";
 import {
   addConversationMessage,
@@ -105,7 +106,7 @@ class AIService {
       onCompletion
     );
 
-    const stream = response.toDataStreamResponse();
+    const stream = response.toDataStreamResponse({ getErrorMessage: errorHandler });
 
     return stream;
   }

@@ -111,6 +111,12 @@
     const newVisibleCount = visibleMessageCount + 20; // Load 20 more messages each time
     visibleMessageCount = Math.min(newVisibleCount, $messages.length); // Prevent exceeding total
   }
+  /**
+   * Load all messages in the conversation history
+   */
+  function loadAllMessages() {
+    visibleMessageCount = $messages.length;
+  }
 
   function handleMessageSubmit(event: KeyboardEvent) {
     if (event.key === "Enter" && !event.shiftKey) {
@@ -347,13 +353,18 @@
 <section>
   <div class="chat-list">
     {#if visibleMessageCount < $messages.length}
-      <Button
-        class="load-more-button"
-        on:click={loadMoreMessages}
-        aria-label="Load previous messages"
-      >
-        Load More Messages
-      </Button>
+      <div class="load-buttons mb-2 flex space-x-2">
+        <Button
+          class="load-more-button"
+          on:click={loadMoreMessages}
+          aria-label="Load previous messages"
+        >
+          Load More Messages
+        </Button>
+        <Button class="load-all-button" on:click={loadAllMessages} aria-label="Load all messages">
+          Load All Messages
+        </Button>
+      </div>
     {/if}
 
     {#each visibleMessages as message (message.id)}

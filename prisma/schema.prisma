@@ -123,7 +123,7 @@ model Message {
   createdAt      DateTime       @default(now()) @db.Timestamp(3)
   updatedAt      DateTime       @default(now()) @updatedAt @db.Timestamp(3)
   conversation   Conversation   @relation("message_conversationIdToconversation", fields: [conversationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "message_conversationId_conversation_id_fk")
-  parent         Message?       @relation("messageTomessage", fields: [parentId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "message_parentId_message_id_fk")
+  parent         Message?       @relation("messageTomessage", fields: [parentId], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "message_parentId_message_id_fk")
   children       Message[]      @relation("messageTomessage")
   user           User?          @relation(fields: [userId], references: [id], onUpdate: NoAction, map: "message_userId_user_id_fk")
   Conversation   Conversation[]
@@ -176,7 +176,7 @@ model SharedMessage {
   parentId             String?            @db.Char(36)
   createdAt            DateTime           @default(now()) @db.Timestamp(3)
   updatedAt            DateTime           @default(now()) @updatedAt @db.Timestamp(3)
-  parent               SharedMessage?     @relation("sharedMessageTosharedMessage", fields: [parentId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "sharedMessage_parentId_sharedMessage_id_fk")
+  parent               SharedMessage?     @relation("sharedMessageTosharedMessage", fields: [parentId], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "sharedMessage_parentId_sharedMessage_id_fk")
   children             SharedMessage[]    @relation("sharedMessageTosharedMessage")
   sharedConversation   SharedConversation @relation(fields: [sharedConversationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "sharedMessage_sharedConversationId_sharedConversation_id_fk")
 

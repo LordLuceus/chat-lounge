@@ -243,6 +243,9 @@ export async function deleteConversation(userId: string, conversationId: string)
     throw new Error("User is not a member of the conversation");
   }
 
+  // Manually remove all messages first to avoid multi-path cascade issues
+  await prisma.message.deleteMany({ where: { conversationId } });
+  // Then delete the conversation (cascade will clean up conversationUsers and sharedConversations)
   await prisma.conversation.delete({ where: { id: conversationId } });
 
   return { id: conversationId, deleted: true };

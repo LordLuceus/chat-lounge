@@ -1,7 +1,6 @@
-import { env as privateEnv } from "$env/dynamic/private";
-import { env as publicEnv } from "$env/dynamic/public";
+import { env } from "$env/dynamic/private";
 import { importChat } from "$lib/server/conversations-service";
-import { Realtime } from "ably";
+import { getIo, removeProgress, setProgress } from "$lib/server/socket";
 import { Queue, QueueEvents, Worker } from "bullmq";
 import IORedis from "ioredis";
 
@@ -9,31 +8,11 @@ import IORedis from "ioredis";
 const redis = new IORedis({
   host: "valkey-server",
   port: 6379,
-  password: privateEnv.REDIS_PASSWORD,
+  password: env.REDIS_PASSWORD,
   maxRetriesPerRequest: null
 });
 
 export const importQueue = new Queue("import-queue", { connection: redis });
-
-let ablyRealtime: Realtime | null = null;
-export function getAblyRealtime() {
-  if (!ablyRealtime) {
-    const ablyApiKey = publicEnv.PUBLIC_ABLY_API_KEY;
-
-    if (ablyApiKey) {
-      // Check that API key is present
-      ablyRealtime = new Realtime({ key: ablyApiKey });
-      ablyRealtime.connection.once("connected", () => {
-        console.log("Connected to Ably");
-      });
-    } else {
-      console.warn("Ably API key is not set. Ably connection will not be established.");
-    }
-  }
-  return ablyRealtime;
-}
-
-ablyRealtime = getAblyRealtime();
 
 // Instantiate QueueEvents for listening to job events
 const queueEvents = new QueueEvents("import-queue", { connection: redis });
@@ -55,26 +34,44 @@ queueEvents.on("completed", async ({ jobId }) => {
   const job = await importQueue.getJob(jobId);
   const { conversationId } = job.data;
 
-  // For completed events, publish completion to relevant channel
-  ablyRealtime?.channels.get(`import-${conversationId}`).publish("completed", { jobId });
+  setProgress(conversationId, 100);
+  const io = getIo();
+  if (io) {
+    io.to(`import-${conversationId}`).emit("completed", { jobId });
+  } else {
+    console.warn(
+      `[socket.io] emit skipped: 'completed' for import-${conversationId}, io not initialized`
+    );
+  }
+  removeProgress(conversationId);
 });
 
 queueEvents.on("failed", async ({ jobId, failedReason }) => {
   const job = await importQueue.getJob(jobId);
   const { conversationId } = job.data;
 
-  // Handle job failure
-  ablyRealtime?.channels
-    .get(`import-${conversationId}`)
-    .publish("failed", { jobId, error: failedReason });
+  removeProgress(conversationId);
+  const io = getIo();
+  if (io) {
+    io.to(`import-${conversationId}`).emit("failed", { jobId, error: failedReason });
+  } else {
+    console.warn(
+      `[socket.io] emit skipped: 'failed' for import-${conversationId}, io not initialized`
+    );
+  }
 });
 
 queueEvents.on("progress", async ({ jobId, data }) => {
   const job = await importQueue.getJob(jobId);
   const { conversationId } = job.data;
 
-  // Publish progress to relevant channel
-  ablyRealtime?.channels
-    .get(`import-${conversationId}`)
-    .publish("progress", { jobId, progress: data });
+  setProgress(conversationId, data as number);
+  const io = getIo();
+  if (io) {
+    io.to(`import-${conversationId}`).emit("progress", { jobId, progress: data });
+  } else {
+    console.warn(
+      `[socket.io] emit skipped: 'progress' for import-${conversationId}, io not initialized`
+    );
+  }
 });

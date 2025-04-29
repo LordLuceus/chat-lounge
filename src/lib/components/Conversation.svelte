@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { env } from "$env/dynamic/public";
+  import { io, type Socket } from "socket.io-client";
   import Chat from "$lib/components/Chat.svelte";
   import Toast from "$lib/components/Toast.svelte";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
@@ -9,7 +9,6 @@
   import { conversationStore } from "$lib/stores";
   import type { SelectItem } from "$lib/types/client";
   import { createQuery, useQueryClient } from "@tanstack/svelte-query";
-  import { Realtime } from "ably";
   import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
   import { onDestroy, onMount } from "svelte";
   import { toast } from "svelte-sonner";
@@ -93,32 +92,30 @@
   }
 
   let progress: number = 0;
-  let ablyRealtime: Realtime;
+  let socket: Socket;
 
-  onMount(async () => {
+  onMount(() => {
     if (!$conversationStore?.isImporting) return;
-    ablyRealtime = new Realtime({ key: env.PUBLIC_ABLY_API_KEY });
-    await ablyRealtime.connection.once("connected");
-    const channel = ablyRealtime.channels.get(`import-${$conversationStore?.id}`);
-    channel.subscribe("progress", (message) => {
-      progress = message.data.progress;
+    // Connect to socket.io server via same origin; Caddy should proxy /socket.io to the internal port
+    socket = io();
+    socket.on("progress", (data) => {
+      progress = data.progress;
     });
-
-    channel.subscribe("completed", (message) => {
+    socket.on("completed", (data) => {
       client.invalidateQueries({ queryKey: ["conversations"] });
       toast.success(Toast, { componentProps: { text: "Chat imported successfully." } });
-      ablyRealtime.close();
+      socket.disconnect();
     });
-
-    channel.subscribe("failed", (message) => {
+    socket.on("failed", (data) => {
       toast.error(Toast, {
-        componentProps: { text: `Failed to import chat. ${message.data.error}` }
+        componentProps: { text: `Failed to import chat. ${data.error}` }
       });
     });
+    socket.emit("join-import-room", $conversationStore.id);
   });
 
   onDestroy(() => {
-    if (ablyRealtime) ablyRealtime.close();
+    if (socket) socket.disconnect();
   });
 </script>
 

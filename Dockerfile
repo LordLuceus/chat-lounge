@@ -32,5 +32,6 @@ COPY --from=builder /app/run.sh ./run.sh
 ENV NODE_ENV=production
 
 EXPOSE 3000
+EXPOSE 4001
 
 CMD ["./run.sh"]

@@ -11,16 +11,16 @@ const SOCKET_PORT = process.env.SOCKET_PORT ? parseInt(process.env.SOCKET_PORT) 
 
 // Initialize Socket.io on the HTTP server
 export const io = new Server(httpServer, {
-  cors: { origin: '*' }
+  cors: { origin: "*" }
 });
 
 // Listen for client connections
-io.on('connection', (socket) => {
-  socket.on('join-import-room', (conversationId: string) => {
+io.on("connection", (socket) => {
+  socket.on("join-import-room", (conversationId: string) => {
     socket.join(`import-${conversationId}`);
     const progress = importProgressMap.get(conversationId);
     if (progress !== undefined) {
-      socket.emit('progress', { progress });
+      socket.emit("progress", { progress });
     }
   });
 });

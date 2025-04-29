@@ -434,7 +434,7 @@
 
   {#if !$conversationStore}
     <div class="import-conversation">
-      <Button on:click={importConversation}>Import conversation (BETA)</Button>
+      <Button on:click={importConversation}>Import conversation</Button>
     </div>
   {/if}
 </section>

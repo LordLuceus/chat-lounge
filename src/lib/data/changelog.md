@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 29 Apr, 2025
+
+The conversation import eature is now out of beta. Also added a load all messages button alongside the load more button.
+
 ## 16 Mar, 2025
 
 Added folders. You can now organize your conversations into folders, making it easier to find and manage them. Start by creating a new folder on the folders page. You can then add conversations to the folder by clicking the "Add to folder" button in the conversation menu. Hope you enjoy the new feature! 🚀

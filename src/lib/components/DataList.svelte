@@ -1,6 +1,7 @@
 <script lang="ts">
   import InfiniteScroll from "$lib/components/InfiniteScroll.svelte";
   import { Button } from "$lib/components/ui/button";
+  import { Label } from "$lib/components/ui/label";
   import { ToggleGroup, ToggleGroupItem } from "$lib/components/ui/toggle-group";
   import { type SearchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
@@ -70,7 +71,7 @@
 
 {#if sortOptions.length}
   <div class="my-4 flex items-center gap-4">
-    <label class="flex items-center gap-2 font-medium">
+    <Label class="flex items-center gap-2 font-medium">
       Sort by:
       <select
         bind:value={selectedSortBy}
@@ -81,9 +82,9 @@
           <option {value}>{label}</option>
         {/each}
       </select>
-    </label>
+    </Label>
     <div class="flex items-center gap-2">
-      <span class="font-medium">Order:</span>
+      <Label class="font-medium">Order:</Label>
       <ToggleGroup
         type="single"
         value={selectedSortOrder}

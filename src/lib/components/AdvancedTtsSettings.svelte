@@ -293,10 +293,7 @@
     </div>
     <Dialog.Footer>
       {#if $selectedVoice}
-        <Button
-          on:click={handleSettingsChange}
-          disabled={$voiceSettingsMutation.isPending || $voiceSettingsQuery.isFetching}
-        >
+        <Button on:click={handleSettingsChange} disabled={$voiceSettingsMutation.isPending}>
           {#if $voiceSettingsMutation.isPending}Saving...{:else}Save Changes{/if}
         </Button>
       {/if}

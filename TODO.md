@@ -31,7 +31,7 @@
 
 - [x] Strip special characters from the text before sending it to the TTS service.
 - [x] Add a TTS history page.
-- [ ] Add advanced TTS options.
+- [x] Add advanced TTS options.
 - [ ] Add a way to create and edit voices.
 
 ## Long term

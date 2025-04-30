@@ -1,5 +1,11 @@
 # ChatLounge Changelog
 
+## 30 Apr, 2025
+
+Added voice settings to the advanced TTS settings dialog. You can now adjust the speed, stability, and other ElevenLabs settings for the selected voice.
+
+Also added a sorting panel to the conversations, agents, and folders pages.
+
 ## 29 Apr, 2025
 
 The conversation import eature is now out of beta. Also added a load all messages button alongside the load more button.

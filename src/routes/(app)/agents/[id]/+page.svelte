@@ -12,7 +12,14 @@
   let initialMessages: Message[];
   $: if (data.agent.greeting) {
     initialMessages = [
-      { role: "assistant", content: data.agent.greeting, id: uuidv4(), parentId: null }
+      {
+        role: "assistant",
+        content: data.agent.greeting,
+        id: uuidv4(),
+        parentId: null,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
     ];
   }
 

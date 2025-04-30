@@ -66,6 +66,13 @@
     if (browser)
       searchParams.set({ search: "", sortBy: "", sortOrder: "", ownerOnly: false, visibility: "" });
   });
+
+  const agentSortOptions = [
+    { label: "Name", value: "name" },
+    { label: "Created", value: "createdAt" },
+    { label: "Updated", value: "updatedAt" },
+    { label: "Last used", value: "lastUsedAt" }
+  ];
 </script>
 
 <svelte:head>
@@ -105,7 +112,15 @@
 </ToggleGroup.Root>
 
 <SignedIn let:user>
-  <DataList query={agentsQuery} let:item searchLabel="Search agents" {searchParams}>
+  <DataList
+    query={agentsQuery}
+    let:item
+    searchLabel="Search agents"
+    {searchParams}
+    sortOptions={agentSortOptions}
+    defaultSortBy="lastUsedAt"
+    defaultSortOrder="DESC"
+  >
     <p slot="no-results">No agents found.</p>
     <Card.Root>
       <Card.Header>

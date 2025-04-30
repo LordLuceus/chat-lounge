@@ -51,6 +51,12 @@
   onDestroy(() => {
     if (browser) searchParams.set({ search: "", sortBy: "", sortOrder: "" });
   });
+
+  const conversationSortOptions = [
+    { label: "Name", value: "name" },
+    { label: "Created", value: "createdAt" },
+    { label: "Updated", value: "lastUpdated" }
+  ];
 </script>
 
 <svelte:head>
@@ -60,7 +66,15 @@
 
 <h1>Conversations</h1>
 
-<DataList query={conversationsQuery} let:item searchLabel="Search conversations" {searchParams}>
+<DataList
+  query={conversationsQuery}
+  let:item
+  searchLabel="Search conversations"
+  {searchParams}
+  sortOptions={conversationSortOptions}
+  defaultSortBy="lastUpdated"
+  defaultSortOrder="DESC"
+>
   <p slot="no-results">No conversations found.</p>
   <Card.Root>
     <Card.Header>

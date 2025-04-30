@@ -64,6 +64,12 @@
         folderId: undefined
       });
   });
+
+  const folderSortOptions = [
+    { label: "Name", value: "name" },
+    { label: "Created", value: "createdAt" },
+    { label: "Updated", value: "updatedAt" }
+  ];
 </script>
 
 <svelte:head>
@@ -75,7 +81,15 @@
 <CreateFolderDialog />
 
 <SignedIn let:user>
-  <DataList query={foldersQuery} let:item searchLabel="Search folders" {searchParams}>
+  <DataList
+    query={foldersQuery}
+    let:item
+    searchLabel="Search folders"
+    {searchParams}
+    sortOptions={folderSortOptions}
+    defaultSortBy="updatedAt"
+    defaultSortOrder="DESC"
+  >
     <p slot="no-results">No folders found.</p>
     <Card.Root>
       <Card.Header>

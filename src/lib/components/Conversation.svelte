@@ -130,13 +130,15 @@
 
 <SignedIn let:user>
   {#if !$conversationStore?.isImporting}
-    <Chat
-      apiKeys={$page.data.keys}
-      models={$page.data.models}
-      initialMessages={messages}
-      {selectedModel}
-      agent={$page.data?.agent}
-    />
+    {#key $page.data.conversation.id}
+      <Chat
+        apiKeys={$page.data.keys}
+        models={$page.data.models}
+        initialMessages={messages}
+        {selectedModel}
+        agent={$page.data?.agent}
+      />
+    {/key}
     <div class="export-chat">
       <DropdownMenu.Root>
         <DropdownMenu.Trigger>Export Chat</DropdownMenu.Trigger>

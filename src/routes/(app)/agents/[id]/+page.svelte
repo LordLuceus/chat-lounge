@@ -46,5 +46,7 @@
 </h1>
 
 <CheckApiKeys {data}>
-  <Chat agent={data.agent} apiKeys={data.keys} models={data.models} {initialMessages} />
+  {#key data.agent.id}
+    <Chat agent={data.agent} apiKeys={data.keys} models={data.models} {initialMessages} />
+  {/key}
 </CheckApiKeys>

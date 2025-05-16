@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 16 May, 2025
+
+Fixed a long-standing bug where the chat input would sometimes be unresponsive when switching between conversations or agents.
+
 ## 30 Apr, 2025
 
 Added voice settings to the advanced TTS settings dialog. You can now adjust the speed, stability, and other ElevenLabs settings for the selected voice.

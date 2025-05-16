@@ -134,8 +134,13 @@
 
   function focusChatInput() {
     if ($newConversation) return;
-    const chatInput = document.querySelector(".chat-input") as HTMLTextAreaElement;
-    chatInput.focus();
+    if (!chatForm) return;
+    const chatInput = chatForm.querySelector("textarea") as HTMLTextAreaElement;
+    if (!chatInput) return;
+    // Delay focus to ensure the DOM update has fully completed
+    setTimeout(() => {
+      chatInput.focus();
+    }, 0);
   }
 
   async function copyLastMessage() {

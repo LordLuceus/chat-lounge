@@ -290,6 +290,39 @@ class AIService {
     return text.trim().replaceAll('"', "").replaceAll("*", "");
   }
 
+  /**
+   * Generate follow-up suggestions based on the conversation context.
+   * Returns an array of three suggestion strings.
+   */
+  public async generateFollowUps(
+    messages: { role: string; content: string }[],
+    modelId: string
+  ): Promise<string[]> {
+    const prompt =
+      "Based on the following conversation, suggest three possible follow-up questions or next steps the user might say. Respond with a numbered list of exactly three items, no additional commentary. Follow the style and tone of the user's existing messages as closely as possible, especially in longer conversations. Do not enclose the suggestions in quotes.";
+
+    const context = messages.map(({ role, content }) => `${role}: ${content}`).join("\n");
+
+    const { text } = await generateText({
+      model: this.client(modelId, this.provider === "google" ? this.GOOGLE_SETTINGS : undefined),
+      messages: [{ role: "user", content: prompt + "\n\n---\n\n" + context }],
+      system: undefined,
+      temperature: 1.0
+    });
+
+    // Split by lines and strip numbering and quotes
+    return text
+      .split("\n")
+      .map((line) =>
+        line
+          .replace(/^\s*\d+\.\s*/, "")
+          .replace(/["“”]/g, "")
+          .trim()
+      )
+      .filter((line) => line.length > 0)
+      .slice(0, 3);
+  }
+
   private async prepareSystemPrompt(
     agent: Agent | undefined,
     userId: string

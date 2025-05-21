@@ -107,6 +107,20 @@
 
   $: visibleMessages = $messages.filter((message) => message.content).slice(-visibleMessageCount);
 
+  // Follow-up suggestions state and mutation
+  let followups: string[] = [];
+  const followupsMutation = createMutation<string[]>({
+    mutationFn: async () =>
+      (
+        await fetch(`/api/conversations/${$conversationStore?.id}/followups`, {
+          method: "POST"
+        })
+      ).json(),
+    onSuccess: (data) => (followups = data),
+    onError: () =>
+      toast.error(Toast, { componentProps: { text: "Failed to load follow-up suggestions." } })
+  });
+
   function loadMoreMessages() {
     const newVisibleCount = visibleMessageCount + 20; // Load 20 more messages each time
     visibleMessageCount = Math.min(newVisibleCount, $messages.length); // Prevent exceeding total
@@ -236,6 +250,7 @@
 
   afterNavigate(async () => {
     if (!$newConversation) resetConversation();
+    followups = [];
     await tick();
     focusChatInput();
   });
@@ -382,38 +397,75 @@
       />
     {/each}
   </div>
-  {#if $isLoading}
-    <Button on:click={stop}>Stop generating</Button>
-  {/if}
-  {#if $messages.at(-1)?.role === "assistant" && !$isLoading}
-    <Button
-      on:click={() =>
-        reload({
-          body: {
-            modelId: selectedModel?.value,
-            agentId: agent?.id,
-            conversationId: $conversationStore?.id,
-            regenerate: true
-          }
-        })}>Regenerate</Button
-    >
-  {/if}
-  {#if $error}
-    <p class="error">There was an error while getting a response from the AI.</p>
-    <Button
-      on:click={() =>
-        reload({
-          body: {
-            modelId: selectedModel?.value,
-            agentId: agent?.id,
-            conversationId: $conversationStore?.id
-          }
-        })}>Try again</Button
-    >
+  <div class="chat-actions flex space-x-2">
+    {#if $isLoading}
+      <Button on:click={stop}>Stop generating</Button>
+    {/if}
+    {#if $messages.at(-1)?.role === "assistant" && !$isLoading}
+      <Button
+        on:click={() => {
+          followups = [];
+          reload({
+            body: {
+              modelId: selectedModel?.value,
+              agentId: agent?.id,
+              conversationId: $conversationStore?.id,
+              regenerate: true
+            }
+          });
+        }}>Regenerate</Button
+      >
+      <Button
+        class="ml-2"
+        on:click={() => $followupsMutation.mutate()}
+        disabled={$followupsMutation.isPending}
+      >
+        {#if $followupsMutation.isPending}
+          Loading suggestions...
+        {:else}
+          Suggest Follow-ups
+        {/if}
+      </Button>
+    {/if}
+    {#if $error}
+      <p class="error">There was an error while getting a response from the AI.</p>
+      <Button
+        on:click={() =>
+          reload({
+            body: {
+              modelId: selectedModel?.value,
+              agentId: agent?.id,
+              conversationId: $conversationStore?.id
+            }
+          })}>Try again</Button
+      >
+    {/if}
+  </div>
+
+  {#if followups.length}
+    <div class="sr-only" role="alert">
+      <p>
+        {followups.length} follow-up suggestion{followups.length > 1 ? "s" : ""} loaded.
+      </p>
+    </div>
+    <div class="followup-suggestions mb-2 flex space-x-2">
+      {#each followups as suggestion (suggestion)}
+        <Button
+          variant="outline"
+          on:click={() => {
+            input.set(suggestion);
+            focusChatInput();
+          }}
+        >
+          {suggestion}
+        </Button>
+      {/each}
+    </div>
   {/if}
 
   <form
-    on:submit={(e) =>
+    on:submit={(e) => {
+      followups = [];
       handleSubmit(e, {
         body: {
           modelId: selectedModel?.value,
@@ -421,7 +473,8 @@
           conversationId: $conversationStore?.id
         },
         allowEmptySubmit: true
-      })}
+      });
+    }}
     bind:this={chatForm}
   >
     <Textarea

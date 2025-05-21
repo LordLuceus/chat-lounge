@@ -1,4 +1,8 @@
-import { findLastNodeInBranch, getConversationMessages as getMessages } from "$lib/helpers";
+import {
+  findLastNodeInBranch,
+  getConversationMessages as getMessages,
+  setModel
+} from "$lib/helpers";
 import AIService from "$lib/server/ai-service";
 import { getApiKey } from "$lib/server/api-keys-service";
 import { prisma } from "$lib/server/db";
@@ -442,19 +446,11 @@ async function generateConversationName(
 
   if (!apiKey) return null;
 
-  if (apiKey.provider === AIProvider.Mistral) {
-    modelId = "mistral-small-latest";
-  } else if (apiKey.provider === AIProvider.OpenAI) {
-    modelId = "gpt-4.1-nano";
-  } else if (apiKey.provider === AIProvider.Google) {
-    modelId = "models/gemini-2.0-flash";
-  } else if (apiKey.provider === AIProvider.Anthropic) {
-    modelId = "claude-3-5-haiku-20241022";
-  }
+  const modelIdToUse = setModel(apiKey, model.id);
 
   const service = new AIService(apiKey.provider as AIProvider, apiKey.key);
 
-  return service.generateConversationName(messages, modelId);
+  return service.generateConversationName(messages, modelIdToUse);
 }
 
 export async function importChat(

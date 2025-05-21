@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 21 May, 2025
+
+Added a follow-up suggestions feature. If you're not sure where to take the conversation next, you can now ask the AI for three possible follow-up questions or next steps. Clicking on one of the suggestions will insert it into the chat input, ready for you to edit it or just send it as-is. Enjoy!
+
 ## 16 May, 2025
 
 Fixed a long-standing bug where the chat input would sometimes be unresponsive when switching between conversations or agents.

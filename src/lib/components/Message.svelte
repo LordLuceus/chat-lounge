@@ -91,9 +91,7 @@
         {#if $page.data.keys.eleven && message.role === "assistant"}
           <Tts text={message.content} />
         {/if}
-        {#if message.role === "assistant"}
-          <Button on:click={copyToClipboard}>Copy</Button>
-        {/if}
+        <Button on:click={copyToClipboard}>Copy</Button>
         {#if siblings.length > 1}
           <div>
             <Button

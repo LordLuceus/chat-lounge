@@ -256,7 +256,7 @@
   });
 
   $: if (initialMessages) {
-    setMessages(initialMessages);
+    tick().then(() => setMessages(initialMessages));
   }
 
   async function handleEdit(id: string, content: string, regenerate: boolean = true) {

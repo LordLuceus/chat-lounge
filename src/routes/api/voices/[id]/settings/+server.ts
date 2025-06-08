@@ -1,8 +1,8 @@
 import { getApiKey } from "$lib/server/api-keys-service";
 import { getUser } from "$lib/server/users-service";
 import { AIProvider } from "$lib/types/db";
+import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
-import { ElevenLabsClient } from "elevenlabs";
 
 export const GET: RequestHandler = async ({ locals, params }) => {
   if (!locals.session?.userId) {
@@ -30,7 +30,7 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 
   const client = new ElevenLabsClient({ apiKey: apiKey.key });
 
-  const voiceSettings = await client.voices.getSettings(id);
+  const voiceSettings = await client.voices.settings.get(id);
 
   return json(voiceSettings);
 };
@@ -63,7 +63,7 @@ export const PUT: RequestHandler = async ({ locals, params, request }) => {
 
   const client = new ElevenLabsClient({ apiKey: apiKey.key });
 
-  const voiceSettings = await client.voices.editSettings(id, body);
+  const voiceSettings = await client.voices.settings.update(id, body);
 
   return json(voiceSettings);
 };

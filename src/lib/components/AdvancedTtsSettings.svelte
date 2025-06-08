@@ -3,14 +3,13 @@
   import { Button } from "$lib/components/ui/button";
   import * as Dialog from "$lib/components/ui/dialog";
   import { Label } from "$lib/components/ui/label";
-  // import { Slider } from "$lib/components/ui/slider"; // Use if available
   import { Switch } from "$lib/components/ui/switch";
   import { ariaListOpen } from "$lib/helpers";
   import { selectedTtsModel, selectedVoice } from "$lib/stores";
   import type { TtsModelItem } from "$lib/types/client";
   import type { ElevenLabsModel } from "$lib/types/elevenlabs";
+  import type { VoiceSettings } from "@elevenlabs/elevenlabs-js/api";
   import { createMutation, createQuery, useQueryClient } from "@tanstack/svelte-query";
-  import type { VoiceSettings } from "elevenlabs/api";
   import { onMount } from "svelte";
   import Select from "svelte-select";
   import { toast } from "svelte-sonner";
@@ -20,17 +19,17 @@
 
   const defaultSettings: VoiceSettings = {
     stability: 0.5,
-    similarity_boost: 0.75,
+    similarityBoost: 0.75,
     style: 0,
-    use_speaker_boost: false,
+    useSpeakerBoost: false,
     speed: 1
   };
 
   // 1. Local Form State (Bound to UI inputs)
   let localStability: number = defaultSettings.stability!;
-  let localSimilarityBoost: number = defaultSettings.similarity_boost!;
+  let localSimilarityBoost: number = defaultSettings.similarityBoost!;
   let localStyle: number = defaultSettings.style!;
-  let localSpeakerBoost: boolean = defaultSettings.use_speaker_boost!;
+  let localSpeakerBoost: boolean = defaultSettings.useSpeakerBoost!;
   let localSpeed: number = defaultSettings.speed!;
 
   const voiceSettingsQuery = createQuery<VoiceSettings>(
@@ -49,12 +48,12 @@
             });
             return { ...defaultSettings };
           }
-          const data = await response.json();
+          const data: VoiceSettings = await response.json();
           return {
             stability: data?.stability ?? defaultSettings.stability,
-            similarity_boost: data?.similarity_boost ?? defaultSettings.similarity_boost,
+            similarityBoost: data?.similarityBoost ?? defaultSettings.similarityBoost,
             style: data?.style ?? defaultSettings.style,
-            use_speaker_boost: data?.use_speaker_boost ?? defaultSettings.use_speaker_boost,
+            useSpeakerBoost: data?.useSpeakerBoost ?? defaultSettings.useSpeakerBoost,
             speed: data?.speed ?? defaultSettings.speed
           };
         } catch (error) {
@@ -80,11 +79,11 @@
         },
         body: JSON.stringify({
           stability: localStability,
-          similarity_boost: localSimilarityBoost,
+          similarityBoost: localSimilarityBoost,
           style: localStyle,
-          use_speaker_boost: localSpeakerBoost,
+          useSpeakerBoost: localSpeakerBoost,
           speed: localSpeed
-        })
+        } satisfies VoiceSettings)
       });
 
       if (!response.ok) {
@@ -110,9 +109,9 @@
   function syncLocalStateWithQueryData(settings: VoiceSettings | undefined | null) {
     const data = settings ?? defaultSettings;
     localStability = data.stability ?? defaultSettings.stability!;
-    localSimilarityBoost = data.similarity_boost ?? defaultSettings.similarity_boost!;
+    localSimilarityBoost = data.similarityBoost ?? defaultSettings.similarityBoost!;
     localStyle = data.style ?? defaultSettings.style!;
-    localSpeakerBoost = data.use_speaker_boost ?? defaultSettings.use_speaker_boost!;
+    localSpeakerBoost = data.useSpeakerBoost ?? defaultSettings.useSpeakerBoost!;
     localSpeed = data.speed ?? defaultSettings.speed!;
   }
 

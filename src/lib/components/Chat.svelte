@@ -38,6 +38,7 @@
   export let initialMessages: ExtendedMessage[] | undefined = undefined;
 
   let chatForm: HTMLFormElement;
+  let startSound: HTMLAudioElement;
   let finishSound: HTMLAudioElement;
   let voiceMessage: string;
 
@@ -96,6 +97,11 @@
             }
           });
         } else if ($conversationStore) client.invalidateQueries({ queryKey: ["conversations"] });
+      },
+      onResponse: async () => {
+        if (!voiceMessage) {
+          startSound.play();
+        }
       },
       body: {
         modelId: selectedModel?.value,
@@ -174,6 +180,7 @@
 
   onMount(() => {
     focusChatInput();
+    startSound = new Audio("/assets/begin.mp3");
     finishSound = new Audio("/assets/typing.wav");
 
     handleModelSelection();
@@ -184,8 +191,14 @@
 
   onDestroy(() => {
     if (browser) {
-      finishSound.pause();
-      finishSound.remove();
+      if (startSound) {
+        startSound.pause();
+        startSound.remove();
+      }
+      if (finishSound) {
+        finishSound.pause();
+        finishSound.remove();
+      }
 
       if (!$newConversation) resetAudio();
       conversationStore.set(null);

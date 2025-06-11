@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 11 Jun, 2025
+
+A small update replacing the soon-to-be-deprecated Gemini 2.5 Pro Preview model with the newer June version. Also added a sound effect when the AI response starts streaming in, useful for reasoning models that can take some time to "think" before responding.
+
 ## 29 May, 2025
 
 Added support for the new Claude 4 family of models from Anthropic.

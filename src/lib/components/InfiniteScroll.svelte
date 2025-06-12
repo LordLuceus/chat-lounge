@@ -1,12 +1,18 @@
 <script lang="ts">
   import { onMount } from "svelte";
 
-  // Props
-  export let fetchMore: () => void;
-  export let hasMore: boolean;
+  
+  interface Props {
+    // Props
+    fetchMore: () => void;
+    hasMore: boolean;
+    children?: import('svelte').Snippet;
+  }
+
+  let { fetchMore, hasMore, children }: Props = $props();
 
   let loading: boolean = false;
-  let scrollContainer: HTMLElement;
+  let scrollContainer: HTMLElement = $state();
 
   const onScroll = async () => {
     if (scrollContainer) {
@@ -30,5 +36,5 @@
 </script>
 
 <div bind:this={scrollContainer} class="h-96 overflow-y-auto">
-  <slot />
+  {@render children?.()}
 </div>

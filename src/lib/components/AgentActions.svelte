@@ -26,14 +26,18 @@
     }
   });
 
-  export let id: string;
-  export let name: string;
+  interface Props {
+    id: string;
+    name: string;
+  }
 
-  let editDialogOpen = false;
-  let deleteDialogOpen = false;
-  let editData: EditData;
+  let { id, name }: Props = $props();
 
-  $: editUrl = `/agents/${id}/edit`;
+  let editDialogOpen = $state(false);
+  let deleteDialogOpen = $state(false);
+  let editData: EditData = $state();
+
+  let editUrl = $derived(`/agents/${id}/edit`);
 
   async function editClick() {
     const result = await preloadData(editUrl);
@@ -87,9 +91,11 @@
 </AlertDialog.Root>
 
 <DropdownMenu.Root>
-  <DropdownMenu.Trigger asChild let:builder>
-    <Button builders={[builder]}>Actions</Button>
-  </DropdownMenu.Trigger>
+  <DropdownMenu.Trigger asChild >
+    {#snippet children({ builder })}
+        <Button builders={[builder]}>Actions</Button>
+          {/snippet}
+    </DropdownMenu.Trigger>
   <DropdownMenu.Content>
     <DropdownMenu.Item on:click={async () => await editClick()}>Edit</DropdownMenu.Item>
     <DropdownMenu.Item on:click={() => deleteClick()}>Delete</DropdownMenu.Item>

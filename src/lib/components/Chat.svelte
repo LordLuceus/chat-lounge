@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { run, handlers } from "svelte/legacy";
+
   import { browser } from "$app/environment";
   import { afterNavigate, goto } from "$app/navigation";
   import { page } from "$app/stores";
@@ -31,22 +33,32 @@
   import { toast } from "svelte-sonner";
   import { v4 as uuidv4 } from "uuid";
 
-  export let agent: { id: string; name: string } | undefined = undefined;
-  export let apiKeys: { mistral: boolean; openai: boolean; eleven: boolean } | undefined;
-  export let models: SelectItem[] | undefined;
-  export let selectedModel: SelectItem | undefined = undefined;
-  export let initialMessages: ExtendedMessage[] | undefined = undefined;
+  interface Props {
+    agent?: { id: string; name: string } | undefined;
+    apiKeys: { mistral: boolean; openai: boolean; eleven: boolean } | undefined;
+    models: SelectItem[] | undefined;
+    selectedModel?: SelectItem | undefined;
+    initialMessages?: ExtendedMessage[] | undefined;
+  }
 
-  let chatForm: HTMLFormElement;
+  let {
+    agent = undefined,
+    apiKeys,
+    models,
+    selectedModel = $bindable(undefined),
+    initialMessages = undefined
+  }: Props = $props();
+
+  let chatForm: HTMLFormElement = $state();
   let startSound: HTMLAudioElement;
   let finishSound: HTMLAudioElement;
-  let voiceMessage: string;
+  let voiceMessage: string = $state();
 
   let controller: AbortController;
   let signal: AbortSignal;
 
   const initialMessageCount = 20;
-  let visibleMessageCount = initialMessageCount;
+  let visibleMessageCount = $state(initialMessageCount);
 
   const client = useQueryClient();
 
@@ -111,10 +123,12 @@
       initialMessages
     });
 
-  $: visibleMessages = $messages.filter((message) => message.content).slice(-visibleMessageCount);
+  let visibleMessages = $derived(
+    $messages.filter((message) => message.content).slice(-visibleMessageCount)
+  );
 
   // Follow-up suggestions state and mutation
-  let followups: string[] = [];
+  let followups: string[] = $state([]);
   const followupsMutation = createMutation<string[]>({
     mutationFn: async () =>
       (
@@ -236,7 +250,7 @@
     signal = controller.signal;
   }
 
-  $: {
+  run(() => {
     if (voiceMessage) {
       append(
         { content: voiceMessage, role: "user" },
@@ -249,7 +263,7 @@
         }
       );
     }
-  }
+  });
 
   function resetConversation() {
     setMessages(initialMessages || []);
@@ -268,9 +282,11 @@
     focusChatInput();
   });
 
-  $: if (initialMessages) {
-    tick().then(() => setMessages(initialMessages));
-  }
+  run(() => {
+    if (initialMessages) {
+      tick().then(() => setMessages(initialMessages));
+    }
+  });
 
   async function handleEdit(id: string, content: string, regenerate: boolean = true) {
     const messageIndex = $messages.findIndex((message) => message.id === id);
@@ -368,7 +384,7 @@
   }
 </script>
 
-<svelte:window on:keydown={handleCopyLastMessage} on:keydown={handleFocusChatInput} />
+<svelte:window onkeydown={handlers(handleCopyLastMessage, handleFocusChatInput)} />
 
 <Select
   bind:value={selectedModel}
@@ -477,7 +493,7 @@
   {/if}
 
   <form
-    on:submit={(e) => {
+    onsubmit={(e) => {
       followups = [];
       handleSubmit(e, {
         body: {

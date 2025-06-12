@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { run } from 'svelte/legacy';
+
   import { browser } from "$app/environment";
   import { goto } from "$app/navigation";
   import { page } from "$app/stores";
@@ -17,11 +19,21 @@
   import { toast } from "svelte-sonner";
   import { derived, writable } from "svelte/store";
 
-  export let id: string;
-  export let name: string;
-  export let isPinned: boolean;
-  export let sharedConversationId: string | undefined;
-  export let folderId: string | undefined;
+  interface Props {
+    id: string;
+    name: string;
+    isPinned: boolean;
+    sharedConversationId: string | undefined;
+    folderId: string | undefined;
+  }
+
+  let {
+    id,
+    name,
+    isPinned,
+    sharedConversationId,
+    folderId
+  }: Props = $props();
 
   const searchParams = writable<SearchParams>({
     search: "",
@@ -192,15 +204,17 @@
     }
   });
 
-  let renameDialogOpen = false;
-  let deleteDialogOpen = false;
-  let shareDialogOpen = false;
-  let unshareDialogOpen = false;
-  let addToFolderDialogOpen = false;
-  let newName = "";
-  let selectedFolderId: string | undefined;
+  let renameDialogOpen = $state(false);
+  let deleteDialogOpen = $state(false);
+  let shareDialogOpen = $state(false);
+  let unshareDialogOpen = $state(false);
+  let addToFolderDialogOpen = $state(false);
+  let newName = $state("");
+  let selectedFolderId: string | undefined = $state();
 
-  $: newName = name;
+  run(() => {
+    newName = name;
+  });
 
   function renameClick() {
     renameDialogOpen = true;
@@ -342,17 +356,20 @@
     <Dialog.Header>
       <Dialog.Title>Add conversation to folder</Dialog.Title>
       <Dialog.Description>Add this conversation to a folder.</Dialog.Description>
-      <DataList query={foldersQuery} let:item searchLabel="Search folders" {searchParams}>
-        <p slot="no-results">No folders found.</p>
-        <div>
-          <Button
-            on:click={() => {
-              selectedFolderId = item.id;
-              handleAddToFolder();
-            }}>{item.name}</Button
-          >
-        </div>
-      </DataList>
+      <DataList query={foldersQuery}  searchLabel="Search folders" {searchParams}>
+        <!-- @migration-task: migrate this slot by hand, `no-results` is an invalid identifier -->
+  <p slot="no-results">No folders found.</p>
+        {#snippet children({ item })}
+                <div>
+            <Button
+              on:click={() => {
+                selectedFolderId = item.id;
+                handleAddToFolder();
+              }}>{item.name}</Button
+            >
+          </div>
+                      {/snippet}
+            </DataList>
     </Dialog.Header>
   </Dialog.Content>
 </Dialog.Root>

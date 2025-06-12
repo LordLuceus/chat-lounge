@@ -7,8 +7,12 @@
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
   import { toast } from "svelte-sonner";
 
-  export let id: string;
-  export let name: string;
+  interface Props {
+    id: string;
+    name: string;
+  }
+
+  let { id, name }: Props = $props();
 
   const client = useQueryClient();
 
@@ -29,7 +33,7 @@
     }
   });
 
-  let deleteDialogOpen = false;
+  let deleteDialogOpen = $state(false);
 
   function deleteClick() {
     deleteDialogOpen = true;

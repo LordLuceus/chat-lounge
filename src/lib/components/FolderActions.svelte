@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { run } from 'svelte/legacy';
+
   import { goto } from "$app/navigation";
   import { page } from "$app/stores";
   import Toast from "$lib/components/Toast.svelte";
@@ -39,14 +41,20 @@
     }
   });
 
-  export let id: string;
-  export let name: string;
+  interface Props {
+    id: string;
+    name: string;
+  }
 
-  let renameDialogOpen = false;
-  let deleteDialogOpen = false;
-  let newName = "";
+  let { id, name }: Props = $props();
 
-  $: newName = name;
+  let renameDialogOpen = $state(false);
+  let deleteDialogOpen = $state(false);
+  let newName = $state("");
+
+  run(() => {
+    newName = name;
+  });
 
   function renameClick() {
     renameDialogOpen = true;
@@ -104,9 +112,11 @@
 </AlertDialog.Root>
 
 <DropdownMenu.Root>
-  <DropdownMenu.Trigger asChild let:builder>
-    <Button builders={[builder]}>Actions</Button>
-  </DropdownMenu.Trigger>
+  <DropdownMenu.Trigger asChild >
+    {#snippet children({ builder })}
+        <Button builders={[builder]}>Actions</Button>
+          {/snippet}
+    </DropdownMenu.Trigger>
   <DropdownMenu.Content>
     <DropdownMenu.Item on:click={() => renameClick()}>Rename</DropdownMenu.Item>
     <DropdownMenu.Item on:click={() => deleteClick()}>Delete</DropdownMenu.Item>

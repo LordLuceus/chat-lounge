@@ -80,32 +80,37 @@
 
 <CreateFolderDialog />
 
-<SignedIn let:user>
-  <DataList
-    query={foldersQuery}
-    let:item
-    searchLabel="Search folders"
-    {searchParams}
-    sortOptions={folderSortOptions}
-    defaultSortBy="updatedAt"
-    defaultSortOrder="DESC"
-  >
-    <p slot="no-results">No folders found.</p>
-    <Card.Root>
-      <Card.Header>
-        <Card.Title tag="h2">
-          <a href={`/folders/${item.id}`}>{item.name}</a>
-        </Card.Title>
-      </Card.Header>
-      <Card.Content>
-        <p>
-          <strong>Last updated </strong>
-          <Time timestamp={item.updatedAt} relative />
-        </p>
-      </Card.Content>
-      <Card.Footer>
-        <FolderActions id={item.id} name={item.name} />
-      </Card.Footer>
-    </Card.Root>
-  </DataList>
+<SignedIn >
+  {#snippet children({ user })}
+    <DataList
+      query={foldersQuery}
+      
+      searchLabel="Search folders"
+      {searchParams}
+      sortOptions={folderSortOptions}
+      defaultSortBy="updatedAt"
+      defaultSortOrder="DESC"
+    >
+      <!-- @migration-task: migrate this slot by hand, `no-results` is an invalid identifier -->
+  <p slot="no-results">No folders found.</p>
+      {#snippet children({ item })}
+        <Card.Root>
+          <Card.Header>
+            <Card.Title tag="h2">
+              <a href={`/folders/${item.id}`}>{item.name}</a>
+            </Card.Title>
+          </Card.Header>
+          <Card.Content>
+            <p>
+              <strong>Last updated </strong>
+              <Time timestamp={item.updatedAt} relative />
+            </p>
+          </Card.Content>
+          <Card.Footer>
+            <FolderActions id={item.id} name={item.name} />
+          </Card.Footer>
+        </Card.Root>
+            {/snippet}
+    </DataList>
+  {/snippet}
 </SignedIn>

@@ -60,22 +60,25 @@
 
 <h1>Shared Conversations</h1>
 
-<DataList query={conversationsQuery} let:item searchLabel="Search conversations" {searchParams}>
+<DataList query={conversationsQuery}  searchLabel="Search conversations" {searchParams}>
+  <!-- @migration-task: migrate this slot by hand, `no-results` is an invalid identifier -->
   <p slot="no-results">No conversations found.</p>
-  <Card.Root>
-    <Card.Header>
-      <Card.Title tag="h2">
-        <a href={`/conversations/shared/${item.id}`}>{item.name}</a>
-      </Card.Title>
-    </Card.Header>
-    <Card.Content>
-      <p>
-        <strong>Shared </strong>
-        <Time timestamp={item.sharedAt} relative />
-      </p>
-    </Card.Content>
-    <Card.Footer>
-      <SharedConversationActions id={item.id} name={item.name} />
-    </Card.Footer>
-  </Card.Root>
+  {#snippet children({ item })}
+    <Card.Root>
+      <Card.Header>
+        <Card.Title tag="h2">
+          <a href={`/conversations/shared/${item.id}`}>{item.name}</a>
+        </Card.Title>
+      </Card.Header>
+      <Card.Content>
+        <p>
+          <strong>Shared </strong>
+          <Time timestamp={item.sharedAt} relative />
+        </p>
+      </Card.Content>
+      <Card.Footer>
+        <SharedConversationActions id={item.id} name={item.name} />
+      </Card.Footer>
+    </Card.Root>
+  {/snippet}
 </DataList>

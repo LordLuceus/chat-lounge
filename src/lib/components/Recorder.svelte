@@ -6,7 +6,11 @@
   import { onDestroy, onMount } from "svelte";
   import { toast } from "svelte-sonner";
 
-  export let setVoiceMessage: (message: string) => void;
+  interface Props {
+    setVoiceMessage: (message: string) => void;
+  }
+
+  let { setVoiceMessage }: Props = $props();
 
   let mediaRecorder: MediaRecorder;
   let recordedChunks: BlobPart[] = [];
@@ -69,7 +73,7 @@
     recordedChunks = [];
   }
 
-  let isRecording = false;
+  let isRecording = $state(false);
 
   function toggleRecording(): void {
     if (isRecording) {
@@ -109,7 +113,7 @@
   }
 </script>
 
-<svelte:window on:keydown={handleRecordToggle} />
+<svelte:window onkeydown={handleRecordToggle} />
 
 <Button on:click={toggleRecording} aria-label={isRecording ? "Stop recording" : "Start recording"}>
   <Mic />

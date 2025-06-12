@@ -4,10 +4,21 @@
   import type { PagedResponse } from "$lib/types/api";
   import type { CreateInfiniteQueryResult, InfiniteData } from "@tanstack/svelte-query";
 
-  export let query: CreateInfiniteQueryResult<InfiniteData<PagedResponse<any>, unknown>, Error>;
-  export let itemType: string;
+  interface Props {
+    query: CreateInfiniteQueryResult<InfiniteData<PagedResponse<any>, unknown>, Error>;
+    itemType: string;
+    link?: import('svelte').Snippet<[any]>;
+    menu?: import('svelte').Snippet<[any]>;
+  }
 
-  let open = false;
+  let {
+    query,
+    itemType,
+    link,
+    menu
+  }: Props = $props();
+
+  let open = $state(false);
 </script>
 
 <Collapsible.Root bind:open>
@@ -22,8 +33,8 @@
           {#each $query.data.pages as { data }}
             {#each data as item}
               <li class="flex items-center">
-                <slot name="link" {item} />
-                <slot name="menu" {item} />
+                {@render link?.({ item, })}
+                {@render menu?.({ item, })}
               </li>
             {/each}
           {/each}

@@ -11,7 +11,11 @@
 
   const plugins = [gfmPlugin(), lineBreaksPlugin];
 
-  export let message: Message;
+  interface Props {
+    message: Message;
+  }
+
+  let { message }: Props = $props();
 
   async function copyToClipboard() {
     await navigator.clipboard.writeText(message.content);

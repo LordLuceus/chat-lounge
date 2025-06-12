@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { run } from "svelte/legacy";
+
   import { enhance } from "$app/forms";
   import { Button } from "$lib/components/ui/button";
   import * as Dialog from "$lib/components/ui/dialog";
@@ -7,19 +9,25 @@
   import { AIProvider } from "$lib/types/db";
   import type { ActionData } from "./$types";
 
-  export let provider: AIProvider;
-  export let openText: string;
-  export let form: ActionData;
-  let apiKeyInput: Input;
-  let open = false;
+  interface Props {
+    provider: AIProvider;
+    openText: string;
+    form: ActionData;
+  }
+
+  let { provider, openText, form }: Props = $props();
+  let apiKeyInput: Input = $state();
+  let open = $state(false);
 
   function handleApiKeyError() {
     apiKeyInput?.focus();
   }
 
-  $: if (form?.message) {
-    handleApiKeyError();
-  }
+  run(() => {
+    if (form?.message) {
+      handleApiKeyError();
+    }
+  });
 </script>
 
 <Dialog.Root bind:open>

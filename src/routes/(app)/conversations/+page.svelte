@@ -68,36 +68,39 @@
 
 <DataList
   query={conversationsQuery}
-  let:item
+  
   searchLabel="Search conversations"
   {searchParams}
   sortOptions={conversationSortOptions}
   defaultSortBy="lastUpdated"
   defaultSortOrder="DESC"
 >
+  <!-- @migration-task: migrate this slot by hand, `no-results` is an invalid identifier -->
   <p slot="no-results">No conversations found.</p>
-  <Card.Root>
-    <Card.Header>
-      <Card.Title tag="h2">
-        <a href={`${item.agentId ? "/agents/" + item.agentId : ""}/conversations/${item.id}`}
-          >{item.name}</a
-        >
-      </Card.Title>
-    </Card.Header>
-    <Card.Content>
-      <p>
-        <strong>Last updated </strong>
-        <Time timestamp={item.lastUpdated} relative />
-      </p>
-    </Card.Content>
-    <Card.Footer>
-      <ConversationActions
-        id={item.id}
-        name={item.name}
-        sharedConversationId={item.sharedConversationId}
-        isPinned={item.isPinned}
-        folderId={item.folderId}
-      />
-    </Card.Footer>
-  </Card.Root>
+  {#snippet children({ item })}
+    <Card.Root>
+      <Card.Header>
+        <Card.Title tag="h2">
+          <a href={`${item.agentId ? "/agents/" + item.agentId : ""}/conversations/${item.id}`}
+            >{item.name}</a
+          >
+        </Card.Title>
+      </Card.Header>
+      <Card.Content>
+        <p>
+          <strong>Last updated </strong>
+          <Time timestamp={item.lastUpdated} relative />
+        </p>
+      </Card.Content>
+      <Card.Footer>
+        <ConversationActions
+          id={item.id}
+          name={item.name}
+          sharedConversationId={item.sharedConversationId}
+          isPinned={item.isPinned}
+          folderId={item.folderId}
+        />
+      </Card.Footer>
+    </Card.Root>
+  {/snippet}
 </DataList>

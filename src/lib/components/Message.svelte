@@ -19,20 +19,30 @@
 
   const plugins = [gfmPlugin(), lineBreaksPlugin];
 
-  export let message: Message;
-  export let siblings: Message[] = [];
-  export let onEdit: (id: string, content: string, regenerate: boolean) => void;
-  export let isLoading: boolean | undefined;
-  export let isLastMessage: boolean | undefined;
+  interface Props {
+    message: Message;
+    siblings?: Message[];
+    onEdit: (id: string, content: string, regenerate: boolean) => void;
+    isLoading: boolean | undefined;
+    isLastMessage: boolean | undefined;
+  }
 
-  let rewindDialogOpen = false;
+  let {
+    message,
+    siblings = [],
+    onEdit,
+    isLoading,
+    isLastMessage
+  }: Props = $props();
+
+  let rewindDialogOpen = $state(false);
 
   async function copyToClipboard() {
     await navigator.clipboard.writeText(message.content);
     toast.success(Toast, { componentProps: { text: "Message copied to clipboard" } });
   }
 
-  $: currentSiblingIndex = siblings.findIndex((sibling) => sibling.id === message.id);
+  let currentSiblingIndex = $derived(siblings.findIndex((sibling) => sibling.id === message.id));
 
   const client = useQueryClient();
 
@@ -72,47 +82,49 @@
   }
 </script>
 
-<SignedIn let:user>
-  {#if message.role === "user" || message.role === "assistant"}
-    <section aria-label="{message.role} message">
-      <div class="{message.role}-message" use:copyCodeBlocks={{ content: message.content }}>
-        {#if message.role === "user"}
-          <Avatar.Root>
-            <Avatar.Image src={user?.imageUrl} alt={user?.username} />
-            <Avatar.Fallback>{user?.username}</Avatar.Fallback>
-          </Avatar.Root>
-        {:else}
-          <BotMessageSquare />
-        {/if}
-        <Markdown md={message.content} {plugins} />
-        {#if message.role === "user" && !isLoading}
-          <EditMessage id={message.id} content={message.content} onSubmit={onEdit} />
-        {/if}
-        {#if $page.data.keys.eleven && message.role === "assistant"}
-          <Tts text={message.content} />
-        {/if}
-        <Button on:click={copyToClipboard}>Copy</Button>
-        {#if siblings.length > 1}
-          <div>
-            <Button
-              disabled={currentSiblingIndex < 1 || isLoading}
-              on:click={() => setCurrentNode(siblings.at(currentSiblingIndex - 1)?.id)}
-              >Previous message</Button
-            >
-            <span>{currentSiblingIndex + 1} / {siblings.length}</span>
-            <Button
-              disabled={currentSiblingIndex === siblings.length - 1 || isLoading}
-              on:click={() => setCurrentNode(siblings.at(currentSiblingIndex + 1)?.id)}
-              >Next message</Button
-            >
-          </div>
-        {/if}
-        {#if message.role === "assistant" && !isLastMessage}
-          <Button on:click={() => (rewindDialogOpen = true)}>Rewind</Button>
-        {/if}
-      </div>
-    </section>
-  {/if}
+<SignedIn >
+  {#snippet children({ user })}
+    {#if message.role === "user" || message.role === "assistant"}
+      <section aria-label="{message.role} message">
+        <div class="{message.role}-message" use:copyCodeBlocks={{ content: message.content }}>
+          {#if message.role === "user"}
+            <Avatar.Root>
+              <Avatar.Image src={user?.imageUrl} alt={user?.username} />
+              <Avatar.Fallback>{user?.username}</Avatar.Fallback>
+            </Avatar.Root>
+          {:else}
+            <BotMessageSquare />
+          {/if}
+          <Markdown md={message.content} {plugins} />
+          {#if message.role === "user" && !isLoading}
+            <EditMessage id={message.id} content={message.content} onSubmit={onEdit} />
+          {/if}
+          {#if $page.data.keys.eleven && message.role === "assistant"}
+            <Tts text={message.content} />
+          {/if}
+          <Button on:click={copyToClipboard}>Copy</Button>
+          {#if siblings.length > 1}
+            <div>
+              <Button
+                disabled={currentSiblingIndex < 1 || isLoading}
+                on:click={() => setCurrentNode(siblings.at(currentSiblingIndex - 1)?.id)}
+                >Previous message</Button
+              >
+              <span>{currentSiblingIndex + 1} / {siblings.length}</span>
+              <Button
+                disabled={currentSiblingIndex === siblings.length - 1 || isLoading}
+                on:click={() => setCurrentNode(siblings.at(currentSiblingIndex + 1)?.id)}
+                >Next message</Button
+              >
+            </div>
+          {/if}
+          {#if message.role === "assistant" && !isLastMessage}
+            <Button on:click={() => (rewindDialogOpen = true)}>Rewind</Button>
+          {/if}
+        </div>
+      </section>
+    {/if}
+  {/snippet}
 </SignedIn>
 
 <AlertDialog.Root bind:open={rewindDialogOpen}>

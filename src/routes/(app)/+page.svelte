@@ -6,9 +6,13 @@
   import { onMount } from "svelte";
   import type { PageData } from "./$types";
 
-  export let data: PageData;
+  interface Props {
+    data: PageData;
+  }
 
-  let initialMessages: Message[] | undefined = undefined;
+  let { data }: Props = $props();
+
+  let initialMessages: Message[] | undefined = $state(undefined);
 
   onMount(async () => {
     if ($page.url.searchParams.get("shareId")) {

@@ -1,3 +1,7 @@
+<!-- @migration-task Error while migrating Svelte code: can't migrate `$: selectedModel = $page.data.models?.find(
+    (m: SelectItem) => m.value === $page.data.conversation.modelId
+  );` to `$derived` because there's a variable named derived.
+     Rename the variable and try again or migrate by hand. -->
 <script lang="ts">
   import { page } from "$app/stores";
   import { io, type Socket } from "socket.io-client";

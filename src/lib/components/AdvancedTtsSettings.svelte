@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { run } from 'svelte/legacy';
+
   import Toast from "$lib/components/Toast.svelte";
   import { Button } from "$lib/components/ui/button";
   import * as Dialog from "$lib/components/ui/dialog";
@@ -26,11 +28,11 @@
   };
 
   // 1. Local Form State (Bound to UI inputs)
-  let localStability: number = defaultSettings.stability!;
-  let localSimilarityBoost: number = defaultSettings.similarityBoost!;
-  let localStyle: number = defaultSettings.style!;
-  let localSpeakerBoost: boolean = defaultSettings.useSpeakerBoost!;
-  let localSpeed: number = defaultSettings.speed!;
+  let localStability: number = $state(defaultSettings.stability!);
+  let localSimilarityBoost: number = $state(defaultSettings.similarityBoost!);
+  let localStyle: number = $state(defaultSettings.style!);
+  let localSpeakerBoost: boolean = $state(defaultSettings.useSpeakerBoost!);
+  let localSpeed: number = $state(defaultSettings.speed!);
 
   const voiceSettingsQuery = createQuery<VoiceSettings>(
     derived(selectedVoice, ($selectedVoice) => ({
@@ -104,7 +106,7 @@
     }
   });
 
-  let models: TtsModelItem[] | undefined;
+  let models: TtsModelItem[] | undefined = $state();
 
   function syncLocalStateWithQueryData(settings: VoiceSettings | undefined | null) {
     const data = settings ?? defaultSettings;
@@ -115,20 +117,24 @@
     localSpeed = data.speed ?? defaultSettings.speed!;
   }
 
-  $: if (
-    $voiceSettingsQuery.data &&
-    !$voiceSettingsQuery.isPlaceholderData &&
-    $voiceSettingsQuery.status === "success"
-  ) {
-    syncLocalStateWithQueryData($voiceSettingsQuery.data);
-  }
-
-  $: if ($selectedVoice) {
-    const currentData = client.getQueryData<VoiceSettings>(["voiceSettings", $selectedVoice.value]);
-    if (!currentData || $voiceSettingsQuery.isPlaceholderData) {
-      syncLocalStateWithQueryData(currentData ?? defaultSettings);
+  run(() => {
+    if (
+      $voiceSettingsQuery.data &&
+      !$voiceSettingsQuery.isPlaceholderData &&
+      $voiceSettingsQuery.status === "success"
+    ) {
+      syncLocalStateWithQueryData($voiceSettingsQuery.data);
     }
-  }
+  });
+
+  run(() => {
+    if ($selectedVoice) {
+      const currentData = client.getQueryData<VoiceSettings>(["voiceSettings", $selectedVoice.value]);
+      if (!currentData || $voiceSettingsQuery.isPlaceholderData) {
+        syncLocalStateWithQueryData(currentData ?? defaultSettings);
+      }
+    }
+  });
 
   async function fetchTtsModels() {
     try {
@@ -179,9 +185,11 @@
 </script>
 
 <Dialog.Root>
-  <Dialog.Trigger asChild let:builder>
-    <Button builders={[builder]} variant="outline">Advanced TTS Settings</Button>
-  </Dialog.Trigger>
+  <Dialog.Trigger asChild >
+    {#snippet children({ builder })}
+        <Button builders={[builder]} variant="outline">Advanced TTS Settings</Button>
+          {/snippet}
+    </Dialog.Trigger>
   <Dialog.Content class="sm:max-w-[425px]">
     <Dialog.Header>
       <Dialog.Title>Advanced TTS Settings</Dialog.Title>

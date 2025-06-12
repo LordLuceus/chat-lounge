@@ -1,17 +1,25 @@
 <script lang="ts">
+  import { run } from "svelte/legacy";
+
   import { toast } from "svelte-sonner";
   import Toast from "./Toast.svelte";
 
-  export let characterLimit: number | undefined;
-  export let value: string;
-
-  $: if (value?.length >= characterLimit!) {
-    toast.error(Toast, {
-      componentProps: {
-        text: `You've reached the character limit of ${characterLimit} characters.`
-      }
-    });
+  interface Props {
+    characterLimit: number | undefined;
+    value: string;
   }
+
+  let { characterLimit, value }: Props = $props();
+
+  run(() => {
+    if (value?.length >= characterLimit!) {
+      toast.error(Toast, {
+        componentProps: {
+          text: `You've reached the character limit of ${characterLimit} characters.`
+        }
+      });
+    }
+  });
 </script>
 
 <p>

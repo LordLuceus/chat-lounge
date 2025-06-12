@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { run } from 'svelte/legacy';
+
   import Toast from "$lib/components/Toast.svelte";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { Button } from "$lib/components/ui/button";
@@ -7,13 +9,17 @@
   import MoreHorizontal from "lucide-svelte/icons/more-horizontal";
   import { toast } from "svelte-sonner";
 
-  export let id: string;
-  export let category: string;
+  interface Props {
+    id: string;
+    category: string;
+  }
 
-  let copyIdSuccess = false;
-  let deleteSuccess = false;
-  let deleteError = false;
-  let deleteDialogOpen = false;
+  let { id, category }: Props = $props();
+
+  let copyIdSuccess = $state(false);
+  let deleteSuccess = $state(false);
+  let deleteError = $state(false);
+  let deleteDialogOpen = $state(false);
 
   const client = useQueryClient();
 
@@ -39,7 +45,7 @@
     }
   }
 
-  $: {
+  run(() => {
     if (copyIdSuccess) {
       toast.success(Toast, { componentProps: { text: "Voice ID copied to clipboard." } });
       copyIdSuccess = false;
@@ -54,7 +60,7 @@
       toast.error(Toast, { componentProps: { text: "Failed to delete voice." } });
       deleteError = false;
     }
-  }
+  });
 </script>
 
 <AlertDialog.Root bind:open={deleteDialogOpen}>
@@ -73,12 +79,14 @@
 </AlertDialog.Root>
 
 <DropdownMenu.Root>
-  <DropdownMenu.Trigger asChild let:builder>
-    <Button variant="ghost" builders={[builder]} size="icon" class="relative h-8 w-8 p-0">
-      <span class="sr-only">Actions</span>
-      <MoreHorizontal class="h-4 w-4" />
-    </Button>
-  </DropdownMenu.Trigger>
+  <DropdownMenu.Trigger asChild >
+    {#snippet children({ builder })}
+        <Button variant="ghost" builders={[builder]} size="icon" class="relative h-8 w-8 p-0">
+        <span class="sr-only">Actions</span>
+        <MoreHorizontal class="h-4 w-4" />
+      </Button>
+          {/snippet}
+    </DropdownMenu.Trigger>
   <DropdownMenu.Content>
     <DropdownMenu.Group>
       <DropdownMenu.Label>Actions</DropdownMenu.Label>

@@ -14,7 +14,11 @@
   import { onDestroy } from "svelte";
   import { toast } from "svelte-sonner";
 
-  export let text: string;
+  interface Props {
+    text: string;
+  }
+
+  let { text }: Props = $props();
 
   let controller: AbortController;
   let signal: AbortSignal;

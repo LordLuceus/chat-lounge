@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { run } from "svelte/legacy";
+
   import { page } from "$app/stores";
   import Chat from "$lib/components/Chat.svelte";
   import CheckApiKeys from "$lib/components/CheckApiKeys.svelte";
@@ -7,21 +9,27 @@
   import { v4 as uuidv4 } from "uuid";
   import type { PageData } from "./$types";
 
-  export let data: PageData;
-
-  let initialMessages: Message[];
-  $: if (data.agent.greeting) {
-    initialMessages = [
-      {
-        role: "assistant",
-        content: data.agent.greeting,
-        id: uuidv4(),
-        parentId: null,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ];
+  interface Props {
+    data: PageData;
   }
+
+  let { data }: Props = $props();
+
+  let initialMessages: Message[] = $state();
+  run(() => {
+    if (data.agent.greeting) {
+      initialMessages = [
+        {
+          role: "assistant",
+          content: data.agent.greeting,
+          id: uuidv4(),
+          parentId: null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ];
+    }
+  });
 
   onMount(async () => {
     if ($page.url.searchParams.get("shareId")) {

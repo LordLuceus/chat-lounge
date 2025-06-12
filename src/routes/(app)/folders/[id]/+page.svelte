@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { run } from 'svelte/legacy';
+
   import { browser } from "$app/environment";
   import { page } from "$app/stores";
   import ConversationActions from "$lib/components/ConversationActions.svelte";
@@ -13,7 +15,11 @@
   import { derived } from "svelte/store";
   import type { PageData } from "./$types";
 
-  export let data: PageData;
+  interface Props {
+    data: PageData;
+  }
+
+  let { data }: Props = $props();
 
   const fetchConversations = async (
     { pageParam = 1 },
@@ -58,9 +64,11 @@
     if (browser) searchParams.set({ search: "", sortBy: "", sortOrder: "", folderId: undefined });
   });
 
-  $: if (data.folder) {
-    searchParams.set({ ...$searchParams, folderId: data.folder.id });
-  }
+  run(() => {
+    if (data.folder) {
+      searchParams.set({ ...$searchParams, folderId: data.folder.id });
+    }
+  });
 </script>
 
 <svelte:head>
@@ -72,33 +80,36 @@
 
 <DataList
   query={conversationsQuery}
-  let:item
+  
   searchLabel="Search conversations in folder"
   {searchParams}
 >
+  <!-- @migration-task: migrate this slot by hand, `no-results` is an invalid identifier -->
   <p slot="no-results">No conversations found.</p>
-  <Card.Root>
-    <Card.Header>
-      <Card.Title tag="h2">
-        <a href={`${item.agentId ? "/agents/" + item.agentId : ""}/conversations/${item.id}`}
-          >{item.name}</a
-        >
-      </Card.Title>
-    </Card.Header>
-    <Card.Content>
-      <p>
-        <strong>Last updated </strong>
-        <Time timestamp={item.lastUpdated} relative />
-      </p>
-    </Card.Content>
-    <Card.Footer>
-      <ConversationActions
-        id={item.id}
-        name={item.name}
-        sharedConversationId={item.sharedConversationId}
-        isPinned={item.isPinned}
-        folderId={item.folderId}
-      />
-    </Card.Footer>
-  </Card.Root>
+  {#snippet children({ item })}
+    <Card.Root>
+      <Card.Header>
+        <Card.Title tag="h2">
+          <a href={`${item.agentId ? "/agents/" + item.agentId : ""}/conversations/${item.id}`}
+            >{item.name}</a
+          >
+        </Card.Title>
+      </Card.Header>
+      <Card.Content>
+        <p>
+          <strong>Last updated </strong>
+          <Time timestamp={item.lastUpdated} relative />
+        </p>
+      </Card.Content>
+      <Card.Footer>
+        <ConversationActions
+          id={item.id}
+          name={item.name}
+          sharedConversationId={item.sharedConversationId}
+          isPinned={item.isPinned}
+          folderId={item.folderId}
+        />
+      </Card.Footer>
+    </Card.Root>
+  {/snippet}
 </DataList>

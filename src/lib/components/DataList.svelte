@@ -1,3 +1,4 @@
+<!-- @migration-task Error while migrating Svelte code: This migration would change the name of a slot (no-results to no_results) making the component unusable -->
 <script lang="ts">
   import InfiniteScroll from "$lib/components/InfiniteScroll.svelte";
   import { Button } from "$lib/components/ui/button";

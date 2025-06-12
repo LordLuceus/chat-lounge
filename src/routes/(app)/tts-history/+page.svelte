@@ -11,8 +11,8 @@
   import { toast } from "svelte-sonner";
   import Time from "svelte-time";
 
-  let deleteDialogOpen = false;
-  let deleteId: string | null;
+  let deleteDialogOpen = $state(false);
+  let deleteId: string | null = $state();
 
   const client = useQueryClient();
 

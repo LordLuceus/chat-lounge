@@ -18,7 +18,11 @@
   import type { PageData } from "./$types";
   import AgentForm from "./AgentForm.svelte";
 
-  export let data: PageData;
+  interface Props {
+    data: PageData;
+  }
+
+  let { data }: Props = $props();
 
   const fetchAgents = async (
     { pageParam = 1 },
@@ -111,39 +115,44 @@
   <ToggleGroup.Item value="public">Public agents</ToggleGroup.Item>
 </ToggleGroup.Root>
 
-<SignedIn let:user>
-  <DataList
-    query={agentsQuery}
-    let:item
-    searchLabel="Search agents"
-    {searchParams}
-    sortOptions={agentSortOptions}
-    defaultSortBy="lastUsedAt"
-    defaultSortOrder="DESC"
-  >
-    <p slot="no-results">No agents found.</p>
-    <Card.Root>
-      <Card.Header>
-        <Card.Title tag="h2">
-          <a href={`/agents/${item.id}`}>{item.name}</a>
-        </Card.Title>
-        {#if item.description}
-          <Card.Description>{item.description}</Card.Description>
-        {/if}
-      </Card.Header>
-      {#if item.lastUsedAt}
-        <Card.Content>
-          <p>
-            <strong>Last chat </strong>
-            <Time timestamp={item.lastUsedAt} relative />
-          </p>
-        </Card.Content>
-      {/if}
-      {#if item.userId === user?.id}
-        <Card.Footer>
-          <AgentActions id={item.id} name={item.name} />
-        </Card.Footer>
-      {/if}
-    </Card.Root>
-  </DataList>
+<SignedIn >
+  {#snippet children({ user })}
+    <DataList
+      query={agentsQuery}
+      
+      searchLabel="Search agents"
+      {searchParams}
+      sortOptions={agentSortOptions}
+      defaultSortBy="lastUsedAt"
+      defaultSortOrder="DESC"
+    >
+      <!-- @migration-task: migrate this slot by hand, `no-results` is an invalid identifier -->
+  <p slot="no-results">No agents found.</p>
+      {#snippet children({ item })}
+        <Card.Root>
+          <Card.Header>
+            <Card.Title tag="h2">
+              <a href={`/agents/${item.id}`}>{item.name}</a>
+            </Card.Title>
+            {#if item.description}
+              <Card.Description>{item.description}</Card.Description>
+            {/if}
+          </Card.Header>
+          {#if item.lastUsedAt}
+            <Card.Content>
+              <p>
+                <strong>Last chat </strong>
+                <Time timestamp={item.lastUsedAt} relative />
+              </p>
+            </Card.Content>
+          {/if}
+          {#if item.userId === user?.id}
+            <Card.Footer>
+              <AgentActions id={item.id} name={item.name} />
+            </Card.Footer>
+          {/if}
+        </Card.Root>
+            {/snippet}
+    </DataList>
+  {/snippet}
 </SignedIn>

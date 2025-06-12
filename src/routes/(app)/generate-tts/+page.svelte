@@ -16,7 +16,7 @@
   import { Loader, Speech } from "lucide-svelte";
   import { onDestroy, onMount } from "svelte";
 
-  let text: string;
+  let text: string = $state();
 
   let controller: AbortController;
   let signal: AbortSignal;

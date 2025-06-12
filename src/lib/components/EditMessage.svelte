@@ -3,12 +3,16 @@
   import * as Dialog from "$lib/components/ui/dialog";
   import { Textarea } from "$lib/components/ui/textarea";
 
-  export let id: string;
-  export let content: string;
-  export let onSubmit: (id: string, content: string, regenerate: boolean) => void;
+  interface Props {
+    id: string;
+    content: string;
+    onSubmit: (id: string, content: string, regenerate: boolean) => void;
+  }
 
-  let open = false;
-  $: value = content;
+  let { id, content, onSubmit }: Props = $props();
+
+  let open = $state(false);
+  let value = $derived(content);
 </script>
 
 <Dialog.Root bind:open>

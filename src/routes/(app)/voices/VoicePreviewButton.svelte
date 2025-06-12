@@ -2,8 +2,12 @@
   import { Button } from "$lib/components/ui/button";
   import { playingAudio } from "$lib/stores";
 
-  export let name: string;
-  export let previewUrl: string | null;
+  interface Props {
+    name: string;
+    previewUrl: string | null;
+  }
+
+  let { name, previewUrl }: Props = $props();
 
   function previewVoice() {
     playingAudio.update((currentAudio) => {

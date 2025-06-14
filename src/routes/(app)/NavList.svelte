@@ -11,7 +11,7 @@
     menu?: import("svelte").Snippet<[any]>;
   }
 
-  let { query, itemType, link, menu }: Props = $props();
+  const { query, itemType, link, menu }: Props = $props();
 
   let open = $state(false);
 </script>

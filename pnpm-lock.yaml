@@ -35,6 +35,9 @@ importers:
       '@tanstack/svelte-query':
         specifier: ^5.80.6
         version: 5.80.6(svelte@5.34.1)
+      '@tanstack/table-core':
+        specifier: ^8.21.3
+        version: 8.21.3
       ai:
         specifier: ^4.3.16
         version: 4.3.16(react@18.3.1)(zod@3.25.56)
@@ -87,8 +90,8 @@ importers:
         specifier: ^5.8.3
         version: 5.8.3
       svelte-sonner:
-        specifier: ^0.3.28
-        version: 0.3.28(svelte@5.34.1)
+        specifier: ^1.0.5
+        version: 1.0.5(svelte@5.34.1)
       svelte-time:
         specifier: ^0.9.0
         version: 0.9.0
@@ -104,6 +107,9 @@ importers:
       tailwind-variants:
         specifier: ^0.2.1
         version: 0.2.1(tailwindcss@3.4.17)
+      tailwindcss-animate:
+        specifier: ^1.0.7
+        version: 1.0.7(tailwindcss@3.4.17)
       uuid:
         specifier: ^9.0.1
         version: 9.0.1
@@ -951,6 +957,10 @@ packages:
     resolution: {integrity: sha512-ULExzbybuLbk8xeSn04ST615ikYCHGa6n8KhelNFRGIBx1b+smDkqw9pGmN+uNGD+3z2wXjnKmtFVaRp3sbDNA==}
     peerDependencies:
       svelte: ^3.54.0 || ^4.0.0 || ^5.0.0
+
+  '@tanstack/table-core@8.21.3':
+    resolution: {integrity: sha512-ldZXEhOBb8Is7xLs01fR3YEc3DERiz5silj8tnGkFZytt1abEvl/GhUmCE0PMLaMPTa3Jk4HbKmRlHmu+gCftg==}
+    engines: {node: '>=12'}
 
   '@types/cookie@0.6.0':
     resolution: {integrity: sha512-4Kh9a6B2bQciAhf7FSuMRRkUWecJgJu9nPnx3yzpsfXX/c50REIqpHY4C82bXP90qrLtXtkDxTZosYO3UpOwlA==}
@@ -2742,10 +2752,10 @@ packages:
   svelte-select@5.8.3:
     resolution: {integrity: sha512-nQsvflWmTCOZjssdrNptzfD1Ok45hHVMTL5IHay5DINk7dfu5Er+8KsVJnZMJdSircqtR0YlT4YkCFlxOUhVPA==}
 
-  svelte-sonner@0.3.28:
-    resolution: {integrity: sha512-K3AmlySeFifF/cKgsYNv5uXqMVNln0NBAacOYgmkQStLa/UoU0LhfAACU6Gr+YYC8bOCHdVmFNoKuDbMEsppJg==}
+  svelte-sonner@1.0.5:
+    resolution: {integrity: sha512-9dpGPFqKb/QWudYqGnEz93vuY+NgCEvyNvxoCLMVGw6sDN/3oVeKV1xiEirW2E1N3vJEyj5imSBNOGltQHA7mg==}
     peerDependencies:
-      svelte: ^3.0.0 || ^4.0.0 || ^5.0.0-next.1
+      svelte: ^5.0.0
 
   svelte-time@0.9.0:
     resolution: {integrity: sha512-XLEflTNZCjJM2ltCJL0NTpN9J2KBZXxupfl9S2sRFx+utSuQXbs3YIM14DIuENsjG1Qn5NtzRb0gviIB7lCMxQ==}
@@ -2794,6 +2804,11 @@ packages:
     engines: {node: '>=16.x', pnpm: '>=7.x'}
     peerDependencies:
       tailwindcss: '*'
+
+  tailwindcss-animate@1.0.7:
+    resolution: {integrity: sha512-bl6mpH3T7I3UFxuvDEXLxy/VuFxBk5bbzplh7tXI68mwMokNYd1t9qPBHlnyTwfa4JGC4zP516I1hYYtQ/vspA==}
+    peerDependencies:
+      tailwindcss: '>=3.0.0 || insiders'
 
   tailwindcss@3.4.17:
     resolution: {integrity: sha512-w33E2aCvSDP0tW9RZuNXadXlkHXqFzSkQew/aIa2i/Sj8fThxwovwlXHSPXTbAHwEIhBFXAedUhP2tueAKP8Og==}
@@ -3702,6 +3717,8 @@ snapshots:
     dependencies:
       '@tanstack/query-core': 5.80.6
       svelte: 5.34.1
+
+  '@tanstack/table-core@8.21.3': {}
 
   '@types/cookie@0.6.0': {}
 
@@ -5743,8 +5760,9 @@ snapshots:
     dependencies:
       svelte-floating-ui: 1.5.8
 
-  svelte-sonner@0.3.28(svelte@5.34.1):
+  svelte-sonner@1.0.5(svelte@5.34.1):
     dependencies:
+      runed: 0.28.0(svelte@5.34.1)
       svelte: 5.34.1
 
   svelte-time@0.9.0:
@@ -5840,6 +5858,10 @@ snapshots:
   tailwind-variants@0.2.1(tailwindcss@3.4.17):
     dependencies:
       tailwind-merge: 2.6.0
+      tailwindcss: 3.4.17
+
+  tailwindcss-animate@1.0.7(tailwindcss@3.4.17):
+    dependencies:
       tailwindcss: 3.4.17
 
   tailwindcss@3.4.17:

@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { run } from "svelte/legacy";
-
   import { goto } from "$app/navigation";
   import AgentActions from "$lib/components/AgentActions.svelte";
   import ConversationActions from "$lib/components/ConversationActions.svelte";
@@ -16,13 +14,12 @@
   import { audioFilename, currentAudioUrl, downloadUrl, ttsProps, voices } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
   import type { Voice } from "$lib/types/elevenlabs";
+  import { SunMoon } from "@lucide/svelte";
   import type { Agent, Conversation, Folder } from "@prisma/client";
   import { createInfiniteQuery, createQuery, type CreateQueryResult } from "@tanstack/svelte-query";
-  import ClerkLoaded from "clerk-sveltekit/client/ClerkLoaded.svelte";
-  import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
-  import SignedOut from "clerk-sveltekit/client/SignedOut.svelte";
-  import { SunMoon } from "lucide-svelte";
   import { resetMode, setMode } from "mode-watcher";
+  import { ClerkLoaded, SignedIn, SignedOut } from "svelte-clerk";
+  import { useClerkContext } from "svelte-clerk/client";
   import { toast } from "svelte-sonner";
   import type { LayoutData } from "./$types";
   import NavList from "./NavList.svelte";
@@ -32,7 +29,11 @@
     children?: import("svelte").Snippet;
   }
 
-  let { data, children }: Props = $props();
+  const { data, children }: Props = $props();
+
+  const ctx = useClerkContext();
+
+  const user = $derived(ctx.user);
 
   const fetchConversations = async ({ pageParam = 1 }) =>
     await fetch(`/api/conversations?page=${pageParam}&limit=20`).then((res) => res.json());
@@ -43,7 +44,7 @@
   const fetchFolders = async ({ pageParam = 1 }) =>
     await fetch(`/api/folders?page=${pageParam}&limit=20`).then((res) => res.json());
 
-  const conversationsQuery = createInfiniteQuery<PagedResponse<Conversation>>({
+  const conversationsQuery = createInfiniteQuery<PagedResponse<Conversation>>(() => ({
     queryKey: ["conversations"],
     queryFn: ({ pageParam }) => fetchConversations({ pageParam: pageParam as number }),
     initialPageParam: 1,
@@ -54,9 +55,9 @@
 
       return undefined;
     }
-  });
+  }));
 
-  const agentsQuery = createInfiniteQuery<PagedResponse<Agent>>({
+  const agentsQuery = createInfiniteQuery<PagedResponse<Agent>>(() => ({
     queryKey: ["agents"],
     queryFn: ({ pageParam }) => fetchAgents({ pageParam: pageParam as number }),
     initialPageParam: 1,
@@ -67,9 +68,9 @@
 
       return undefined;
     }
-  });
+  }));
 
-  const foldersQuery = createInfiniteQuery<PagedResponse<Folder>>({
+  const foldersQuery = createInfiniteQuery<PagedResponse<Folder>>(() => ({
     queryKey: ["folders"],
     queryFn: ({ pageParam }) => fetchFolders({ pageParam: pageParam as number }),
     initialPageParam: 1,
@@ -80,20 +81,20 @@
 
       return undefined;
     }
-  });
+  }));
 
-  let voicesQuery: CreateQueryResult<Voice[], Error> = $state();
-  run(() => {
+  let voicesQuery: CreateQueryResult<Voice[], Error> | undefined = $state();
+  $effect(() => {
     if (data.keys?.eleven)
-      voicesQuery = createQuery<Voice[]>({
+      voicesQuery = createQuery<Voice[]>(() => ({
         queryKey: ["voices"],
         queryFn: async () => (await fetch("/api/voices")).json(),
         refetchInterval: 60000
-      });
+      }));
   });
 
-  run(() => {
-    if ($voicesQuery) voices.set($voicesQuery.data);
+  $effect(() => {
+    if (voicesQuery) voices.set(voicesQuery.data);
   });
 
   function setDownloadUrlAndFilename(url: string, filename: string) {
@@ -101,7 +102,7 @@
     audioFilename.set(filename);
   }
 
-  run(() => {
+  $effect(() => {
     if ($ttsProps) {
       generateTTS({
         text: $ttsProps.text,
@@ -117,151 +118,146 @@
   });
 
   let ttsOpen = $state(false);
-
-  const children_render = $derived(children);
 </script>
 
 <SignedIn>
-  {#snippet children({ user })}
-    <header class="flex items-center justify-between p-4">
-      <a href="/">
-        <img src="/assets/chatlounge_logo.webp" alt="ChatLounge" />
-      </a>
-      <nav class="flex">
-        <a href="/">Home</a>
-        {#if $conversationsQuery.isSuccess && $conversationsQuery.data.pages[0].meta.total > 0}
-          <NavList query={conversationsQuery} itemType="Conversations">
-            {#snippet link({ item })}
-              <div>
-                <a
-                  href={`${item.agentId ? "/agents/" + item.agentId : ""}/conversations/${item.id}`}
-                  >{item.name}</a
-                >
-              </div>
-            {/snippet}
-            {#snippet menu({ item })}
-              <div>
-                <ConversationActions
-                  id={item.id}
-                  name={item.name}
-                  sharedConversationId={item.sharedConversationId}
-                  isPinned={item.isPinned}
-                  folderId={item.folderId}
-                />
-              </div>
-            {/snippet}
-          </NavList>
-        {/if}
-        {#if $agentsQuery.isSuccess && $agentsQuery.data.pages[0].meta.total > 0}
-          <NavList query={agentsQuery} itemType="Agents">
-            {#snippet link({ item })}
-              <div>
-                <a href={`/agents/${item.id}`}>{item.name}</a>
-              </div>
-            {/snippet}
-            {#snippet menu({ item })}
-              <div>
-                {#if user?.id === item.userId}
-                  <AgentActions id={item.id} name={item.name} />
-                {/if}
-              </div>
-            {/snippet}
-          </NavList>
-        {:else}
-          <a href="/agents">Agents</a>
-        {/if}
-        {#if $foldersQuery.isSuccess && $foldersQuery.data.pages[0].meta.total > 0}
-          <NavList query={foldersQuery} itemType="Folders">
-            {#snippet link({ item })}
-              <div>
-                <a href={`/folders/${item.id}`}>{item.name}</a>
-              </div>
-            {/snippet}
-            {#snippet menu({ item })}
-              <div>
-                <FolderActions id={item.id} name={item.name} />
-              </div>
-            {/snippet}
-          </NavList>
-        {:else}
-          <a href="/folders">Folders</a>
-        {/if}
-        {#if data?.keys?.eleven}
-          <Collapsible.Root bind:open={ttsOpen}>
-            <Collapsible.Trigger aria-expanded={ttsOpen}>TTS</Collapsible.Trigger>
-            <Collapsible.Content>
-              <ul class="list-none">
-                <li><a href="/generate-tts">Generate Speech</a></li>
-                <li>
-                  <a href="/voices">Voices</a>
-                </li>
-                <li>
-                  <a href="/tts-history">History</a>
-                </li>
-              </ul>
-            </Collapsible.Content>
-          </Collapsible.Root>
-        {/if}
-      </nav>
-      <ClerkLoaded>
-        {#snippet children({ clerk })}
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger>
-              <Avatar.Root>
-                <Avatar.Image src={clerk?.user?.imageUrl} alt={clerk?.user?.username} />
-                <Avatar.Fallback>{clerk?.user?.username}</Avatar.Fallback>
-              </Avatar.Root>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Content align="end">
-              <DropdownMenu.Item on:click={() => goto("/conversations/shared")}
-                >My shared conversations</DropdownMenu.Item
+  <header class="flex items-center justify-between p-4">
+    <a href="/">
+      <img src="/assets/chatlounge_logo.webp" alt="ChatLounge" />
+    </a>
+    <nav class="flex">
+      <a href="/">Home</a>
+      {#if conversationsQuery.isSuccess && conversationsQuery.data.pages[0].meta.total > 0}
+        <NavList query={conversationsQuery} itemType="Conversations">
+          {#snippet link({ item })}
+            <div>
+              <a href={`${item.agentId ? "/agents/" + item.agentId : ""}/conversations/${item.id}`}
+                >{item.name}</a
               >
-              <DropdownMenu.Item on:click={() => goto("/settings")}>Settings</DropdownMenu.Item>
-              <DropdownMenu.Item on:click={() => goto("/profile")}>Account</DropdownMenu.Item>
-              <DropdownMenu.Item
-                on:click={async () => {
-                  await clerk?.signOut();
-                  goto("/auth/sign-in");
-                }}>Sign out</DropdownMenu.Item
-              >
-            </DropdownMenu.Content>
-          </DropdownMenu.Root>
-        {/snippet}
-      </ClerkLoaded>
-      <DropdownMenu.Root>
-        <DropdownMenu.Trigger asChild>
-          {#snippet children({ builder })}
-            <Button builders={[builder]} variant="outline" size="icon">
-              <SunMoon />
-              <span class="sr-only">Toggle theme</span>
-            </Button>
+            </div>
           {/snippet}
-        </DropdownMenu.Trigger>
-        <DropdownMenu.Content align="end">
-          <DropdownMenu.Item on:click={() => setMode("light")}>Light</DropdownMenu.Item>
-          <DropdownMenu.Item on:click={() => setMode("dark")}>Dark</DropdownMenu.Item>
-          <DropdownMenu.Item on:click={() => resetMode()}>System</DropdownMenu.Item>
-        </DropdownMenu.Content>
-      </DropdownMenu.Root>
-    </header>
-
-    <main class="flex flex-col items-center">
-      {@render children_render?.()}
-
-      {#if $currentAudioUrl}
-        <section aria-label="Audio player">
-          <audio src={$currentAudioUrl} controls autoplay></audio>
-          {#if $downloadUrl}
-            <a href={$downloadUrl} download={$audioFilename}>Download audio</a>
-          {/if}
-        </section>
+          {#snippet menu({ item })}
+            <div>
+              <ConversationActions
+                id={item.id}
+                name={item.name}
+                sharedConversationId={item.sharedConversationId}
+                isPinned={item.isPinned}
+                folderId={item.folderId}
+              />
+            </div>
+          {/snippet}
+        </NavList>
       {/if}
-    </main>
+      {#if agentsQuery.isSuccess && agentsQuery.data.pages[0].meta.total > 0}
+        <NavList query={agentsQuery} itemType="Agents">
+          {#snippet link({ item })}
+            <div>
+              <a href={`/agents/${item.id}`}>{item.name}</a>
+            </div>
+          {/snippet}
+          {#snippet menu({ item })}
+            <div>
+              {#if user?.id === item.userId}
+                <AgentActions id={item.id} name={item.name} />
+              {/if}
+            </div>
+          {/snippet}
+        </NavList>
+      {:else}
+        <a href="/agents">Agents</a>
+      {/if}
+      {#if foldersQuery.isSuccess && foldersQuery.data.pages[0].meta.total > 0}
+        <NavList query={foldersQuery} itemType="Folders">
+          {#snippet link({ item })}
+            <div>
+              <a href={`/folders/${item.id}`}>{item.name}</a>
+            </div>
+          {/snippet}
+          {#snippet menu({ item })}
+            <div>
+              <FolderActions id={item.id} name={item.name} />
+            </div>
+          {/snippet}
+        </NavList>
+      {:else}
+        <a href="/folders">Folders</a>
+      {/if}
+      {#if data?.keys?.eleven}
+        <Collapsible.Root bind:open={ttsOpen}>
+          <Collapsible.Trigger aria-expanded={ttsOpen}>TTS</Collapsible.Trigger>
+          <Collapsible.Content>
+            <ul class="list-none">
+              <li><a href="/generate-tts">Generate Speech</a></li>
+              <li>
+                <a href="/voices">Voices</a>
+              </li>
+              <li>
+                <a href="/tts-history">History</a>
+              </li>
+            </ul>
+          </Collapsible.Content>
+        </Collapsible.Root>
+      {/if}
+    </nav>
+    <ClerkLoaded>
+      {#snippet children()}
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger>
+            <Avatar.Root>
+              <Avatar.Image src={user?.imageUrl} alt={user?.username} />
+              <Avatar.Fallback>{user?.username}</Avatar.Fallback>
+            </Avatar.Root>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content align="end">
+            <DropdownMenu.Item onclick={() => goto("/conversations/shared")}
+              >My shared conversations</DropdownMenu.Item
+            >
+            <DropdownMenu.Item onclick={() => goto("/settings")}>Settings</DropdownMenu.Item>
+            <DropdownMenu.Item onclick={() => goto("/profile")}>Account</DropdownMenu.Item>
+            <DropdownMenu.Item
+              onclick={async () => {
+                await ctx.clerk?.signOut();
+                goto("/auth/sign-in");
+              }}>Sign out</DropdownMenu.Item
+            >
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
+      {/snippet}
+    </ClerkLoaded>
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger>
+        {#snippet child({ props })}
+          <Button {...props} variant="outline" size="icon">
+            <SunMoon />
+            <span class="sr-only">Toggle theme</span>
+          </Button>
+        {/snippet}
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Content align="end">
+        <DropdownMenu.Item onclick={() => setMode("light")}>Light</DropdownMenu.Item>
+        <DropdownMenu.Item onclick={() => setMode("dark")}>Dark</DropdownMenu.Item>
+        <DropdownMenu.Item onclick={() => resetMode()}>System</DropdownMenu.Item>
+      </DropdownMenu.Content>
+    </DropdownMenu.Root>
+  </header>
 
-    <footer>
-      <a href="/changelog">Changelog</a>
-    </footer>
-  {/snippet}
+  <main class="flex flex-col items-center">
+    {@render children?.()}
+
+    {#if $currentAudioUrl}
+      <section aria-label="Audio player">
+        <audio src={$currentAudioUrl} controls autoplay></audio>
+        {#if $downloadUrl}
+          <a href={$downloadUrl} download={$audioFilename}>Download audio</a>
+        {/if}
+      </section>
+    {/if}
+  </main>
+
+  <footer>
+    <a href="/changelog">Changelog</a>
+  </footer>
 </SignedIn>
 
 <SignedOut>

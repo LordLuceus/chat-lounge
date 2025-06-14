@@ -3,11 +3,11 @@ import { AIProvider } from "$lib/types/db";
 import type { LayoutServerLoad } from "./$types";
 
 export const load = (async ({ locals }) => {
-  if (!locals.session?.userId) {
+  const { userId } = locals.auth();
+  if (!userId) {
     return {};
   }
 
-  const { userId } = locals.session;
   const storedKeys = await getApiKeys(userId);
 
   const keys = {

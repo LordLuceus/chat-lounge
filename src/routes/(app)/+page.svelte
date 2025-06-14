@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { page } from "$app/stores";
+  import { page } from "$app/state";
   import Chat from "$lib/components/Chat.svelte";
   import CheckApiKeys from "$lib/components/CheckApiKeys.svelte";
   import type { Message } from "$lib/helpers";
@@ -10,14 +10,14 @@
     data: PageData;
   }
 
-  let { data }: Props = $props();
+  const { data }: Props = $props();
 
   let initialMessages: Message[] | undefined = $state(undefined);
 
   onMount(async () => {
-    if ($page.url.searchParams.get("shareId")) {
+    if (page.url.searchParams.get("shareId")) {
       const response = await fetch(
-        `/api/conversations/shared/${$page.url.searchParams.get("shareId")}`
+        `/api/conversations/shared/${page.url.searchParams.get("shareId")}`
       );
       if (response.ok) {
         const data = await response.json();

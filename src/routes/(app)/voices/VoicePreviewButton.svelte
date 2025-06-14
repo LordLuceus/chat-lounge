@@ -7,7 +7,7 @@
     previewUrl: string | null;
   }
 
-  let { name, previewUrl }: Props = $props();
+  const { name, previewUrl }: Props = $props();
 
   function previewVoice() {
     playingAudio.update((currentAudio) => {
@@ -25,7 +25,7 @@
 </script>
 
 {#if previewUrl}
-  <Button on:click={previewVoice}>{name}</Button>
+  <Button onclick={previewVoice}>{name}</Button>
 {:else}
   <span>{name}</span>
 {/if}

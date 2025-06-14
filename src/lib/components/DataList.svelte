@@ -1,5 +1,6 @@
-<!-- @migration-task Error while migrating Svelte code: This migration would change the name of a slot (no-results to no_results) making the component unusable -->
 <script lang="ts">
+  import { run } from "svelte/legacy";
+
   import InfiniteScroll from "$lib/components/InfiniteScroll.svelte";
   import { Button } from "$lib/components/ui/button";
   import { Label } from "$lib/components/ui/label";
@@ -13,16 +14,31 @@
   import type { Writable } from "svelte/store";
   import { get } from "svelte/store";
 
-  export let query: CreateInfiniteQueryResult<InfiniteData<PagedResponse<any>, unknown>, Error>;
-  export let searchLabel: string;
-  export let searchParams: Writable<SearchParams>;
-  export let sortOptions: { label: string; value: string }[] = [];
-  export let defaultSortBy: string = "";
-  export let defaultSortOrder: string = "";
+  interface Props {
+    query: CreateInfiniteQueryResult<InfiniteData<PagedResponse<any>, unknown>, Error>;
+    searchLabel: string;
+    searchParams: Writable<SearchParams>;
+    sortOptions?: { label: string; value: string }[];
+    defaultSortBy?: string;
+    defaultSortOrder?: string;
+    noResults?: import("svelte").Snippet;
+    children?: import("svelte").Snippet<[any]>;
+  }
 
-  let value = "";
-  let selectedSortBy: string = defaultSortBy;
-  let selectedSortOrder: string = defaultSortOrder;
+  let {
+    query,
+    searchLabel,
+    searchParams,
+    sortOptions = [],
+    defaultSortBy = "",
+    defaultSortOrder = "",
+    noResults,
+    children
+  }: Props = $props();
+
+  let value = $state("");
+  let selectedSortBy: string = $state(defaultSortBy);
+  let selectedSortOrder: string = $state(defaultSortOrder);
 
   function setSearch(value: string) {
     searchParams.update((params) => ({ ...params, search: value }));
@@ -33,7 +49,7 @@
     searchParams.update((params) => ({ ...params, sortBy, sortOrder }));
   }
 
-  let srAlertMessage = "";
+  let srAlertMessage = $state("");
 
   function setAlertMessage() {
     const total = $query.data?.pages[0].meta.total;
@@ -45,7 +61,9 @@
     }
   }
 
-  $: if ($query.isSuccess && $searchParams.search) setAlertMessage();
+  run(() => {
+    if ($query.isSuccess && $searchParams.search) setAlertMessage();
+  });
 
   onMount(() => {
     const initial = get(searchParams);
@@ -76,7 +94,7 @@
       Sort by:
       <select
         bind:value={selectedSortBy}
-        on:change={() => setSort(selectedSortBy, selectedSortOrder)}
+        onchange={() => setSort(selectedSortBy, selectedSortOrder)}
         class="rounded border px-2 py-1"
       >
         {#each sortOptions as { label, value }}
@@ -106,7 +124,7 @@
 
 {#if $query.isSuccess}
   {#if $query.data.pages[0].meta.total === 0}
-    <slot name="no-results" />
+    {@render noResults?.()}
   {/if}
 
   <InfiniteScroll
@@ -117,7 +135,7 @@
       {#each $query.data.pages as { data }}
         {#each data as item}
           <li class="flex items-center">
-            <slot {item} />
+            {@render children?.({ item })}
           </li>
         {/each}
       {/each}

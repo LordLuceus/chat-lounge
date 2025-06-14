@@ -6,7 +6,7 @@ import type { Actions } from "./$types";
 
 export const actions: Actions = {
   apiKey: async ({ locals, request, url }) => {
-    const { session } = locals;
+    const { userId } = locals.auth();
     const formData = await request.formData();
     const provider = url.searchParams.get("provider");
 
@@ -16,11 +16,11 @@ export const actions: Actions = {
 
     const apiKey = formData.get("apiKey") as string;
 
-    if (!session?.userId) {
+    if (!userId) {
       return fail(401, { message: "Unauthorized" });
     }
 
-    const user = await getUser(session.userId);
+    const user = await getUser(userId);
 
     if (!user) {
       return fail(401, { message: "Unauthorized" });

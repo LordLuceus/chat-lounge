@@ -1,6 +1,7 @@
 <script lang="ts">
   import { AIProvider } from "$lib/types/db";
-  import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
+  import { SignedIn } from "svelte-clerk";
+  import { useClerkContext } from "svelte-clerk/client";
   import type { ActionData, PageData } from "./$types";
   import ApiKeyForm from "./ApiKeyForm.svelte";
 
@@ -9,7 +10,10 @@
     form: ActionData;
   }
 
-  let { data, form }: Props = $props();
+  const { data, form }: Props = $props();
+
+  const ctx = useClerkContext();
+  const user = $derived(ctx.user);
 </script>
 
 <svelte:head>
@@ -19,7 +23,7 @@
 
 <section>
   <SignedIn>
-    {#snippet children({ user })}
+    {#snippet children()}
       <h1>Settings</h1>
       <p>Welcome, {user?.username}!</p>
       <p>Here you can manage your API keys.</p>

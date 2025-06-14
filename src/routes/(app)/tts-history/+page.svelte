@@ -6,17 +6,17 @@
   import { generateAudioFilename } from "$lib/helpers";
   import { audioFilename, currentAudioUrl, downloadUrl } from "$lib/stores";
   import type { HistoryResponse } from "$lib/types/elevenlabs";
+  import { Loader } from "@lucide/svelte";
   import { createInfiniteQuery, createMutation, useQueryClient } from "@tanstack/svelte-query";
-  import { Loader } from "lucide-svelte";
   import { toast } from "svelte-sonner";
   import Time from "svelte-time";
 
   let deleteDialogOpen = $state(false);
-  let deleteId: string | null = $state();
+  let deleteId: string | null = $state(null);
 
   const client = useQueryClient();
 
-  const historyQuery = createInfiniteQuery<HistoryResponse>({
+  const historyQuery = createInfiniteQuery<HistoryResponse>(() => ({
     queryKey: ["ttsHistory"],
     queryFn: async ({ pageParam }) =>
       (await fetch(`/api/tts-history?lastItemId=${pageParam}`)).json(),
@@ -27,9 +27,9 @@
       }
       return lastPage.last_history_item_id;
     }
-  });
+  }));
 
-  const deleteHistoryItemMutation = createMutation({
+  const deleteHistoryItemMutation = createMutation(() => ({
     mutationFn: async (id: string) =>
       (
         await fetch(`/api/tts-history/${id}`, {
@@ -39,7 +39,7 @@
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ["ttsHistory"] });
     }
-  });
+  }));
 
   async function handlePlay(id: string, text: string) {
     const response = await fetch(`/api/tts-history/${id}`);
@@ -85,7 +85,7 @@
       return;
     }
 
-    $deleteHistoryItemMutation.mutate(deleteId, {
+    deleteHistoryItemMutation.mutate(deleteId, {
       onSuccess: () => {
         deleteDialogOpen = false;
         deleteId = null;
@@ -102,14 +102,14 @@
 
 <h1>TTS History</h1>
 
-{#if $historyQuery.isSuccess}
+{#if historyQuery.isSuccess}
   <ul class="list-none">
-    {#each $historyQuery.data.pages as page}
+    {#each historyQuery.data.pages as page}
       {#each page.history as historyItem}
         <li>
           <Card.Root>
             <Card.Header>
-              <Card.Title tag="h2"
+              <Card.Title level={2}
                 >{historyItem.text
                   ? historyItem.text.slice(0, 80)
                   : historyItem.dialogue?.[0].text.slice(0, 80)}...</Card.Title
@@ -121,23 +121,23 @@
             </Card.Content>
             <Card.Footer>
               <Button
-                on:click={() =>
+                onclick={() =>
                   handlePlay(
                     historyItem.history_item_id,
-                    historyItem.text ?? historyItem.dialogue?.[0].text
+                    historyItem.text ?? historyItem.dialogue?.[0].text!
                   )}>Play</Button
               >
               <Button
-                on:click={() =>
+                onclick={() =>
                   handleDownload(
                     historyItem.history_item_id,
-                    historyItem.text ?? historyItem.dialogue?.[0].text
+                    historyItem.text ?? historyItem.dialogue?.[0].text!
                   )}
               >
                 Download</Button
               >
               <Button
-                on:click={() => {
+                onclick={() => {
                   deleteDialogOpen = true;
                   deleteId = historyItem.history_item_id;
                 }}>Delete</Button
@@ -149,17 +149,17 @@
     {/each}
   </ul>
 
-  {#if $historyQuery.hasNextPage && !$historyQuery.isFetching}
+  {#if historyQuery.hasNextPage && !historyQuery.isFetching}
     <Button
-      disabled={!$historyQuery.hasNextPage || $historyQuery.isFetchingNextPage}
-      on:click={() => $historyQuery.fetchNextPage()}>Load more</Button
+      disabled={!historyQuery.hasNextPage || historyQuery.isFetchingNextPage}
+      onclick={() => historyQuery.fetchNextPage()}>Load more</Button
     >
   {/if}
-{:else if $historyQuery.isLoading}
-  <Loader />
-{:else if $historyQuery.isError}
-  <p>Error: {$historyQuery.error.message}</p>
-  <Button on:click={() => $historyQuery.refetch()}>Try again</Button>
+{:else if historyQuery.isLoading}
+  <Loader class="animate-spin" />
+{:else if historyQuery.isError}
+  <p>Error: {historyQuery.error.message}</p>
+  <Button onclick={() => historyQuery.refetch()}>Try again</Button>
 {/if}
 
 <AlertDialog.Root bind:open={deleteDialogOpen}>
@@ -170,12 +170,12 @@
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel
-        on:click={() => {
+        onclick={() => {
           deleteDialogOpen = false;
           deleteId = null;
         }}>Cancel</AlertDialog.Cancel
       >
-      <AlertDialog.Action on:click={() => handleDelete()}>Delete</AlertDialog.Action>
+      <AlertDialog.Action onclick={() => handleDelete()}>Delete</AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>

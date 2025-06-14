@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { run } from "svelte/legacy";
-
   import { enhance } from "$app/forms";
   import { Button } from "$lib/components/ui/button";
   import * as Dialog from "$lib/components/ui/dialog";
@@ -15,15 +13,15 @@
     form: ActionData;
   }
 
-  let { provider, openText, form }: Props = $props();
-  let apiKeyInput: Input = $state();
+  const { provider, openText, form }: Props = $props();
+  let apiKeyInput: HTMLElement | null = $state(null);
   let open = $state(false);
 
   function handleApiKeyError() {
     apiKeyInput?.focus();
   }
 
-  run(() => {
+  $effect(() => {
     if (form?.message) {
       handleApiKeyError();
     }
@@ -46,7 +44,7 @@
       >
         <Label>
           <span>API Key</span>
-          <Input type="text" name="apiKey" bind:this={apiKeyInput} required />
+          <Input type="text" name="apiKey" ref={apiKeyInput} required />
         </Label>
         {#if form?.message}
           <p role="alert">{form.message}</p>

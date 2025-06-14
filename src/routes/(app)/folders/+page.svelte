@@ -80,11 +80,10 @@
 
 <CreateFolderDialog />
 
-<SignedIn >
+<SignedIn>
   {#snippet children({ user })}
     <DataList
       query={foldersQuery}
-      
       searchLabel="Search folders"
       {searchParams}
       sortOptions={folderSortOptions}
@@ -92,7 +91,7 @@
       defaultSortOrder="DESC"
     >
       <!-- @migration-task: migrate this slot by hand, `no-results` is an invalid identifier -->
-  <p slot="no-results">No folders found.</p>
+      <p slot="no-results">No folders found.</p>
       {#snippet children({ item })}
         <Card.Root>
           <Card.Header>
@@ -110,7 +109,7 @@
             <FolderActions id={item.id} name={item.name} />
           </Card.Footer>
         </Card.Root>
-            {/snippet}
+      {/snippet}
     </DataList>
   {/snippet}
 </SignedIn>

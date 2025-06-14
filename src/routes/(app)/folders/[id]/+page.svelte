@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { run } from 'svelte/legacy';
+  import { run } from "svelte/legacy";
 
   import { browser } from "$app/environment";
   import { page } from "$app/stores";
@@ -78,12 +78,7 @@
 
 <h1>{data.folder?.name}</h1>
 
-<DataList
-  query={conversationsQuery}
-  
-  searchLabel="Search conversations in folder"
-  {searchParams}
->
+<DataList query={conversationsQuery} searchLabel="Search conversations in folder" {searchParams}>
   <!-- @migration-task: migrate this slot by hand, `no-results` is an invalid identifier -->
   <p slot="no-results">No conversations found.</p>
   {#snippet children({ item })}

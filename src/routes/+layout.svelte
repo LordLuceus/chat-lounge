@@ -2,18 +2,22 @@
   import { browser } from "$app/environment";
   import { QueryClient, QueryClientProvider } from "@tanstack/svelte-query";
   import { ModeWatcher } from "mode-watcher";
+  import { ClerkProvider } from "svelte-clerk";
   import "../app.pcss";
+
   interface Props {
-    children?: import('svelte').Snippet;
+    children?: import("svelte").Snippet;
   }
 
-  let { children }: Props = $props();
+  const { children }: Props = $props();
 
   const queryClient = new QueryClient({ defaultOptions: { queries: { enabled: browser } } });
 </script>
 
-<QueryClientProvider client={queryClient}>
-  {@render children?.()}
-</QueryClientProvider>
+<ClerkProvider>
+  <QueryClientProvider client={queryClient}>
+    {@render children?.()}
+  </QueryClientProvider>
+</ClerkProvider>
 
 <ModeWatcher />

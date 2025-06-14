@@ -91,11 +91,11 @@
 </AlertDialog.Root>
 
 <DropdownMenu.Root>
-  <DropdownMenu.Trigger asChild >
+  <DropdownMenu.Trigger asChild>
     {#snippet children({ builder })}
-        <Button builders={[builder]}>Actions</Button>
-          {/snippet}
-    </DropdownMenu.Trigger>
+      <Button builders={[builder]}>Actions</Button>
+    {/snippet}
+  </DropdownMenu.Trigger>
   <DropdownMenu.Content>
     <DropdownMenu.Item on:click={async () => await editClick()}>Edit</DropdownMenu.Item>
     <DropdownMenu.Item on:click={() => deleteClick()}>Delete</DropdownMenu.Item>

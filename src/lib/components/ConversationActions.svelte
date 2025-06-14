@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { run } from 'svelte/legacy';
+  import { run } from "svelte/legacy";
 
   import { browser } from "$app/environment";
   import { goto } from "$app/navigation";
@@ -27,13 +27,7 @@
     folderId: string | undefined;
   }
 
-  let {
-    id,
-    name,
-    isPinned,
-    sharedConversationId,
-    folderId
-  }: Props = $props();
+  let { id, name, isPinned, sharedConversationId, folderId }: Props = $props();
 
   const searchParams = writable<SearchParams>({
     search: "",
@@ -356,11 +350,11 @@
     <Dialog.Header>
       <Dialog.Title>Add conversation to folder</Dialog.Title>
       <Dialog.Description>Add this conversation to a folder.</Dialog.Description>
-      <DataList query={foldersQuery}  searchLabel="Search folders" {searchParams}>
+      <DataList query={foldersQuery} searchLabel="Search folders" {searchParams}>
         <!-- @migration-task: migrate this slot by hand, `no-results` is an invalid identifier -->
-  <p slot="no-results">No folders found.</p>
+        <p slot="no-results">No folders found.</p>
         {#snippet children({ item })}
-                <div>
+          <div>
             <Button
               on:click={() => {
                 selectedFolderId = item.id;
@@ -368,8 +362,8 @@
               }}>{item.name}</Button
             >
           </div>
-                      {/snippet}
-            </DataList>
+        {/snippet}
+      </DataList>
     </Dialog.Header>
   </Dialog.Content>
 </Dialog.Root>

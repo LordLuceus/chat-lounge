@@ -6,17 +6,13 @@
 
   interface Props {
     class?: $$Props["class"];
-    children?: import('svelte').Snippet;
-    [key: string]: any
+    children?: import("svelte").Snippet;
+    [key: string]: any;
   }
 
   let { class: className = undefined, children, ...rest }: Props = $props();
-  
 </script>
 
-<AlertDialogPrimitive.Description
-  class={cn("text-sm text-muted-foreground", className)}
-  {...rest}
->
+<AlertDialogPrimitive.Description class={cn("text-sm text-muted-foreground", className)} {...rest}>
   {@render children?.()}
 </AlertDialogPrimitive.Description>

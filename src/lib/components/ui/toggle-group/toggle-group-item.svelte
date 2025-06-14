@@ -6,15 +6,13 @@
 
   type $$Props = ToggleGroupPrimitive.ItemProps & ToggleVariants;
 
-
-  
   interface Props {
     class?: string | undefined | null;
     variant?: $$Props["variant"];
     size?: $$Props["size"];
     value: $$Props["value"];
-    children?: import('svelte').Snippet;
-    [key: string]: any
+    children?: import("svelte").Snippet;
+    [key: string]: any;
   }
 
   let {

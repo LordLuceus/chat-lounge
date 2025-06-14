@@ -1,12 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
 
-  
   interface Props {
     // Props
     fetchMore: () => void;
     hasMore: boolean;
-    children?: import('svelte').Snippet;
+    children?: import("svelte").Snippet;
   }
 
   let { fetchMore, hasMore, children }: Props = $props();

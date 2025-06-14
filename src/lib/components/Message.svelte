@@ -27,13 +27,7 @@
     isLastMessage: boolean | undefined;
   }
 
-  let {
-    message,
-    siblings = [],
-    onEdit,
-    isLoading,
-    isLastMessage
-  }: Props = $props();
+  let { message, siblings = [], onEdit, isLoading, isLastMessage }: Props = $props();
 
   let rewindDialogOpen = $state(false);
 
@@ -82,7 +76,7 @@
   }
 </script>
 
-<SignedIn >
+<SignedIn>
   {#snippet children({ user })}
     {#if message.role === "user" || message.role === "assistant"}
       <section aria-label="{message.role} message">

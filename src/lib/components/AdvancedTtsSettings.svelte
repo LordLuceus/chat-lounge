@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { run } from 'svelte/legacy';
+  import { run } from "svelte/legacy";
 
   import Toast from "$lib/components/Toast.svelte";
   import { Button } from "$lib/components/ui/button";
@@ -129,7 +129,10 @@
 
   run(() => {
     if ($selectedVoice) {
-      const currentData = client.getQueryData<VoiceSettings>(["voiceSettings", $selectedVoice.value]);
+      const currentData = client.getQueryData<VoiceSettings>([
+        "voiceSettings",
+        $selectedVoice.value
+      ]);
       if (!currentData || $voiceSettingsQuery.isPlaceholderData) {
         syncLocalStateWithQueryData(currentData ?? defaultSettings);
       }
@@ -185,11 +188,11 @@
 </script>
 
 <Dialog.Root>
-  <Dialog.Trigger asChild >
+  <Dialog.Trigger asChild>
     {#snippet children({ builder })}
-        <Button builders={[builder]} variant="outline">Advanced TTS Settings</Button>
-          {/snippet}
-    </Dialog.Trigger>
+      <Button builders={[builder]} variant="outline">Advanced TTS Settings</Button>
+    {/snippet}
+  </Dialog.Trigger>
   <Dialog.Content class="sm:max-w-[425px]">
     <Dialog.Header>
       <Dialog.Title>Advanced TTS Settings</Dialog.Title>

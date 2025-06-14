@@ -2,11 +2,11 @@ import { getConversation, updateConversation } from "$lib/server/conversations-s
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const PUT = (async ({ locals, params }) => {
-  if (!locals.session?.userId) {
+  const { userId } = locals.auth();
+  if (!userId) {
     return error(401, "Unauthorized");
   }
 
-  const { userId } = locals.session;
   const { id } = params;
 
   if (!id) {

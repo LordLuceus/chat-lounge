@@ -18,15 +18,15 @@
 </svelte:head>
 
 <section>
-  <SignedIn >
+  <SignedIn>
     {#snippet children({ user })}
-        <h1>Settings</h1>
+      <h1>Settings</h1>
       <p>Welcome, {user?.username}!</p>
       <p>Here you can manage your API keys.</p>
       <h2>API Keys</h2>
       <p>
-        Manage your API keys for supported providers. To use the app, at least one of Mistral, OpenAI,
-        or Google is required. ElevenLabs and OpenAI are required for voice conversations.
+        Manage your API keys for supported providers. To use the app, at least one of Mistral,
+        OpenAI, or Google is required. ElevenLabs and OpenAI are required for voice conversations.
       </p>
       <h3>Mistral</h3>
       {#if data.keys?.mistral}
@@ -68,8 +68,8 @@
         <p>You haven't set your Anthropic API key yet.</p>
         <ApiKeyForm provider={AIProvider.Anthropic} openText="Set" {form} />
       {/if}
-          {/snippet}
-    </SignedIn>
+    {/snippet}
+  </SignedIn>
 </section>
 
 <style>

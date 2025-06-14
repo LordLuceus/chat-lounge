@@ -115,11 +115,10 @@
   <ToggleGroup.Item value="public">Public agents</ToggleGroup.Item>
 </ToggleGroup.Root>
 
-<SignedIn >
+<SignedIn>
   {#snippet children({ user })}
     <DataList
       query={agentsQuery}
-      
       searchLabel="Search agents"
       {searchParams}
       sortOptions={agentSortOptions}
@@ -127,7 +126,7 @@
       defaultSortOrder="DESC"
     >
       <!-- @migration-task: migrate this slot by hand, `no-results` is an invalid identifier -->
-  <p slot="no-results">No agents found.</p>
+      <p slot="no-results">No agents found.</p>
       {#snippet children({ item })}
         <Card.Root>
           <Card.Header>
@@ -152,7 +151,7 @@
             </Card.Footer>
           {/if}
         </Card.Root>
-            {/snippet}
+      {/snippet}
     </DataList>
   {/snippet}
 </SignedIn>

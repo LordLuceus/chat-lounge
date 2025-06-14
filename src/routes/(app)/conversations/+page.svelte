@@ -68,7 +68,6 @@
 
 <DataList
   query={conversationsQuery}
-  
   searchLabel="Search conversations"
   {searchParams}
   sortOptions={conversationSortOptions}

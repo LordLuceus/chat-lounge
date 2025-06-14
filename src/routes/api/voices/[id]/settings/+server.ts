@@ -5,12 +5,12 @@ import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const GET: RequestHandler = async ({ locals, params }) => {
-  if (!locals.session?.userId) {
+  const { userId } = locals.auth();
+  if (!userId) {
     return error(401, { message: "Unauthorized" });
   }
 
   const { id } = params;
-  const { userId } = locals.session;
 
   if (!id) {
     return error(400, { message: "No voice ID provided" });
@@ -36,12 +36,12 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 };
 
 export const PUT: RequestHandler = async ({ locals, params, request }) => {
-  if (!locals.session?.userId) {
+  const { userId } = locals.auth();
+  if (!userId) {
     return error(401, { message: "Unauthorized" });
   }
 
   const { id } = params;
-  const { userId } = locals.session;
 
   if (!id) {
     return error(400, { message: "No voice ID provided" });

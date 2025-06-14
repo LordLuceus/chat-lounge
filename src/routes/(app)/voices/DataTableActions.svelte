@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { run } from 'svelte/legacy';
+  import { run } from "svelte/legacy";
 
   import Toast from "$lib/components/Toast.svelte";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
@@ -79,14 +79,14 @@
 </AlertDialog.Root>
 
 <DropdownMenu.Root>
-  <DropdownMenu.Trigger asChild >
+  <DropdownMenu.Trigger asChild>
     {#snippet children({ builder })}
-        <Button variant="ghost" builders={[builder]} size="icon" class="relative h-8 w-8 p-0">
+      <Button variant="ghost" builders={[builder]} size="icon" class="relative h-8 w-8 p-0">
         <span class="sr-only">Actions</span>
         <MoreHorizontal class="h-4 w-4" />
       </Button>
-          {/snippet}
-    </DropdownMenu.Trigger>
+    {/snippet}
+  </DropdownMenu.Trigger>
   <DropdownMenu.Content>
     <DropdownMenu.Group>
       <DropdownMenu.Label>Actions</DropdownMenu.Label>

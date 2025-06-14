@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { run } from 'svelte/legacy';
+  import { run } from "svelte/legacy";
 
   import { goto } from "$app/navigation";
   import { page } from "$app/stores";
@@ -112,11 +112,11 @@
 </AlertDialog.Root>
 
 <DropdownMenu.Root>
-  <DropdownMenu.Trigger asChild >
+  <DropdownMenu.Trigger asChild>
     {#snippet children({ builder })}
-        <Button builders={[builder]}>Actions</Button>
-          {/snippet}
-    </DropdownMenu.Trigger>
+      <Button builders={[builder]}>Actions</Button>
+    {/snippet}
+  </DropdownMenu.Trigger>
   <DropdownMenu.Content>
     <DropdownMenu.Item on:click={() => renameClick()}>Rename</DropdownMenu.Item>
     <DropdownMenu.Item on:click={() => deleteClick()}>Delete</DropdownMenu.Item>

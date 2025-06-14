@@ -6,31 +6,28 @@ import { getModel } from "$lib/server/models-service";
 import { AIProvider } from "$lib/types/db";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
-/**
- * Generate three follow-up suggestions for a conversation.
- */
-export const POST: RequestHandler = async ({ locals, params }) => {
-  if (!locals.session?.userId) {
-    throw error(401, "Unauthorized");
+export const POST = (async ({ locals, params }) => {
+  const { userId } = locals.auth();
+  if (!userId) {
+    return error(401, "Unauthorized");
   }
-  const userId = locals.session.userId;
   const conversationId = params.id;
 
-  if (!conversationId) throw error(400, "Conversation ID is required");
+  if (!conversationId) return error(400, "Conversation ID is required");
 
   const conversation = await getConversation(userId, conversationId);
   if (!conversation) {
-    throw error(404, "Conversation not found");
+    return error(404, "Conversation not found");
   }
 
   const model = await getModel(conversation.modelId!);
   if (!model) {
-    throw error(404, "Model not found");
+    return error(404, "Model not found");
   }
 
   const apiKey = await getApiKey(userId, model.provider as AIProvider);
   if (!apiKey) {
-    throw error(404, "API key not found");
+    return error(404, "API key not found");
   }
 
   const aiService = new AIService(model.provider as AIProvider, apiKey.key);
@@ -41,4 +38,4 @@ export const POST: RequestHandler = async ({ locals, params }) => {
   const suggestions = await aiService.generateFollowUps(context, followupModelId);
 
   return json(suggestions);
-};
+}) satisfies RequestHandler;

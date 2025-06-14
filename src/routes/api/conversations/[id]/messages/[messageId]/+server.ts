@@ -4,7 +4,12 @@ import {
 } from "$lib/server/conversations-service";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
-export const GET = (async ({ params }) => {
+export const GET = (async ({ locals, params }) => {
+  const { userId } = locals.auth();
+  if (!userId) {
+    return error(401, "Unauthorized");
+  }
+
   const { id, messageId } = params;
 
   if (!id || !messageId) {
@@ -20,7 +25,12 @@ export const GET = (async ({ params }) => {
   return json(message);
 }) satisfies RequestHandler;
 
-export const PUT = (async ({ params, request }) => {
+export const PUT = (async ({ locals, params, request }) => {
+  const { userId } = locals.auth();
+  if (!userId) {
+    return error(401, "Unauthorized");
+  }
+
   const { id, messageId } = params;
 
   if (!id || !messageId) {

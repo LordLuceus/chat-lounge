@@ -8,14 +8,13 @@
   type T = $$Generic<"single" | "multiple">;
   type $$Props = ToggleGroupPrimitive.Props<T> & VariantProps<typeof toggleVariants>;
 
-  
   interface Props {
     class?: string | undefined | null;
     variant?: $$Props["variant"];
     size?: $$Props["size"];
     value?: $$Props["value"];
-    children?: import('svelte').Snippet<[any]>;
-    [key: string]: any
+    children?: import("svelte").Snippet<[any]>;
+    [key: string]: any;
   }
 
   let {
@@ -39,9 +38,8 @@
   class={cn("flex items-center justify-center gap-1", className)}
   bind:value
   {...rest}
-  
 >
   {#snippet children({ builder })}
-    {@render children_render?.({ builder, })}
+    {@render children_render?.({ builder })}
   {/snippet}
 </ToggleGroupPrimitive.Root>

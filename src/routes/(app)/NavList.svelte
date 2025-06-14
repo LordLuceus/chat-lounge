@@ -7,16 +7,11 @@
   interface Props {
     query: CreateInfiniteQueryResult<InfiniteData<PagedResponse<any>, unknown>, Error>;
     itemType: string;
-    link?: import('svelte').Snippet<[any]>;
-    menu?: import('svelte').Snippet<[any]>;
+    link?: import("svelte").Snippet<[any]>;
+    menu?: import("svelte").Snippet<[any]>;
   }
 
-  let {
-    query,
-    itemType,
-    link,
-    menu
-  }: Props = $props();
+  let { query, itemType, link, menu }: Props = $props();
 
   let open = $state(false);
 </script>
@@ -33,8 +28,8 @@
           {#each $query.data.pages as { data }}
             {#each data as item}
               <li class="flex items-center">
-                {@render link?.({ item, })}
-                {@render menu?.({ item, })}
+                {@render link?.({ item })}
+                {@render menu?.({ item })}
               </li>
             {/each}
           {/each}

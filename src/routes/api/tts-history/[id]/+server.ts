@@ -7,12 +7,11 @@ import { error, type RequestHandler } from "@sveltejs/kit";
 
 export const GET = (async ({ locals, request, params }) => {
   const { id } = params;
+  const { userId } = locals.auth();
 
-  if (!locals.session?.userId) {
+  if (!userId) {
     return error(401, "Unauthorized");
   }
-
-  const { userId } = locals.session;
 
   const user = await getUser(userId);
 
@@ -49,7 +48,8 @@ export const GET = (async ({ locals, request, params }) => {
 }) satisfies RequestHandler;
 
 export const DELETE = (async ({ locals, params }) => {
-  if (!locals.session?.userId) {
+  const { userId } = locals.auth();
+  if (!userId) {
     return error(401, "Unauthorized");
   }
 
@@ -58,8 +58,6 @@ export const DELETE = (async ({ locals, params }) => {
   if (!id) {
     return error(400, "No history item ID provided");
   }
-
-  const { userId } = locals.session;
 
   const user = await getUser(userId);
 

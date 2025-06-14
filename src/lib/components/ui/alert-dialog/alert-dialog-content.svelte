@@ -5,13 +5,12 @@
 
   type $$Props = AlertDialogPrimitive.ContentProps;
 
-
   interface Props {
     transition?: $$Props["transition"];
     transitionConfig?: $$Props["transitionConfig"];
     class?: $$Props["class"];
-    children?: import('svelte').Snippet;
-    [key: string]: any
+    children?: import("svelte").Snippet;
+    [key: string]: any;
   }
 
   let {
@@ -21,7 +20,6 @@
     children,
     ...rest
   }: Props = $props();
-  
 </script>
 
 <AlertDialog.Portal>

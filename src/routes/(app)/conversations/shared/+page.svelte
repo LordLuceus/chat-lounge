@@ -60,7 +60,7 @@
 
 <h1>Shared Conversations</h1>
 
-<DataList query={conversationsQuery}  searchLabel="Search conversations" {searchParams}>
+<DataList query={conversationsQuery} searchLabel="Search conversations" {searchParams}>
   <!-- @migration-task: migrate this slot by hand, `no-results` is an invalid identifier -->
   <p slot="no-results">No conversations found.</p>
   {#snippet children({ item })}

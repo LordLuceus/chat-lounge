@@ -7,12 +7,12 @@ import { ModelID } from "$lib/types/elevenlabs";
 import { error, type RequestHandler } from "@sveltejs/kit";
 
 export const POST = (async ({ locals, request }) => {
-  if (!locals.session?.userId) {
+  const { userId } = locals.auth();
+  if (!userId) {
     return error(401, "Unauthorized");
   }
 
   const { stream, text, voice, modelId } = await request.json();
-  const { userId } = locals.session;
 
   const user = await getUser(userId);
 

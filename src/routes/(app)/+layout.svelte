@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { run } from 'svelte/legacy';
+  import { run } from "svelte/legacy";
 
   import { goto } from "$app/navigation";
   import AgentActions from "$lib/components/AgentActions.svelte";
@@ -29,7 +29,7 @@
 
   interface Props {
     data: LayoutData;
-    children?: import('svelte').Snippet;
+    children?: import("svelte").Snippet;
   }
 
   let { data, children }: Props = $props();
@@ -121,7 +121,7 @@
   const children_render = $derived(children);
 </script>
 
-<SignedIn >
+<SignedIn>
   {#snippet children({ user })}
     <header class="flex items-center justify-between p-4">
       <a href="/">
@@ -132,14 +132,15 @@
         {#if $conversationsQuery.isSuccess && $conversationsQuery.data.pages[0].meta.total > 0}
           <NavList query={conversationsQuery} itemType="Conversations">
             {#snippet link({ item })}
-                    <div  >
-                <a href={`${item.agentId ? "/agents/" + item.agentId : ""}/conversations/${item.id}`}
+              <div>
+                <a
+                  href={`${item.agentId ? "/agents/" + item.agentId : ""}/conversations/${item.id}`}
                   >{item.name}</a
                 >
               </div>
-                  {/snippet}
+            {/snippet}
             {#snippet menu({ item })}
-                    <div  >
+              <div>
                 <ConversationActions
                   id={item.id}
                   name={item.name}
@@ -148,23 +149,23 @@
                   folderId={item.folderId}
                 />
               </div>
-                  {/snippet}
+            {/snippet}
           </NavList>
         {/if}
         {#if $agentsQuery.isSuccess && $agentsQuery.data.pages[0].meta.total > 0}
           <NavList query={agentsQuery} itemType="Agents">
             {#snippet link({ item })}
-                    <div  >
+              <div>
                 <a href={`/agents/${item.id}`}>{item.name}</a>
               </div>
-                  {/snippet}
+            {/snippet}
             {#snippet menu({ item })}
-                    <div  >
+              <div>
                 {#if user?.id === item.userId}
                   <AgentActions id={item.id} name={item.name} />
                 {/if}
               </div>
-                  {/snippet}
+            {/snippet}
           </NavList>
         {:else}
           <a href="/agents">Agents</a>
@@ -172,15 +173,15 @@
         {#if $foldersQuery.isSuccess && $foldersQuery.data.pages[0].meta.total > 0}
           <NavList query={foldersQuery} itemType="Folders">
             {#snippet link({ item })}
-                    <div  >
+              <div>
                 <a href={`/folders/${item.id}`}>{item.name}</a>
               </div>
-                  {/snippet}
+            {/snippet}
             {#snippet menu({ item })}
-                    <div  >
+              <div>
                 <FolderActions id={item.id} name={item.name} />
               </div>
-                  {/snippet}
+            {/snippet}
           </NavList>
         {:else}
           <a href="/folders">Folders</a>
@@ -202,9 +203,9 @@
           </Collapsible.Root>
         {/if}
       </nav>
-      <ClerkLoaded >
+      <ClerkLoaded>
         {#snippet children({ clerk })}
-            <DropdownMenu.Root>
+          <DropdownMenu.Root>
             <DropdownMenu.Trigger>
               <Avatar.Root>
                 <Avatar.Image src={clerk?.user?.imageUrl} alt={clerk?.user?.username} />
@@ -225,17 +226,17 @@
               >
             </DropdownMenu.Content>
           </DropdownMenu.Root>
-                  {/snippet}
-        </ClerkLoaded>
+        {/snippet}
+      </ClerkLoaded>
       <DropdownMenu.Root>
-        <DropdownMenu.Trigger asChild >
+        <DropdownMenu.Trigger asChild>
           {#snippet children({ builder })}
-                <Button builders={[builder]} variant="outline" size="icon">
+            <Button builders={[builder]} variant="outline" size="icon">
               <SunMoon />
               <span class="sr-only">Toggle theme</span>
             </Button>
-                        {/snippet}
-            </DropdownMenu.Trigger>
+          {/snippet}
+        </DropdownMenu.Trigger>
         <DropdownMenu.Content align="end">
           <DropdownMenu.Item on:click={() => setMode("light")}>Light</DropdownMenu.Item>
           <DropdownMenu.Item on:click={() => setMode("dark")}>Dark</DropdownMenu.Item>

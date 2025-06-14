@@ -6,7 +6,7 @@
   const children_render = $derived(children);
 </script>
 
-<SignedIn >
+<SignedIn>
   {#snippet children({ user })}
     {#if !data.keys.eleven && !data.keys.mistral && !data.keys.openai && !data.keys.google && !data.keys.anthropic}
       <p>You don't have any API keys set.</p>

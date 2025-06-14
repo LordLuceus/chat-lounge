@@ -18,12 +18,12 @@ export const GET = (async ({ params }) => {
 }) satisfies RequestHandler;
 
 export const DELETE = (async ({ locals, params }) => {
-  if (!locals.session?.userId) {
+  const { userId } = locals.auth();
+  if (!userId) {
     return error(401, "Unauthorized");
   }
 
   const { id } = params;
-  const { userId } = locals.session;
 
   if (!id) {
     return error(400, "No conversation ID provided");

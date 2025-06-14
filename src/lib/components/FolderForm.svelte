@@ -36,12 +36,12 @@
 
 <form method="POST" use:enhance {action}>
   <Form.Field {form} name="name">
-    <Form.Control >
+    <Form.Control>
       {#snippet children({ attrs })}
-            <Form.Label>Name</Form.Label>
+        <Form.Label>Name</Form.Label>
         <Input {...attrs} bind:value={$formData.name} />
-                {/snippet}
-        </Form.Control>
+      {/snippet}
+    </Form.Control>
     <Form.Description>The name of this folder</Form.Description>
     <Form.FieldErrors />
   </Form.Field>

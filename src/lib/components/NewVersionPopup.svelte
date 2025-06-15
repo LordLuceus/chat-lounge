@@ -18,7 +18,7 @@
     </Dialog.Description>
     <Dialog.Footer>
       <Button
-        on:click={() => {
+        onclick={() => {
           $newVersionAvailable = false;
           goto("/changelog");
         }}>See what's new</Button

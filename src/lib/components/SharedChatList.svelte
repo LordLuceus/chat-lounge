@@ -6,7 +6,7 @@
     messages: Message[];
   }
 
-  let { messages }: Props = $props();
+  const { messages }: Props = $props();
 </script>
 
 <div class="chat-list">

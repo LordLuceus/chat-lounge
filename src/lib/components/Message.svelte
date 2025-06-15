@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { page } from "$app/stores";
+  import { page } from "$app/state";
   import { copyCodeBlocks } from "$lib/actions/copy-code";
   import EditMessage from "$lib/components/EditMessage.svelte";
   import Toast from "$lib/components/Toast.svelte";
@@ -10,12 +10,16 @@
   import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
   import { conversationStore } from "$lib/stores";
   import type { Message } from "@ai-sdk/svelte";
+  import { BotMessageSquare } from "@lucide/svelte";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
-  import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
-  import { BotMessageSquare } from "lucide-svelte";
+  import { SignedIn } from "svelte-clerk";
+  import { useClerkContext } from "svelte-clerk/client";
   import Markdown from "svelte-exmarkdown";
   import { gfmPlugin } from "svelte-exmarkdown/gfm";
   import { toast } from "svelte-sonner";
+
+  const ctx = useClerkContext();
+  const user = $derived(ctx.user);
 
   const plugins = [gfmPlugin(), lineBreaksPlugin];
 
@@ -27,7 +31,7 @@
     isLastMessage: boolean | undefined;
   }
 
-  let { message, siblings = [], onEdit, isLoading, isLastMessage }: Props = $props();
+  const { message, siblings = [], onEdit, isLoading, isLastMessage }: Props = $props();
 
   let rewindDialogOpen = $state(false);
 
@@ -36,11 +40,11 @@
     toast.success(Toast, { componentProps: { text: "Message copied to clipboard" } });
   }
 
-  let currentSiblingIndex = $derived(siblings.findIndex((sibling) => sibling.id === message.id));
+  const currentSiblingIndex = $derived(siblings.findIndex((sibling) => sibling.id === message.id));
 
   const client = useQueryClient();
 
-  const updateConversationMutation = createMutation({
+  const updateConversationMutation = createMutation(() => ({
     mutationFn: async (value: string) =>
       (
         await fetch(`/api/conversations/${$conversationStore?.id}`, {
@@ -51,11 +55,11 @@
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ["conversations"] });
     }
-  });
+  }));
 
   function setCurrentNode(id?: string) {
     if (!id) return;
-    $updateConversationMutation.mutate(id);
+    updateConversationMutation.mutate(id);
   }
 
   async function rewind(id: string) {
@@ -77,48 +81,46 @@
 </script>
 
 <SignedIn>
-  {#snippet children({ user })}
-    {#if message.role === "user" || message.role === "assistant"}
-      <section aria-label="{message.role} message">
-        <div class="{message.role}-message" use:copyCodeBlocks={{ content: message.content }}>
-          {#if message.role === "user"}
-            <Avatar.Root>
-              <Avatar.Image src={user?.imageUrl} alt={user?.username} />
-              <Avatar.Fallback>{user?.username}</Avatar.Fallback>
-            </Avatar.Root>
-          {:else}
-            <BotMessageSquare />
-          {/if}
-          <Markdown md={message.content} {plugins} />
-          {#if message.role === "user" && !isLoading}
-            <EditMessage id={message.id} content={message.content} onSubmit={onEdit} />
-          {/if}
-          {#if $page.data.keys.eleven && message.role === "assistant"}
-            <Tts text={message.content} />
-          {/if}
-          <Button on:click={copyToClipboard}>Copy</Button>
-          {#if siblings.length > 1}
-            <div>
-              <Button
-                disabled={currentSiblingIndex < 1 || isLoading}
-                on:click={() => setCurrentNode(siblings.at(currentSiblingIndex - 1)?.id)}
-                >Previous message</Button
-              >
-              <span>{currentSiblingIndex + 1} / {siblings.length}</span>
-              <Button
-                disabled={currentSiblingIndex === siblings.length - 1 || isLoading}
-                on:click={() => setCurrentNode(siblings.at(currentSiblingIndex + 1)?.id)}
-                >Next message</Button
-              >
-            </div>
-          {/if}
-          {#if message.role === "assistant" && !isLastMessage}
-            <Button on:click={() => (rewindDialogOpen = true)}>Rewind</Button>
-          {/if}
-        </div>
-      </section>
-    {/if}
-  {/snippet}
+  {#if message.role === "user" || message.role === "assistant"}
+    <section aria-label="{message.role} message">
+      <div class="{message.role}-message" use:copyCodeBlocks={{ content: message.content }}>
+        {#if message.role === "user"}
+          <Avatar.Root>
+            <Avatar.Image src={user?.imageUrl} alt={user?.username} />
+            <Avatar.Fallback>{user?.username}</Avatar.Fallback>
+          </Avatar.Root>
+        {:else}
+          <BotMessageSquare />
+        {/if}
+        <Markdown md={message.content} {plugins} />
+        {#if message.role === "user" && !isLoading}
+          <EditMessage id={message.id} content={message.content} onSubmit={onEdit} />
+        {/if}
+        {#if page.data.keys.eleven && message.role === "assistant"}
+          <Tts text={message.content} />
+        {/if}
+        <Button onclick={copyToClipboard}>Copy</Button>
+        {#if siblings.length > 1}
+          <div>
+            <Button
+              disabled={currentSiblingIndex < 1 || isLoading}
+              onclick={() => setCurrentNode(siblings.at(currentSiblingIndex - 1)?.id)}
+              >Previous message</Button
+            >
+            <span>{currentSiblingIndex + 1} / {siblings.length}</span>
+            <Button
+              disabled={currentSiblingIndex === siblings.length - 1 || isLoading}
+              onclick={() => setCurrentNode(siblings.at(currentSiblingIndex + 1)?.id)}
+              >Next message</Button
+            >
+          </div>
+        {/if}
+        {#if message.role === "assistant" && !isLastMessage}
+          <Button onclick={() => (rewindDialogOpen = true)}>Rewind</Button>
+        {/if}
+      </div>
+    </section>
+  {/if}
 </SignedIn>
 
 <AlertDialog.Root bind:open={rewindDialogOpen}>
@@ -132,7 +134,7 @@
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-      <AlertDialog.Action on:click={() => rewind(message.id)}>Rewind</AlertDialog.Action>
+      <AlertDialog.Action onclick={() => rewind(message.id)}>Rewind</AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>

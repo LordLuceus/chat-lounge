@@ -9,10 +9,10 @@
     onSubmit: (id: string, content: string, regenerate: boolean) => void;
   }
 
-  let { id, content, onSubmit }: Props = $props();
+  const { id, content, onSubmit }: Props = $props();
 
   let open = $state(false);
-  let value = $derived(content);
+  let value = $state(content);
 </script>
 
 <Dialog.Root bind:open>
@@ -20,13 +20,13 @@
   <Dialog.Content>
     <Textarea bind:value placeholder="Type your message..." rows={1} cols={200} autofocus />
     <Button
-      on:click={() => {
+      onclick={() => {
         onSubmit(id, value, true);
         open = false;
       }}>Edit</Button
     >
     <Button
-      on:click={() => {
+      onclick={() => {
         onSubmit(id, value, false);
         open = false;
       }}>Edit (no regeneration)</Button

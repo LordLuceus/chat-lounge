@@ -2,7 +2,7 @@
   import { browser } from "$app/environment";
   import Toast from "$lib/components/Toast.svelte";
   import { Button } from "$lib/components/ui/button";
-  import { Mic } from "lucide-svelte";
+  import { Mic } from "@lucide/svelte";
   import { onDestroy, onMount } from "svelte";
   import { toast } from "svelte-sonner";
 
@@ -10,7 +10,7 @@
     setVoiceMessage: (message: string) => void;
   }
 
-  let { setVoiceMessage }: Props = $props();
+  const { setVoiceMessage }: Props = $props();
 
   let mediaRecorder: MediaRecorder;
   let recordedChunks: BlobPart[] = [];
@@ -115,6 +115,6 @@
 
 <svelte:window onkeydown={handleRecordToggle} />
 
-<Button on:click={toggleRecording} aria-label={isRecording ? "Stop recording" : "Start recording"}>
+<Button onclick={toggleRecording} aria-label={isRecording ? "Stop recording" : "Start recording"}>
   <Mic />
 </Button>

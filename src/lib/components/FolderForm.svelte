@@ -13,7 +13,7 @@
     action?: string;
   }
 
-  let { data, closeDialog = () => {}, action = "" }: Props = $props();
+  const { data, closeDialog = () => {}, action = "" }: Props = $props();
 
   const client = useQueryClient();
 
@@ -37,9 +37,9 @@
 <form method="POST" use:enhance {action}>
   <Form.Field {form} name="name">
     <Form.Control>
-      {#snippet children({ attrs })}
+      {#snippet children({ props })}
         <Form.Label>Name</Form.Label>
-        <Input {...attrs} bind:value={$formData.name} />
+        <Input {...props} bind:value={$formData.name} />
       {/snippet}
     </Form.Control>
     <Form.Description>The name of this folder</Form.Description>

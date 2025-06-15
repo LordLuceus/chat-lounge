@@ -1,6 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/environment";
-  import { page } from "$app/stores";
+  import { page } from "$app/state";
   import ConversationActions from "$lib/components/ConversationActions.svelte";
   import DataList from "$lib/components/DataList.svelte";
   import * as Card from "$lib/components/ui/card";
@@ -10,13 +10,13 @@
   import { createInfiniteQuery } from "@tanstack/svelte-query";
   import { onDestroy } from "svelte";
   import Time from "svelte-time";
-  import { derived } from "svelte/store";
+  import { get } from "svelte/store";
 
   const fetchConversations = async (
     { pageParam = 1 },
     { search, sortBy, sortOrder }: SearchParams
   ) => {
-    const url = new URL("/api/conversations", $page.url.origin);
+    const url = new URL("/api/conversations", page.url.origin);
 
     url.searchParams.set("page", pageParam.toString());
     if (search) {
@@ -32,11 +32,12 @@
     return await fetch(url.toString()).then((res) => res.json());
   };
 
-  const conversationsQuery = createInfiniteQuery<PagedResponse<Conversation>>(
-    derived(searchParams, ($searchParams) => ({
-      queryKey: ["conversations", $searchParams],
+  const conversationsQuery = createInfiniteQuery<PagedResponse<Conversation>>(() => {
+    const params = get(searchParams);
+    return {
+      queryKey: ["conversations", params],
       queryFn: ({ pageParam }: { pageParam: unknown }) =>
-        fetchConversations({ pageParam: pageParam as number }, $searchParams),
+        fetchConversations({ pageParam: pageParam as number }, params),
       initialPageParam: 1,
       getNextPageParam: (lastPage: PagedResponse<Conversation>) => {
         if (lastPage.meta.page < lastPage.meta.totalPages) {
@@ -45,9 +46,8 @@
 
         return undefined;
       }
-    }))
-  );
-
+    };
+  });
   onDestroy(() => {
     if (browser) searchParams.set({ search: "", sortBy: "", sortOrder: "" });
   });
@@ -74,12 +74,13 @@
   defaultSortBy="lastUpdated"
   defaultSortOrder="DESC"
 >
-  <!-- @migration-task: migrate this slot by hand, `no-results` is an invalid identifier -->
-  <p slot="no-results">No conversations found.</p>
+  {#snippet noResults()}
+    <p>No conversations found.</p>
+  {/snippet}
   {#snippet children({ item })}
     <Card.Root>
       <Card.Header>
-        <Card.Title tag="h2">
+        <Card.Title level={2}>
           <a href={`${item.agentId ? "/agents/" + item.agentId : ""}/conversations/${item.id}`}
             >{item.name}</a
           >

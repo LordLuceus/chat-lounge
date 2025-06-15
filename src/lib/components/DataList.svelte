@@ -1,14 +1,12 @@
 <script lang="ts">
-  import { run } from "svelte/legacy";
-
   import InfiniteScroll from "$lib/components/InfiniteScroll.svelte";
   import { Button } from "$lib/components/ui/button";
   import { Label } from "$lib/components/ui/label";
   import { ToggleGroup, ToggleGroupItem } from "$lib/components/ui/toggle-group";
   import { type SearchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
+  import { Loader } from "@lucide/svelte";
   import type { CreateInfiniteQueryResult, InfiniteData } from "@tanstack/svelte-query";
-  import { Loader } from "lucide-svelte";
   import { onMount } from "svelte";
   import Search from "svelte-search";
   import type { Writable } from "svelte/store";
@@ -25,7 +23,7 @@
     children?: import("svelte").Snippet<[any]>;
   }
 
-  let {
+  const {
     query,
     searchLabel,
     searchParams,
@@ -52,7 +50,7 @@
   let srAlertMessage = $state("");
 
   function setAlertMessage() {
-    const total = $query.data?.pages[0].meta.total;
+    const total = query.data?.pages[0].meta.total;
 
     if (total === 0 || !total) {
       srAlertMessage = "No results found";
@@ -61,8 +59,8 @@
     }
   }
 
-  run(() => {
-    if ($query.isSuccess && $searchParams.search) setAlertMessage();
+  $effect(() => {
+    if (query.isSuccess && $searchParams.search) setAlertMessage();
   });
 
   onMount(() => {
@@ -85,7 +83,7 @@
 />
 
 {#if value}
-  <Button on:click={() => (value = "")}>Clear search</Button>
+  <Button onclick={() => (value = "")}>Clear search</Button>
 {/if}
 
 {#if sortOptions.length}
@@ -122,17 +120,17 @@
   </div>
 {/if}
 
-{#if $query.isSuccess}
-  {#if $query.data.pages[0].meta.total === 0}
+{#if query.isSuccess}
+  {#if query.data.pages[0].meta.total === 0}
     {@render noResults?.()}
   {/if}
 
   <InfiniteScroll
-    hasMore={$query.hasNextPage}
-    fetchMore={() => !$query.isFetching && $query.fetchNextPage()}
+    hasMore={query.hasNextPage}
+    fetchMore={() => !query.isFetching && query.fetchNextPage()}
   >
     <ul class="list-none">
-      {#each $query.data.pages as { data }}
+      {#each query.data.pages as { data }}
         {#each data as item}
           <li class="flex items-center">
             {@render children?.({ item })}
@@ -143,12 +141,12 @@
   </InfiniteScroll>
 {/if}
 
-{#if $query.isFetching}
-  <Loader />
+{#if query.isFetching}
+  <Loader class="animate-spin" />
 {/if}
 
-{#if $query.isError}
-  <p>Error: {$query.error.message}</p>
+{#if query.isError}
+  <p>Error: {query.error.message}</p>
 {/if}
 
 {#if srAlertMessage && $searchParams.search}

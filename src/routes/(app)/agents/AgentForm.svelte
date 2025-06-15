@@ -16,7 +16,7 @@
     action?: string;
   }
 
-  let { data, closeDialog = () => {}, action = "" }: Props = $props();
+  const { data, closeDialog = () => {}, action = "" }: Props = $props();
 
   const client = useQueryClient();
 
@@ -40,32 +40,31 @@
 <form method="POST" use:enhance {action}>
   <Form.Fieldset {form} name="type">
     <Form.Legend>Agent Type</Form.Legend>
-    <RadioGroup.Root bind:value={$formData.type} class="flex flex-col space-y-1">
+    <RadioGroup.Root bind:value={$formData.type} class="flex flex-col space-y-1" name="type">
       <div class="flex items-center space-x-3 space-y-0">
         <Form.Control>
-          {#snippet children({ attrs })}
-            <RadioGroup.Item value="default" {...attrs} />
+          {#snippet children({ props })}
+            <RadioGroup.Item value="default" {...props} />
             <Form.Label class="font-normal">Default</Form.Label>
           {/snippet}
         </Form.Control>
       </div>
       <div class="flex items-center space-x-3 space-y-0">
         <Form.Control>
-          {#snippet children({ attrs })}
-            <RadioGroup.Item value="character" {...attrs} />
+          {#snippet children({ props })}
+            <RadioGroup.Item value="character" {...props} />
             <Form.Label class="font-normal">Character</Form.Label>
           {/snippet}
         </Form.Control>
       </div>
-      <RadioGroup.Input name="type" />
     </RadioGroup.Root>
     <Form.FieldErrors />
   </Form.Fieldset>
   <Form.Field {form} name="name">
     <Form.Control>
-      {#snippet children({ attrs })}
+      {#snippet children({ props })}
         <Form.Label>Name</Form.Label>
-        <Input {...attrs} bind:value={$formData.name} />
+        <Input {...props} bind:value={$formData.name} />
       {/snippet}
     </Form.Control>
     <Form.Description>Give your agent a memorable name.</Form.Description>
@@ -73,9 +72,9 @@
   </Form.Field>
   <Form.Field {form} name="description">
     <Form.Control>
-      {#snippet children({ attrs })}
+      {#snippet children({ props })}
         <Form.Label>Description</Form.Label>
-        <Input {...attrs} bind:value={$formData.description} />
+        <Input {...props} bind:value={$formData.description} />
       {/snippet}
     </Form.Control>
     <Form.Description>A brief description of what the agent does.</Form.Description>
@@ -83,9 +82,9 @@
   </Form.Field>
   <Form.Field {form} name="instructions">
     <Form.Control>
-      {#snippet children({ attrs })}
+      {#snippet children({ props })}
         <Form.Label>Instructions</Form.Label>
-        <Textarea {...attrs} bind:value={$formData.instructions} />
+        <Textarea {...props} bind:value={$formData.instructions} />
       {/snippet}
     </Form.Control>
     <Form.Description
@@ -96,9 +95,9 @@
   {#if $formData.type === AgentType.Character}
     <Form.Field {form} name="greeting">
       <Form.Control>
-        {#snippet children({ attrs })}
+        {#snippet children({ props })}
           <Form.Label>Greeting</Form.Label>
-          <Textarea {...attrs} bind:value={$formData.greeting} />
+          <Textarea {...props} bind:value={$formData.greeting} />
         {/snippet}
       </Form.Control>
       <Form.Description>The character's first message when starting a new chat.</Form.Description>
@@ -107,32 +106,35 @@
   {/if}
   <Form.Fieldset {form} name="visibility">
     <Form.Legend>Visibility</Form.Legend>
-    <RadioGroup.Root bind:value={$formData.visibility} class="flex flex-col space-y-1">
+    <RadioGroup.Root
+      bind:value={$formData.visibility}
+      class="flex flex-col space-y-1"
+      name="visibility"
+    >
       <div class="flex items-center space-x-3 space-y-0">
         <Form.Control>
-          {#snippet children({ attrs })}
-            <RadioGroup.Item value="public" {...attrs} />
+          {#snippet children({ props })}
+            <RadioGroup.Item value="public" {...props} />
             <Form.Label class="font-normal">Public</Form.Label>
           {/snippet}
         </Form.Control>
       </div>
       <div class="flex items-center space-x-3 space-y-0">
         <Form.Control>
-          {#snippet children({ attrs })}
-            <RadioGroup.Item value="private" {...attrs} />
+          {#snippet children({ props })}
+            <RadioGroup.Item value="private" {...props} />
             <Form.Label class="font-normal">Private</Form.Label>
           {/snippet}
         </Form.Control>
       </div>
       <div class="flex items-center space-x-3 space-y-0">
         <Form.Control>
-          {#snippet children({ attrs })}
-            <RadioGroup.Item value="hidden" {...attrs} />
+          {#snippet children({ props })}
+            <RadioGroup.Item value="hidden" {...props} />
             <Form.Label class="font-normal">Link only</Form.Label>
           {/snippet}
         </Form.Control>
       </div>
-      <RadioGroup.Input name="visibility" />
     </RadioGroup.Root>
     <Form.FieldErrors />
   </Form.Fieldset>

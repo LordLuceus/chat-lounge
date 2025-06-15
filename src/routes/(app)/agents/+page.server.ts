@@ -14,11 +14,10 @@ export const load = (async () => {
 
 export const actions: Actions = {
   default: async ({ locals, request }) => {
-    if (!locals.session) {
+    const { userId } = locals.auth();
+    if (!userId) {
       return fail(401, { message: "Unauthorized" });
     }
-
-    const { userId } = locals.session;
 
     const form = await superValidate(request, zod(agentSchema), { strict: true });
 
@@ -28,7 +27,7 @@ export const actions: Actions = {
 
     const { name, description, instructions, visibility, type, greeting } = form.data;
     const agentId = await createAgent({
-      userId: userId!,
+      userId,
       name,
       description,
       instructions,

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/environment";
-  import { page } from "$app/stores";
+  import { page } from "$app/state";
   import DataList from "$lib/components/DataList.svelte";
   import SharedConversationActions from "$lib/components/SharedConversationActions.svelte";
   import * as Card from "$lib/components/ui/card";
@@ -10,13 +10,13 @@
   import { createInfiniteQuery } from "@tanstack/svelte-query";
   import { onDestroy } from "svelte";
   import Time from "svelte-time";
-  import { derived } from "svelte/store";
+  import { get } from "svelte/store";
 
   const fetchConversations = async (
     { pageParam = 1 },
     { search, sortBy, sortOrder }: SearchParams
   ) => {
-    const url = new URL("/api/conversations/shared", $page.url.origin);
+    const url = new URL("/api/conversations/shared", page.url.origin);
 
     url.searchParams.set("page", pageParam.toString());
     if (search) {
@@ -32,11 +32,12 @@
     return await fetch(url.toString()).then((res) => res.json());
   };
 
-  const conversationsQuery = createInfiniteQuery<PagedResponse<SharedConversation>>(
-    derived(searchParams, ($searchParams) => ({
-      queryKey: ["sharedConversations", $searchParams],
+  const conversationsQuery = createInfiniteQuery<PagedResponse<SharedConversation>>(() => {
+    const params = get(searchParams);
+    return {
+      queryKey: ["sharedConversations", params],
       queryFn: ({ pageParam }: { pageParam: unknown }) =>
-        fetchConversations({ pageParam: pageParam as number }, $searchParams),
+        fetchConversations({ pageParam: pageParam as number }, params),
       initialPageParam: 1,
       getNextPageParam: (lastPage: PagedResponse<SharedConversation>) => {
         if (lastPage.meta.page < lastPage.meta.totalPages) {
@@ -45,9 +46,8 @@
 
         return undefined;
       }
-    }))
-  );
-
+    };
+  });
   onDestroy(() => {
     if (browser) searchParams.set({ search: "", sortBy: "", sortOrder: "" });
   });
@@ -61,12 +61,14 @@
 <h1>Shared Conversations</h1>
 
 <DataList query={conversationsQuery} searchLabel="Search conversations" {searchParams}>
-  <!-- @migration-task: migrate this slot by hand, `no-results` is an invalid identifier -->
-  <p slot="no-results">No conversations found.</p>
+  {#snippet noResults()}
+    <p>No conversations found.</p>
+  {/snippet}
+
   {#snippet children({ item })}
     <Card.Root>
       <Card.Header>
-        <Card.Title tag="h2">
+        <Card.Title level={2}>
           <a href={`/conversations/shared/${item.id}`}>{item.name}</a>
         </Card.Title>
       </Card.Header>

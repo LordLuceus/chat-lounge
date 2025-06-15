@@ -8,7 +8,7 @@
     action?: string;
   }
 
-  let { data, closeDialog = () => {}, action = "" }: Props = $props();
+  const { data, closeDialog = () => {}, action = "" }: Props = $props();
 </script>
 
 <AgentForm data={data.editForm} {closeDialog} {action} />

@@ -124,14 +124,14 @@
                 onclick={() =>
                   handlePlay(
                     historyItem.history_item_id,
-                    historyItem.text ?? historyItem.dialogue?.[0].text!
+                    historyItem.text ?? historyItem.dialogue?.[0].text ?? ""
                   )}>Play</Button
               >
               <Button
                 onclick={() =>
                   handleDownload(
                     historyItem.history_item_id,
-                    historyItem.text ?? historyItem.dialogue?.[0].text!
+                    historyItem.text ?? historyItem.dialogue?.[0].text ?? ""
                   )}
               >
                 Download</Button

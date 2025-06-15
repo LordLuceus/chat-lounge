@@ -201,29 +201,27 @@
       {/if}
     </nav>
     <ClerkLoaded>
-      {#snippet children()}
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger>
-            <Avatar.Root>
-              <Avatar.Image src={user?.imageUrl} alt={user?.username} />
-              <Avatar.Fallback>{user?.username}</Avatar.Fallback>
-            </Avatar.Root>
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Content align="end">
-            <DropdownMenu.Item onclick={() => goto("/conversations/shared")}
-              >My shared conversations</DropdownMenu.Item
-            >
-            <DropdownMenu.Item onclick={() => goto("/settings")}>Settings</DropdownMenu.Item>
-            <DropdownMenu.Item onclick={() => goto("/profile")}>Account</DropdownMenu.Item>
-            <DropdownMenu.Item
-              onclick={async () => {
-                await ctx.clerk?.signOut();
-                goto("/auth/sign-in");
-              }}>Sign out</DropdownMenu.Item
-            >
-          </DropdownMenu.Content>
-        </DropdownMenu.Root>
-      {/snippet}
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger>
+          <Avatar.Root>
+            <Avatar.Image src={user?.imageUrl} alt={user?.username} />
+            <Avatar.Fallback>{user?.username}</Avatar.Fallback>
+          </Avatar.Root>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content align="end">
+          <DropdownMenu.Item onclick={() => goto("/conversations/shared")}
+            >My shared conversations</DropdownMenu.Item
+          >
+          <DropdownMenu.Item onclick={() => goto("/settings")}>Settings</DropdownMenu.Item>
+          <DropdownMenu.Item onclick={() => goto("/profile")}>Account</DropdownMenu.Item>
+          <DropdownMenu.Item
+            onclick={async () => {
+              await ctx.clerk?.signOut();
+              goto("/auth/sign-in");
+            }}>Sign out</DropdownMenu.Item
+          >
+        </DropdownMenu.Content>
+      </DropdownMenu.Root>
     </ClerkLoaded>
     <DropdownMenu.Root>
       <DropdownMenu.Trigger>

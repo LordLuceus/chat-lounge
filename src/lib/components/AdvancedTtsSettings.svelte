@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { run } from "svelte/legacy";
-
   import Toast from "$lib/components/Toast.svelte";
   import { Button } from "$lib/components/ui/button";
   import * as Dialog from "$lib/components/ui/dialog";
@@ -15,7 +13,7 @@
   import { onMount } from "svelte";
   import Select from "svelte-select";
   import { toast } from "svelte-sonner";
-  import { derived } from "svelte/store";
+  import { get } from "svelte/store";
 
   const client = useQueryClient();
 
@@ -27,22 +25,22 @@
     speed: 1
   };
 
-  // 1. Local Form State (Bound to UI inputs)
   let localStability: number = $state(defaultSettings.stability!);
   let localSimilarityBoost: number = $state(defaultSettings.similarityBoost!);
   let localStyle: number = $state(defaultSettings.style!);
   let localSpeakerBoost: boolean = $state(defaultSettings.useSpeakerBoost!);
   let localSpeed: number = $state(defaultSettings.speed!);
 
-  const voiceSettingsQuery = createQuery<VoiceSettings>(
-    derived(selectedVoice, ($selectedVoice) => ({
-      queryKey: ["voiceSettings", $selectedVoice?.value],
+  const voiceSettingsQuery = createQuery<VoiceSettings>(() => {
+    const voice = get(selectedVoice);
+    return {
+      queryKey: ["voiceSettings", voice?.value],
       queryFn: async () => {
-        if (!$selectedVoice?.value) {
-          return { ...defaultSettings }; // Return a copy
+        if (!voice?.value) {
+          return { ...defaultSettings };
         }
         try {
-          const response = await fetch(`/api/voices/${$selectedVoice.value}/settings`);
+          const response = await fetch(`/api/voices/${voice.value}/settings`);
           if (!response.ok) {
             console.error("Failed to fetch voice settings:", response.statusText);
             toast.error(Toast, {
@@ -68,11 +66,10 @@
       },
       initialData: { ...defaultSettings },
       refetchOnWindowFocus: true,
-      enabled: !!$selectedVoice?.value // Only enable query when a voice is selected
-    }))
-  );
-
-  const voiceSettingsMutation = createMutation({
+      enabled: !!voice?.value
+    };
+  });
+  const voiceSettingsMutation = createMutation(() => ({
     mutationFn: async (voiceId: string) => {
       const response = await fetch(`/api/voices/${voiceId}/settings`, {
         method: "PUT",
@@ -104,7 +101,7 @@
     onError: (error) => {
       console.error("Error saving voice settings:", error);
     }
-  });
+  }));
 
   let models: TtsModelItem[] | undefined = $state();
 
@@ -117,23 +114,23 @@
     localSpeed = data.speed ?? defaultSettings.speed!;
   }
 
-  run(() => {
+  $effect(() => {
     if (
-      $voiceSettingsQuery.data &&
-      !$voiceSettingsQuery.isPlaceholderData &&
-      $voiceSettingsQuery.status === "success"
+      voiceSettingsQuery.data &&
+      !voiceSettingsQuery.isPlaceholderData &&
+      voiceSettingsQuery.status === "success"
     ) {
-      syncLocalStateWithQueryData($voiceSettingsQuery.data);
+      syncLocalStateWithQueryData(voiceSettingsQuery.data);
     }
   });
 
-  run(() => {
+  $effect(() => {
     if ($selectedVoice) {
       const currentData = client.getQueryData<VoiceSettings>([
         "voiceSettings",
         $selectedVoice.value
       ]);
-      if (!currentData || $voiceSettingsQuery.isPlaceholderData) {
+      if (!currentData || voiceSettingsQuery.isPlaceholderData) {
         syncLocalStateWithQueryData(currentData ?? defaultSettings);
       }
     }
@@ -164,8 +161,8 @@
 
   onMount(async () => {
     models = await fetchTtsModels();
-    if ($voiceSettingsQuery.data && !$voiceSettingsQuery.isPlaceholderData) {
-      syncLocalStateWithQueryData($voiceSettingsQuery.data);
+    if (voiceSettingsQuery.data && !voiceSettingsQuery.isPlaceholderData) {
+      syncLocalStateWithQueryData(voiceSettingsQuery.data);
     }
   });
 
@@ -174,7 +171,7 @@
       toast.warning(Toast, { componentProps: { text: "Please select a voice first" } });
       return;
     }
-    $voiceSettingsMutation.mutate($selectedVoice.value);
+    voiceSettingsMutation.mutate($selectedVoice.value);
   }
 
   function formatPercent(value: number): string {
@@ -188,9 +185,9 @@
 </script>
 
 <Dialog.Root>
-  <Dialog.Trigger asChild>
-    {#snippet children({ builder })}
-      <Button builders={[builder]} variant="outline">Advanced TTS Settings</Button>
+  <Dialog.Trigger>
+    {#snippet child({ props })}
+      <Button {...props} variant="outline">Advanced TTS Settings</Button>
     {/snippet}
   </Dialog.Trigger>
   <Dialog.Content class="sm:max-w-[425px]">
@@ -303,8 +300,8 @@
     </div>
     <Dialog.Footer>
       {#if $selectedVoice}
-        <Button on:click={handleSettingsChange} disabled={$voiceSettingsMutation.isPending}>
-          {#if $voiceSettingsMutation.isPending}Saving...{:else}Save Changes{/if}
+        <Button onclick={handleSettingsChange} disabled={voiceSettingsMutation.isPending}>
+          {#if voiceSettingsMutation.isPending}Saving...{:else}Save Changes{/if}
         </Button>
       {/if}
     </Dialog.Footer>

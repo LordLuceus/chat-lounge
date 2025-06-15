@@ -1,6 +1,6 @@
 <script lang="ts">
   import { goto, preloadData } from "$app/navigation";
-  import { page } from "$app/stores";
+  import { page } from "$app/state";
   import Toast from "$lib/components/Toast.svelte";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { Button } from "$lib/components/ui/button";
@@ -13,7 +13,7 @@
 
   const client = useQueryClient();
 
-  const deleteAgentMutation = createMutation({
+  const deleteAgentMutation = createMutation(() => ({
     mutationFn: async (id: string) => {
       await fetch(`/api/agents/${id}`, { method: "DELETE" });
     },
@@ -24,20 +24,20 @@
         predicate: (query) => query.queryKey[0] === "agents" && query.queryKey[1] !== id
       });
     }
-  });
+  }));
 
   interface Props {
     id: string;
     name: string;
   }
 
-  let { id, name }: Props = $props();
+  const { id, name }: Props = $props();
 
   let editDialogOpen = $state(false);
   let deleteDialogOpen = $state(false);
-  let editData: EditData = $state();
+  let editData: EditData | null = $state(null);
 
-  let editUrl = $derived(`/agents/${id}/edit`);
+  const editUrl = $derived(`/agents/${id}/edit`);
 
   async function editClick() {
     const result = await preloadData(editUrl);
@@ -53,12 +53,12 @@
   }
 
   function handleDelete(agentId: string) {
-    $deleteAgentMutation.mutate(agentId, {
+    deleteAgentMutation.mutate(agentId, {
       onSuccess: () => {
         deleteDialogOpen = false;
         toast.success(Toast, { componentProps: { text: "Agent deleted." } });
 
-        if ($page.url.pathname.includes(agentId)) {
+        if (page.url.pathname.includes(agentId)) {
           goto("/");
         }
       }
@@ -85,19 +85,19 @@
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-      <AlertDialog.Action on:click={() => handleDelete(id)}>Delete</AlertDialog.Action>
+      <AlertDialog.Action onclick={() => handleDelete(id)}>Delete</AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>
 
 <DropdownMenu.Root>
-  <DropdownMenu.Trigger asChild>
-    {#snippet children({ builder })}
-      <Button builders={[builder]}>Actions</Button>
+  <DropdownMenu.Trigger>
+    {#snippet child({ props })}
+      <Button {...props}>Actions</Button>
     {/snippet}
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
-    <DropdownMenu.Item on:click={async () => await editClick()}>Edit</DropdownMenu.Item>
-    <DropdownMenu.Item on:click={() => deleteClick()}>Delete</DropdownMenu.Item>
+    <DropdownMenu.Item onclick={async () => await editClick()}>Edit</DropdownMenu.Item>
+    <DropdownMenu.Item onclick={() => deleteClick()}>Delete</DropdownMenu.Item>
   </DropdownMenu.Content>
 </DropdownMenu.Root>

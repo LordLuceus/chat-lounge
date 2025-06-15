@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { run } from "svelte/legacy";
-
   import { toast } from "svelte-sonner";
   import Toast from "./Toast.svelte";
 
@@ -9,9 +7,9 @@
     value: string;
   }
 
-  let { characterLimit, value }: Props = $props();
+  const { characterLimit, value }: Props = $props();
 
-  run(() => {
+  $effect(() => {
     if (value?.length >= characterLimit!) {
       toast.error(Toast, {
         componentProps: {

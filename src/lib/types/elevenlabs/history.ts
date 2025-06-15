@@ -7,11 +7,11 @@ export interface HistoryResponse {
 export interface History {
   history_item_id: string;
   request_id: string;
-  voice_id: string;
+  voice_id: string | null;
   model_id: ModelID;
-  voice_name: string;
-  voice_category: VoiceCategory;
-  text: string;
+  voice_name: string | null;
+  voice_category: VoiceCategory | null;
+  text: string | null;
   date_unix: number;
   character_count_change_from: number;
   character_count_change_to: number;
@@ -21,6 +21,7 @@ export interface History {
   feedback: null;
   share_link_id: null;
   source: Source;
+  dialogue?: Dialogue[];
 }
 
 export enum ContentType {
@@ -59,4 +60,10 @@ export enum VoiceCategory {
   Generated = "generated",
   Premade = "premade",
   Professional = "professional"
+}
+
+export interface Dialogue {
+  voice_id: string;
+  text: string;
+  voice_name: string;
 }

@@ -109,18 +109,30 @@
         <li>
           <Card.Root>
             <Card.Header>
-              <Card.Title tag="h2">{historyItem.text.slice(0, 80)}...</Card.Title>
+              <Card.Title tag="h2"
+                >{historyItem.text
+                  ? historyItem.text.slice(0, 80)
+                  : historyItem.dialogue?.[0].text.slice(0, 80)}...</Card.Title
+              >
             </Card.Header>
             <Card.Content>
-              <p>{historyItem.voice_name}</p>
+              <p>{historyItem.voice_name ?? historyItem.dialogue?.[0].voice_name}</p>
               <p><Time timestamp={historyItem.date_unix * 1000} relative /></p>
             </Card.Content>
             <Card.Footer>
-              <Button on:click={() => handlePlay(historyItem.history_item_id, historyItem.text)}
-                >Play</Button
+              <Button
+                on:click={() =>
+                  handlePlay(
+                    historyItem.history_item_id,
+                    historyItem.text ?? historyItem.dialogue?.[0].text
+                  )}>Play</Button
               >
               <Button
-                on:click={() => handleDownload(historyItem.history_item_id, historyItem.text)}
+                on:click={() =>
+                  handleDownload(
+                    historyItem.history_item_id,
+                    historyItem.text ?? historyItem.dialogue?.[0].text
+                  )}
               >
                 Download</Button
               >

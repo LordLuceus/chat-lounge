@@ -1,6 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
-  import { page } from "$app/stores";
+  import { page } from "$app/state";
   import Toast from "$lib/components/Toast.svelte";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
@@ -12,11 +12,11 @@
     name: string;
   }
 
-  let { id, name }: Props = $props();
+  const { id, name }: Props = $props();
 
   const client = useQueryClient();
 
-  const deleteConversationMutation = createMutation({
+  const deleteConversationMutation = createMutation(() => ({
     mutationFn: async (id: string) =>
       (
         await fetch(`/api/conversations/shared/${id}`, {
@@ -31,7 +31,7 @@
       });
       client.invalidateQueries({ queryKey: ["conversations"], exact: true });
     }
-  });
+  }));
 
   let deleteDialogOpen = $state(false);
 
@@ -40,12 +40,12 @@
   }
 
   function handleDelete(conversationId: string) {
-    $deleteConversationMutation.mutate(conversationId, {
+    deleteConversationMutation.mutate(conversationId, {
       onSuccess: () => {
         deleteDialogOpen = false;
         toast.success(Toast, { componentProps: { text: "Conversation unshared successfully." } });
 
-        if ($page.url.pathname.includes(conversationId)) {
+        if (page.url.pathname.includes(conversationId)) {
           goto("/");
         }
       }
@@ -71,7 +71,7 @@
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-      <AlertDialog.Action on:click={() => handleDelete(id)}>Unshare</AlertDialog.Action>
+      <AlertDialog.Action onclick={() => handleDelete(id)}>Unshare</AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>
@@ -79,7 +79,7 @@
 <DropdownMenu.Root>
   <DropdownMenu.Trigger>Actions</DropdownMenu.Trigger>
   <DropdownMenu.Content>
-    <DropdownMenu.Item on:click={handleCopyShareLink}>Copy share link</DropdownMenu.Item>
-    <DropdownMenu.Item on:click={deleteClick}>Unshare</DropdownMenu.Item>
+    <DropdownMenu.Item onclick={handleCopyShareLink}>Copy share link</DropdownMenu.Item>
+    <DropdownMenu.Item onclick={deleteClick}>Unshare</DropdownMenu.Item>
   </DropdownMenu.Content>
 </DropdownMenu.Root>

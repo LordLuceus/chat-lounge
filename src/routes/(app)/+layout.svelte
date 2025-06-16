@@ -5,9 +5,9 @@
   import FolderActions from "$lib/components/FolderActions.svelte";
   import NewVersionPopup from "$lib/components/NewVersionPopup.svelte";
   import Toast from "$lib/components/Toast.svelte";
+  import * as Collapsible from "$lib/components/ui";
   import * as Avatar from "$lib/components/ui/avatar";
   import { Button } from "$lib/components/ui/button";
-  import * as Collapsible from "$lib/components/ui/collapsible";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Toaster } from "$lib/components/ui/sonner";
   import { generateTTS } from "$lib/services/tts-service";

@@ -3,7 +3,7 @@
     text: string;
   }
 
-  let { text }: Props = $props();
+  const { text }: Props = $props();
 </script>
 
 <div role="alert">

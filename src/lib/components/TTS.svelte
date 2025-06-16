@@ -10,7 +10,7 @@
     ttsGenerating,
     ttsProps
   } from "$lib/stores";
-  import { Loader, Speech } from "lucide-svelte";
+  import { Loader, Speech } from "@lucide/svelte";
   import { onDestroy } from "svelte";
   import { toast } from "svelte-sonner";
 
@@ -18,7 +18,7 @@
     text: string;
   }
 
-  let { text }: Props = $props();
+  const { text }: Props = $props();
 
   let controller: AbortController;
   let signal: AbortSignal;
@@ -44,7 +44,7 @@
   });
 </script>
 
-<Button on:click={tts} disabled={$ttsGenerating}>
+<Button onclick={tts} disabled={$ttsGenerating}>
   {#if $ttsGenerating}
     <Loader />
   {:else}

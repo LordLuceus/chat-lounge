@@ -1,6 +1,6 @@
 <script lang="ts">
   import InfiniteScroll from "$lib/components/InfiniteScroll.svelte";
-  import * as Collapsible from "$lib/components/ui/collapsible";
+  import * as Collapsible from "$lib/components/ui";
   import type { PagedResponse } from "$lib/types/api";
   import type { CreateInfiniteQueryResult, InfiniteData } from "@tanstack/svelte-query";
 
@@ -19,13 +19,13 @@
 <Collapsible.Root bind:open>
   <Collapsible.Trigger aria-expanded={open}>{itemType}</Collapsible.Trigger>
   <Collapsible.Content>
-    {#if $query.isSuccess}
+    {#if query.isSuccess}
       <InfiniteScroll
-        hasMore={$query.hasNextPage}
-        fetchMore={() => !$query.isFetching && $query.fetchNextPage()}
+        hasMore={query.hasNextPage}
+        fetchMore={() => !query.isFetching && query.fetchNextPage()}
       >
         <ul class="list-none">
-          {#each $query.data.pages as { data }}
+          {#each query.data.pages as { data }}
             {#each data as item}
               <li class="flex items-center">
                 {@render link?.({ item })}

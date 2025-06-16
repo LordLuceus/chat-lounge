@@ -4,7 +4,7 @@
   import { Button } from "$lib/components/ui/button";
   import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
   import type { Message } from "@ai-sdk/svelte";
-  import { BotMessageSquare } from "lucide-svelte";
+  import { BotMessageSquare } from "@lucide/svelte";
   import Markdown from "svelte-exmarkdown";
   import { gfmPlugin } from "svelte-exmarkdown/gfm";
   import { toast } from "svelte-sonner";
@@ -15,7 +15,7 @@
     message: Message;
   }
 
-  let { message }: Props = $props();
+  const { message }: Props = $props();
 
   async function copyToClipboard() {
     await navigator.clipboard.writeText(message.content);
@@ -31,7 +31,7 @@
       {/if}
       <Markdown md={message.content} {plugins} />
       {#if message.role === "assistant"}
-        <Button on:click={copyToClipboard}>Copy</Button>
+        <Button onclick={copyToClipboard}>Copy</Button>
       {/if}
     </div>
   </section>

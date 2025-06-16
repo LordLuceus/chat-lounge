@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Toast from "$lib/components/Toast.svelte";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
@@ -45,7 +44,7 @@
     const response = await fetch(`/api/tts-history/${id}`);
 
     if (!response.ok) {
-      toast.error(Toast, { componentProps: { text: "Failed to play audio" } });
+      toast.error("Failed to play audio");
     }
 
     const audio = await response.blob();
@@ -60,7 +59,7 @@
     const response = await fetch(`/api/tts-history/${id}`);
 
     if (!response.ok) {
-      toast.error(Toast, { componentProps: { text: "Failed to download audio" } });
+      toast.error("Failed to download audio");
     }
 
     const audio = await response.blob();
@@ -89,7 +88,7 @@
       onSuccess: () => {
         deleteDialogOpen = false;
         deleteId = null;
-        toast.success(Toast, { componentProps: { text: "History item deleted." } });
+        toast.success("History item deleted.");
       }
     });
   }
@@ -104,8 +103,8 @@
 
 {#if historyQuery.isSuccess}
   <ul class="list-none">
-    {#each historyQuery.data.pages as page}
-      {#each page.history as historyItem}
+    {#each historyQuery.data.pages as page, index (index)}
+      {#each page.history as historyItem (historyItem.history_item_id)}
         <li>
           <Card.Root>
             <Card.Header>

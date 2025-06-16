@@ -15,7 +15,6 @@
   import { SignedIn } from "svelte-clerk";
   import { useClerkContext } from "svelte-clerk/client";
   import Time from "svelte-time";
-  import { get } from "svelte/store";
   import type { PageData } from "./$types";
   import AgentForm from "./AgentForm.svelte";
 
@@ -54,22 +53,24 @@
     return fetch(url.toString()).then((res) => res.json());
   };
 
-  const agentsQuery = createInfiniteQuery<PagedResponse<Agent>>(() => {
-    const params = get(searchParams);
-    return {
-      queryKey: ["agents", params],
-      queryFn: ({ pageParam }: { pageParam: unknown }) =>
-        fetchAgents({ pageParam: pageParam as number }, params),
-      initialPageParam: 1,
-      getNextPageParam: (lastPage: PagedResponse<Agent>) => {
-        if (lastPage.meta.page < lastPage.meta.totalPages) {
-          return lastPage.meta.page + 1;
-        }
+  const agentsQuery = $derived(
+    createInfiniteQuery<PagedResponse<Agent>>(() => {
+      return {
+        queryKey: ["agents", $searchParams],
+        queryFn: ({ pageParam }: { pageParam: unknown }) =>
+          fetchAgents({ pageParam: pageParam as number }, $searchParams),
+        initialPageParam: 1,
+        getNextPageParam: (lastPage: PagedResponse<Agent>) => {
+          if (lastPage.meta.page < lastPage.meta.totalPages) {
+            return lastPage.meta.page + 1;
+          }
 
-        return undefined;
-      }
-    };
-  });
+          return undefined;
+        }
+      };
+    })
+  );
+
   onDestroy(() => {
     if (browser)
       searchParams.set({ search: "", sortBy: "", sortOrder: "", ownerOnly: false, visibility: "" });

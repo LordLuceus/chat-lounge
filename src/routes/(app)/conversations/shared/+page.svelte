@@ -10,7 +10,6 @@
   import { createInfiniteQuery } from "@tanstack/svelte-query";
   import { onDestroy } from "svelte";
   import Time from "svelte-time";
-  import { get } from "svelte/store";
 
   const fetchConversations = async (
     { pageParam = 1 },
@@ -32,22 +31,24 @@
     return await fetch(url.toString()).then((res) => res.json());
   };
 
-  const conversationsQuery = createInfiniteQuery<PagedResponse<SharedConversation>>(() => {
-    const params = get(searchParams);
-    return {
-      queryKey: ["sharedConversations", params],
-      queryFn: ({ pageParam }: { pageParam: unknown }) =>
-        fetchConversations({ pageParam: pageParam as number }, params),
-      initialPageParam: 1,
-      getNextPageParam: (lastPage: PagedResponse<SharedConversation>) => {
-        if (lastPage.meta.page < lastPage.meta.totalPages) {
-          return lastPage.meta.page + 1;
-        }
+  const conversationsQuery = $derived(
+    createInfiniteQuery<PagedResponse<SharedConversation>>(() => {
+      return {
+        queryKey: ["sharedConversations", $searchParams],
+        queryFn: ({ pageParam }: { pageParam: unknown }) =>
+          fetchConversations({ pageParam: pageParam as number }, $searchParams),
+        initialPageParam: 1,
+        getNextPageParam: (lastPage: PagedResponse<SharedConversation>) => {
+          if (lastPage.meta.page < lastPage.meta.totalPages) {
+            return lastPage.meta.page + 1;
+          }
 
-        return undefined;
-      }
-    };
-  });
+          return undefined;
+        }
+      };
+    })
+  );
+
   onDestroy(() => {
     if (browser) searchParams.set({ search: "", sortBy: "", sortOrder: "" });
   });

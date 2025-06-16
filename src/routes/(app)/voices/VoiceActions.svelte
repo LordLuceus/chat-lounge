@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Toast from "$lib/components/Toast.svelte";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { Button } from "$lib/components/ui/button";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
@@ -45,17 +44,17 @@
 
   $effect(() => {
     if (copyIdSuccess) {
-      toast.success(Toast, { componentProps: { text: "Voice ID copied to clipboard." } });
+      toast.success("Voice ID copied to clipboard.");
       copyIdSuccess = false;
     }
 
     if (deleteSuccess) {
-      toast.success(Toast, { componentProps: { text: "Voice deleted." } });
+      toast.success("Voice deleted.");
       deleteSuccess = false;
     }
 
     if (deleteError) {
-      toast.error(Toast, { componentProps: { text: "Failed to delete voice." } });
+      toast.error("Failed to delete voice.");
       deleteError = false;
     }
   });

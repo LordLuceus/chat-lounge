@@ -1,6 +1,5 @@
 <script lang="ts">
   import { browser } from "$app/environment";
-  import Toast from "$lib/components/Toast.svelte";
   import { Button } from "$lib/components/ui/button";
   import { Mic } from "@lucide/svelte";
   import { onDestroy, onMount } from "svelte";
@@ -54,11 +53,7 @@
     } catch (e) {
       console.error(e);
       isRecording = false;
-      toast.warning(Toast, {
-        componentProps: {
-          text: "Failed to start recording. Please check your microphone permissions."
-        }
-      });
+      toast.warning("Failed to start recording. Please check your microphone permissions.");
     }
   }
 

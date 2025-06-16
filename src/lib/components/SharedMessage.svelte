@@ -1,6 +1,5 @@
 <script lang="ts">
   import { copyCodeBlocks } from "$lib/actions/copy-code";
-  import Toast from "$lib/components/Toast.svelte";
   import { Button } from "$lib/components/ui/button";
   import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
   import type { Message } from "@ai-sdk/svelte";
@@ -19,7 +18,7 @@
 
   async function copyToClipboard() {
     await navigator.clipboard.writeText(message.content);
-    toast.success(Toast, { componentProps: { text: "Message copied to clipboard" } });
+    toast.success("Message copied to clipboard");
   }
 </script>
 

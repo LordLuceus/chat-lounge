@@ -1,7 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
   import Chat from "$lib/components/Chat.svelte";
-  import Toast from "$lib/components/Toast.svelte";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { getConversationMessages, type Message } from "$lib/helpers";
   import type { ConversationWithMessageMap } from "$lib/server/conversations-service";
@@ -100,13 +99,11 @@
     });
     socket.on("completed", (data) => {
       client.invalidateQueries({ queryKey: ["conversations"] });
-      toast.success(Toast, { componentProps: { text: "Chat imported successfully." } });
+      toast.success("Chat imported successfully.");
       socket.disconnect();
     });
     socket.on("failed", (data) => {
-      toast.error(Toast, {
-        componentProps: { text: `Failed to import chat. ${data.error}` }
-      });
+      toast.error(`Failed to import chat. ${data.error}`);
     });
     socket.emit("join-import-room", $conversationStore.id);
   });

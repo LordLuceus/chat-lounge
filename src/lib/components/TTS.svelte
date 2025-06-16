@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Toast from "$lib/components/Toast.svelte";
   import { Button } from "$lib/components/ui/button";
   import {
     audioFilename,
@@ -29,7 +28,7 @@
   };
 
   const handleError = (error: string) => {
-    toast.error(Toast, { componentProps: { text: error } });
+    toast.error(error);
   };
 
   const tts = (): void => {

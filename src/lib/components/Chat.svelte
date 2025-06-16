@@ -4,7 +4,6 @@
   import { page } from "$app/state";
   import Message from "$lib/components/Message.svelte";
   import Recorder from "$lib/components/Recorder.svelte";
-  import Toast from "$lib/components/Toast.svelte";
   import TtsSettings from "$lib/components/TtsSettings.svelte";
   import { Button } from "$lib/components/ui/button";
   import { Textarea } from "$lib/components/ui/textarea";
@@ -133,8 +132,7 @@
         })
       ).json(),
     onSuccess: (data) => (followups = data),
-    onError: () =>
-      toast.error(Toast, { componentProps: { text: "Failed to load follow-up suggestions." } })
+    onError: () => toast.error("Failed to load follow-up suggestions.")
   }));
 
   function loadMoreMessages() {
@@ -315,9 +313,7 @@
       });
 
       if (!res.ok) {
-        toast.error(Toast, {
-          componentProps: { text: "Failed to update message." }
-        });
+        toast.error("Failed to update message.");
       }
 
       client.invalidateQueries({ queryKey: ["conversations"] });
@@ -360,9 +356,7 @@
               `${conversation.agentId ? "/agents/" + conversation.agentId : ""}/conversations/${conversation.id}`
             );
           } else {
-            toast.error(Toast, {
-              componentProps: { text: "Failed to import conversation." }
-            });
+            toast.error("Failed to import conversation.");
           }
         } catch (error) {
           console.error("Error importing conversation:", error);

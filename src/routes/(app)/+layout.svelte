@@ -4,7 +4,6 @@
   import ConversationActions from "$lib/components/ConversationActions.svelte";
   import FolderActions from "$lib/components/FolderActions.svelte";
   import NewVersionPopup from "$lib/components/NewVersionPopup.svelte";
-  import Toast from "$lib/components/Toast.svelte";
   import * as Collapsible from "$lib/components/ui";
   import * as Avatar from "$lib/components/ui/avatar";
   import { Button } from "$lib/components/ui/button";
@@ -111,7 +110,7 @@
         onPlayAudio: (audioUrl: string | null) => currentAudioUrl.set(audioUrl),
         onDownloadAudio: ({ downloadUrl, filename }) =>
           setDownloadUrlAndFilename(downloadUrl, filename),
-        onError: (error: string) => toast.error(Toast, { componentProps: { text: error } }),
+        onError: (error: string) => toast.error(error),
         signal: $ttsProps.signal
       });
     }

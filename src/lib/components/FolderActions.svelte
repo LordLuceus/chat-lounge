@@ -1,7 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
-  import Toast from "$lib/components/Toast.svelte";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { Button } from "$lib/components/ui/button";
   import * as Dialog from "$lib/components/ui/dialog";
@@ -62,7 +61,7 @@
     deleteFolderMutation.mutate(folderId, {
       onSuccess: () => {
         deleteDialogOpen = false;
-        toast.success(Toast, { componentProps: { text: "Folder deleted." } });
+        toast.success("Folder deleted.");
 
         if (page.url.pathname.includes(folderId)) {
           goto("/");

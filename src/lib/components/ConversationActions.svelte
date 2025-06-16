@@ -3,7 +3,6 @@
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import DataList from "$lib/components/DataList.svelte";
-  import Toast from "$lib/components/Toast.svelte";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { Button } from "$lib/components/ui/button";
   import * as Dialog from "$lib/components/ui/dialog";
@@ -125,9 +124,7 @@
     onSuccess: ({ id }) => {
       const url = `${window.location.origin}/conversations/shared/${id}`;
       navigator.clipboard.writeText(url);
-      toast.success(Toast, {
-        componentProps: { text: "Conversation shared successfully. Copied link to clipboard." }
-      });
+      toast.success("Conversation shared successfully. Copied link to clipboard.");
       client.invalidateQueries({ queryKey: ["sharedConversations"] });
       client.invalidateQueries({ queryKey: ["conversations"] });
     }
@@ -155,9 +152,7 @@
       ).json(),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ["conversations"] });
-      toast.success(Toast, {
-        componentProps: { text: `Conversation ${isPinned ? "unpinned" : "pinned"} successfully.` }
-      });
+      toast.success(`Conversation ${isPinned ? "unpinned" : "pinned"} successfully.`);
     }
   }));
 
@@ -235,7 +230,7 @@
     deleteConversationMutation.mutate(conversationId, {
       onSuccess: () => {
         deleteDialogOpen = false;
-        toast.success(Toast, { componentProps: { text: "Conversation deleted." } });
+        toast.success("Conversation deleted.");
 
         if (page.url.pathname.includes(conversationId)) {
           goto("/");
@@ -264,9 +259,7 @@
   function handleAddToFolder() {
     addToFolderMutation.mutate(id, {
       onSuccess: () => {
-        toast.success(Toast, {
-          componentProps: { text: "Conversation added to folder successfully." }
-        });
+        toast.success("Conversation added to folder successfully.");
         addToFolderDialogOpen = false;
       }
     });
@@ -275,9 +268,7 @@
   function handleRemoveFromFolder() {
     removeFromFolderMutation.mutate(id, {
       onSuccess: () => {
-        toast.success(Toast, {
-          componentProps: { text: "Conversation removed from folder successfully." }
-        });
+        toast.success("Conversation removed from folder successfully.");
       }
     });
   }

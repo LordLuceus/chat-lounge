@@ -2,7 +2,6 @@
   import { page } from "$app/state";
   import { copyCodeBlocks } from "$lib/actions/copy-code";
   import EditMessage from "$lib/components/EditMessage.svelte";
-  import Toast from "$lib/components/Toast.svelte";
   import Tts from "$lib/components/TTS.svelte";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import * as Avatar from "$lib/components/ui/avatar";
@@ -37,7 +36,7 @@
 
   async function copyToClipboard() {
     await navigator.clipboard.writeText(message.content);
-    toast.success(Toast, { componentProps: { text: "Message copied to clipboard" } });
+    toast.success("Message copied to clipboard");
   }
 
   const currentSiblingIndex = $derived(siblings.findIndex((sibling) => sibling.id === message.id));
@@ -69,13 +68,11 @@
     });
 
     if (!response.ok) {
-      toast.error(Toast, {
-        componentProps: { text: "Failed to rewind conversation." }
-      });
+      toast.error("Failed to rewind conversation.");
     }
 
     client.invalidateQueries({ queryKey: ["conversations"] });
-    toast.success(Toast, { componentProps: { text: "Rewind successful." } });
+    toast.success("Rewind successful.");
     rewindDialogOpen = false;
   }
 </script>

@@ -1,7 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
-  import Toast from "$lib/components/Toast.svelte";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
@@ -43,7 +42,7 @@
     deleteConversationMutation.mutate(conversationId, {
       onSuccess: () => {
         deleteDialogOpen = false;
-        toast.success(Toast, { componentProps: { text: "Conversation unshared successfully." } });
+        toast.success("Conversation unshared successfully.");
 
         if (page.url.pathname.includes(conversationId)) {
           goto("/");
@@ -55,9 +54,7 @@
   function handleCopyShareLink() {
     const url = `${window.location.origin}/conversations/shared/${id}`;
     navigator.clipboard.writeText(url);
-    toast.success(Toast, {
-      componentProps: { text: "Link copied to clipboard." }
-    });
+    toast.success("Link copied to clipboard.");
   }
 </script>
 

@@ -176,7 +176,7 @@
     const lastMessage = chat.messages.at(-1);
     if (lastMessage?.role !== "assistant") return;
     await navigator.clipboard.writeText(lastMessage.content);
-    toast.success(Toast, { componentProps: { text: "Last message copied to clipboard." } });
+    toast.success("Last message copied to clipboard.");
   }
 
   function handleCopyLastMessage(event: KeyboardEvent) {
@@ -278,7 +278,7 @@
 
   $effect(() => {
     if (initialMessages) {
-      tick().then(() => (chat.messages = initialMessages));
+      chat.messages = initialMessages;
     }
   });
 

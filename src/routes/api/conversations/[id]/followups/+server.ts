@@ -20,7 +20,11 @@ export const POST = (async ({ locals, params }) => {
     return error(404, "Conversation not found");
   }
 
-  const model = await getModel(conversation.modelId!);
+  if (!conversation.modelId) {
+    return error(400, "Conversation does not have a model associated with it");
+  }
+
+  const model = await getModel(conversation.modelId);
   if (!model) {
     return error(404, "Model not found");
   }

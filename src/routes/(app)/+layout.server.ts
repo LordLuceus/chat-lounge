@@ -1,11 +1,12 @@
 import { getApiKeys } from "$lib/server/api-keys-service";
 import { AIProvider } from "$lib/types/db";
+import { redirect } from "@sveltejs/kit";
 import type { LayoutServerLoad } from "./$types";
 
 export const load = (async ({ locals }) => {
   const { userId } = locals.auth();
   if (!userId) {
-    return {};
+    return redirect(307, "/auth/sign-in");
   }
 
   const storedKeys = await getApiKeys(userId);

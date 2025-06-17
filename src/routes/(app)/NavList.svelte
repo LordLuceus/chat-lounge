@@ -25,8 +25,8 @@
         fetchMore={() => !query.isFetching && query.fetchNextPage()}
       >
         <ul class="list-none">
-          {#each query.data.pages as { data }}
-            {#each data as item}
+          {#each query.data.pages as { data }, index (index)}
+            {#each data as item (item.id)}
               <li class="flex items-center">
                 {@render link?.({ item })}
                 {@render menu?.({ item })}

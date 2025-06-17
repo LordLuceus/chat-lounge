@@ -277,14 +277,11 @@ class AIService {
     const titleGenerator = await getAgentByName(userId, "Title Generator");
 
     if (titleGenerator) {
-      console.log("Using title generator agent");
       const { text } = await generateText({
         model: this.client(modelId, this.provider === "google" ? this.GOOGLE_SETTINGS : undefined),
         messages: [...messages, { role: "user", content: "" }],
         system: titleGenerator.instructions
       });
-
-      console.log(text);
 
       return text.trim().replaceAll('"', "").replaceAll("*", "");
     }

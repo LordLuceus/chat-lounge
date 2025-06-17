@@ -212,3 +212,27 @@ export async function addAgentUser(agentId: string, userId: string, isOwner: boo
     }
   });
 }
+
+export async function getAgentByName(
+  userId: string,
+  name: string,
+  visibility: Visibility | null = null
+) {
+  return prisma.agent.findFirst({
+    where: {
+      name,
+      OR: [
+        {
+          agentUsers: {
+            some: {
+              userId
+            }
+          }
+        },
+        { visibility: Visibility.Public },
+        { visibility: Visibility.Hidden }
+      ],
+      ...(visibility ? { visibility } : {})
+    }
+  });
+}

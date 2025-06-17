@@ -1,6 +1,6 @@
 import charPrompt from "$lib/data/character_prompt.txt?raw";
 import { errorHandler } from "$lib/helpers/ai-error-handler";
-import type { AgentWithUsage } from "$lib/server/agents-service";
+import { getAgentByName, type AgentWithUsage } from "$lib/server/agents-service";
 import {
   addConversationMessage,
   getConversationMessage,
@@ -266,11 +266,32 @@ class AIService {
   }
 
   public async generateConversationName(
-    messages: { role: string; content: string }[],
-    modelId: string
-  ) {
+    messages: Message[],
+    modelId: string,
+    userId: string
+  ): Promise<string> {
+    if (messages.length === 0) {
+      return "New Chat";
+    }
+
+    const titleGenerator = await getAgentByName(userId, "Title Generator");
+
+    if (titleGenerator) {
+      console.log("Using title generator agent");
+      const { text } = await generateText({
+        model: this.client(modelId, this.provider === "google" ? this.GOOGLE_SETTINGS : undefined),
+        messages: [...messages, { role: "user", content: "" }],
+        system: titleGenerator.instructions
+      });
+
+      console.log(text);
+
+      return text.trim().replaceAll('"', "").replaceAll("*", "");
+    }
+
+    // Fallback to a generic title generation if no Title Generator agent is found
     const prompt =
-      "Summarise the following conversation in five words or fewer. Be as concise as possible without losing the context of the conversation. Your goal is to extract the key point of the conversation and turn it into a short and interesting title. Respond only with the title and nothing else.";
+      "Create a spoiler-free title for this conversation in five words or fewer. Focus on the general topic, setting, or participants rather than specific outcomes, plot points, or results. For combat scenes, mention the combatants or fighting style but avoid revealing who wins or specific events. Keep it engaging but vague enough to avoid spoilers. Respond only with the title and nothing else.";
 
     let messageContext: typeof messages;
 
@@ -290,10 +311,6 @@ class AIService {
     return text.trim().replaceAll('"', "").replaceAll("*", "");
   }
 
-  /**
-   * Generate follow-up suggestions based on the conversation context.
-   * Returns an array of three suggestion strings.
-   */
   public async generateFollowUps(
     messages: { role: string; content: string }[],
     modelId: string

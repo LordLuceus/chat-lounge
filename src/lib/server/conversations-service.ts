@@ -450,7 +450,7 @@ async function generateConversationName(
 
   const service = new AIService(apiKey.provider as AIProvider, apiKey.key);
 
-  return service.generateConversationName(messages, modelIdToUse, userId);
+  return service.generateConversationName(messages as Message[], modelIdToUse, userId);
 }
 
 export async function importChat(

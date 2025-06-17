@@ -1,5 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/environment";
+  import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
   import ConversationActions from "$lib/components/ConversationActions.svelte";
   import DataList from "$lib/components/DataList.svelte";
@@ -8,7 +9,7 @@
   import type { PagedResponse } from "$lib/types/api";
   import type { Conversation } from "@prisma/client";
   import { createInfiniteQuery } from "@tanstack/svelte-query";
-  import { onDestroy } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import Time from "svelte-time";
   import type { PageData } from "./$types";
 
@@ -62,10 +63,21 @@
     if (browser) searchParams.set({ search: "", sortBy: "", sortOrder: "", folderId: undefined });
   });
 
-  $effect(() => {
-    if (data.folder) {
-      searchParams.set({ ...$searchParams, folderId: data.folder.id });
+  function setFolderId() {
+    if (browser) {
+      const folderId = data.folder?.id;
+      if (folderId) {
+        searchParams.set({ ...$searchParams, folderId });
+      }
     }
+  }
+
+  onMount(() => {
+    setFolderId();
+  });
+
+  afterNavigate(() => {
+    setFolderId();
   });
 </script>
 

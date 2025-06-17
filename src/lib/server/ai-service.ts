@@ -9,7 +9,11 @@ import {
 import { getUser } from "$lib/server/users-service";
 import { AgentType, AIProvider } from "$lib/types/db";
 import { createAnthropic, type AnthropicProvider } from "@ai-sdk/anthropic";
-import { createGoogleGenerativeAI, type GoogleGenerativeAIProvider } from "@ai-sdk/google";
+import {
+  createGoogleGenerativeAI,
+  type GoogleGenerativeAIProvider,
+  type GoogleGenerativeAIProviderOptions
+} from "@ai-sdk/google";
 import { createMistral, type MistralProvider } from "@ai-sdk/mistral";
 import { createOpenAI, type OpenAIProvider } from "@ai-sdk/openai";
 import type { Agent, Model } from "@prisma/client";
@@ -106,7 +110,10 @@ class AIService {
       onCompletion
     );
 
-    const stream = response.toDataStreamResponse({ getErrorMessage: errorHandler });
+    const stream = response.toDataStreamResponse({
+      getErrorMessage: errorHandler,
+      sendReasoning: true
+    });
 
     return stream;
   }
@@ -122,7 +129,19 @@ class AIService {
       messages,
       system,
       temperature: 1.0,
-      onFinish
+      onFinish,
+      onChunk({ chunk }) {
+        if (chunk.type === "reasoning") {
+          console.log(chunk.textDelta);
+        }
+      },
+      providerOptions: {
+        googleGenerativeAI: {
+          thinkingConfig: {
+            includeThoughts: true
+          }
+        } satisfies GoogleGenerativeAIProviderOptions
+      }
     });
 
     return result;

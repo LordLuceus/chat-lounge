@@ -89,7 +89,24 @@
         {:else}
           <BotMessageSquare />
         {/if}
-        <Markdown md={message.content} {plugins} />
+
+        {#if message.parts && message.parts.length > 0}
+          {#each message.parts as part}
+            {#if part.type === "text"}
+              <Markdown md={part.text} {plugins} />
+            {:else if part.type === "reasoning"}
+              <details class="reasoning-container">
+                <summary>Reasoning</summary>
+                <div class="reasoning-content">
+                  <Markdown md={part.reasoning} {plugins} />
+                </div>
+              </details>
+            {/if}
+          {/each}
+        {:else}
+          <Markdown md={message.content} {plugins} />
+        {/if}
+
         {#if message.role === "user" && !isLoading}
           <EditMessage id={message.id} content={message.content} onSubmit={onEdit} />
         {/if}

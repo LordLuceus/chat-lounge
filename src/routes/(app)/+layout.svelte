@@ -10,7 +10,7 @@
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Toaster } from "$lib/components/ui/sonner";
   import { generateTTS } from "$lib/services/tts-service";
-  import { audioFilename, currentAudioUrl, downloadUrl, ttsProps, voices } from "$lib/stores";
+  import { audioFilename, downloadUrl, ttsProps, voices } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
   import type { Voice } from "$lib/types/elevenlabs";
   import { SunMoon } from "@lucide/svelte";
@@ -96,20 +96,22 @@
     if (voicesQuery) voices.set(voicesQuery.data);
   });
 
-  function setDownloadUrlAndFilename(url: string, filename: string) {
-    downloadUrl.set(url);
-    audioFilename.set(filename);
-  }
+  let audioEl: HTMLAudioElement = $state()!;
 
   $effect(() => {
-    if ($ttsProps) {
+    if ($ttsProps && audioEl) {
+      downloadUrl.set("");
+      audioFilename.set("");
+
       generateTTS({
+        audioElement: audioEl,
         text: $ttsProps.text,
         voice: $ttsProps.voice,
         modelId: $ttsProps.modelId,
-        onPlayAudio: (audioUrl: string | null) => currentAudioUrl.set(audioUrl),
-        onDownloadAudio: ({ downloadUrl, filename }) =>
-          setDownloadUrlAndFilename(downloadUrl, filename),
+        onDownloadReady: ({ downloadUrl: newUrl, filename }) => {
+          downloadUrl.set(newUrl);
+          audioFilename.set(filename);
+        },
         onError: (error: string) => toast.error(error),
         signal: $ttsProps.signal
       });
@@ -241,12 +243,20 @@
 
   <main class="flex flex-col items-center">
     {@render children?.()}
-
-    {#if $currentAudioUrl}
-      <section aria-label="Audio player">
-        <audio src={$currentAudioUrl} controls autoplay></audio>
+    {#if $ttsProps}
+      <section
+        aria-label="Audio player"
+        class="fixed bottom-0 left-0 right-0 border-t bg-background p-4"
+      >
+        <audio bind:this={audioEl} controls autoplay class="w-full"></audio>
         {#if $downloadUrl}
-          <a href={$downloadUrl} download={$audioFilename}>Download audio</a>
+          <div class="mt-2 text-center">
+            <a
+              href={$downloadUrl}
+              download={$audioFilename}
+              class="text-sm text-primary hover:underline">Download audio</a
+            >
+          </div>
         {/if}
       </section>
     {/if}

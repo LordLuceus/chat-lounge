@@ -12,7 +12,7 @@
   const { setVoiceMessage }: Props = $props();
 
   let mediaRecorder: MediaRecorder;
-  let recordedChunks: BlobPart[] = [];
+  let recordedChunks: Blob[] = [];
   let recStartSound: HTMLAudioElement;
   let recStopSound: HTMLAudioElement;
 
@@ -37,7 +37,7 @@
       }
     };
 
-    const options = { mimeType: "audio/webm" } satisfies MediaRecorderOptions;
+    const options = { mimeType: "audio/webm" };
 
     recStartSound.play();
 

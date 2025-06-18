@@ -97,7 +97,7 @@
     socket.on("progress", (data) => {
       progress = data.progress;
     });
-    socket.on("completed", (data) => {
+    socket.on("completed", () => {
       client.invalidateQueries({ queryKey: ["conversations"] });
       toast.success("Chat imported successfully.");
       socket.disconnect();

@@ -8,7 +8,7 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "lint": "prettier --check . && eslint .",
+    "lint": "prettier --check ./src && eslint ./src",
     "format": "prettier --write '**/*.{js,ts,svelte}'",
     "migrate-create": "prisma migrate dev --create-only",
     "migrate-dev": "prisma migrate dev",

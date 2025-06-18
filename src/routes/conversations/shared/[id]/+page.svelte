@@ -3,9 +3,7 @@
   import { page } from "$app/state";
   import SharedChatList from "$lib/components/SharedChatList.svelte";
   import { Button } from "$lib/components/ui/button";
-  import { createQuery, useQueryClient } from "@tanstack/svelte-query";
-
-  const client = useQueryClient();
+  import { createQuery } from "@tanstack/svelte-query";
 
   const conversationQuery = createQuery(() => {
     return {

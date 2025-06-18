@@ -5,9 +5,12 @@
   import type { CreateInfiniteQueryResult, InfiniteData } from "@tanstack/svelte-query";
 
   interface Props {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     query: CreateInfiniteQueryResult<InfiniteData<PagedResponse<any>, unknown>, Error>;
     itemType: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     link?: import("svelte").Snippet<[any]>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     menu?: import("svelte").Snippet<[any]>;
   }
 

@@ -1,8 +1,6 @@
 <script lang="ts">
   import { Button } from "$lib/components/ui/button";
   import {
-    audioFilename,
-    downloadUrl,
     newConversation,
     selectedTtsModel,
     selectedVoice,
@@ -11,7 +9,6 @@
   } from "$lib/stores";
   import { Loader, Speech } from "@lucide/svelte";
   import { onDestroy } from "svelte";
-  import { toast } from "svelte-sonner";
 
   interface Props {
     text: string;
@@ -21,15 +18,6 @@
 
   let controller: AbortController;
   let signal: AbortSignal;
-
-  const handleDownloadAudio = ({ url, filename }: { url: string; filename: string }) => {
-    audioFilename.set(filename);
-    downloadUrl.set(url);
-  };
-
-  const handleError = (error: string) => {
-    toast.error(error);
-  };
 
   const tts = (): void => {
     controller = new AbortController();

@@ -1,9 +1,5 @@
 <script lang="ts">
   import { SignedIn } from "svelte-clerk";
-  import { useClerkContext } from "svelte-clerk/client";
-
-  const ctx = useClerkContext();
-  const user = $derived(ctx.user);
 
   const { data, children } = $props();
 </script>

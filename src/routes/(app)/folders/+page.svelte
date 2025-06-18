@@ -11,11 +11,7 @@
   import { createInfiniteQuery } from "@tanstack/svelte-query";
   import { onDestroy } from "svelte";
   import { SignedIn } from "svelte-clerk";
-  import { useClerkContext } from "svelte-clerk/client";
   import Time from "svelte-time";
-
-  const ctx = useClerkContext();
-  const user = $derived(ctx.user);
 
   const fetchFolders = async (
     { pageParam = 1 },

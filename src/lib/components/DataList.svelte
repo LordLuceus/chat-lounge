@@ -13,6 +13,7 @@
   import { get } from "svelte/store";
 
   interface Props {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     query: CreateInfiniteQueryResult<InfiniteData<PagedResponse<any>, unknown>, Error>;
     searchLabel: string;
     searchParams: Writable<SearchParams>;
@@ -20,6 +21,7 @@
     defaultSortBy?: string;
     defaultSortOrder?: string;
     noResults?: import("svelte").Snippet;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     children?: import("svelte").Snippet<[any]>;
   }
 

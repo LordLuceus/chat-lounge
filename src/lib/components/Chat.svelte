@@ -381,7 +381,7 @@
   bind:value={selectedModel}
   items={models}
   placeholder="Select model..."
-  on:change={(e) => localStorage.setItem("selectedModel", JSON.stringify(selectedModel))}
+  on:change={() => localStorage.setItem("selectedModel", JSON.stringify(selectedModel))}
   {ariaListOpen}
   clearable={false}
 />

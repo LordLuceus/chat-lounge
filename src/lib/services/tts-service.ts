@@ -23,12 +23,10 @@ export async function generateTTS({
   text = ttsCleanup(text);
   ttsGenerating.set(true);
 
-  // Clean up any previous media source
   if (audioElement.src.startsWith("blob:")) {
     URL.revokeObjectURL(audioElement.src);
   }
 
-  // Fallback for browsers without MediaSource support
   const isStreamingSupported = window.MediaSource && MediaSource.isTypeSupported("audio/mpeg");
   if (!isStreamingSupported) {
     console.warn("MediaSource API not supported. Falling back to full download for playback.");
@@ -65,118 +63,124 @@ export async function generateTTS({
 
   mediaSource.addEventListener(
     "sourceopen",
-    async () => {
+    () => {
       URL.revokeObjectURL(audioElement.src);
 
       const allChunks: Uint8Array[] = [];
+      const chunkQueue: Uint8Array[] = [];
+      let isStreamFinished = false;
+
       const sourceBuffer = mediaSource.addSourceBuffer("audio/mpeg");
+      const MAX_BUFFER_AHEAD = 600; // 10 minutes
 
-      // How much audio to buffer ahead of the current time (in seconds)
-      const MAX_BUFFER_AHEAD = 30;
-
-      // --- Graceful Error Handling ---
-      // This flag ensures we only show the error once and stop trying to fetch more data.
       let hasEncounteredError = false;
+      const cleanup = () => {
+        audioElement.removeEventListener("timeupdate", pump);
+        sourceBuffer.removeEventListener("updateend", pump);
+        if (mediaSource.readyState === "open") {
+          try {
+            mediaSource.endOfStream();
+          } catch (e) {
+            console.warn("MediaSource already closed or ended.", e);
+          }
+        }
+      };
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const handleError = (message: string, error?: any) => {
         if (hasEncounteredError) return;
         hasEncounteredError = true;
         console.error(message, error);
         onError(message);
-        // CRITICAL: We do NOT call mediaSource.endOfStream() here.
-        // This allows the browser to continue playing whatever is in the buffer.
-        ttsGenerating.set(false); // Update UI state
+        cleanup();
+        ttsGenerating.set(false);
       };
 
-      try {
-        const response = await fetch(`/api/tts`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text, voice, stream: true, modelId }),
-          signal
-        });
-
-        if (!response.ok || !response.body) {
-          const error = await response
-            .json()
-            .catch(() => ({ message: "An unknown network error occurred." }));
-          throw new Error(error.message);
+      const pump = () => {
+        if (hasEncounteredError) {
+          return;
         }
 
-        const reader = response.body.getReader();
-        audioElement.play().catch((e) => console.warn("Autoplay was blocked:", e));
-
-        // This is our main processing pump.
-        const pump = async () => {
-          if (hasEncounteredError) {
-            return; // Stop pumping if an error occurred.
+        if (isStreamFinished && chunkQueue.length === 0) {
+          if (!sourceBuffer.updating) {
+            cleanup();
           }
+          return;
+        }
 
-          // Backpressure check: Only proceed if the buffer isn't too full.
-          if (sourceBuffer.updating) {
-            // If the buffer is already busy, wait for it to finish its current operation.
-            setTimeout(pump, 100);
+        if (sourceBuffer.buffered.length > 0) {
+          const bufferEnd = sourceBuffer.buffered.end(sourceBuffer.buffered.length - 1);
+          const bufferAhead = bufferEnd - audioElement.currentTime;
+          if (bufferAhead > MAX_BUFFER_AHEAD) {
             return;
           }
+        }
 
-          if (sourceBuffer.buffered.length > 0) {
-            const bufferedEnd = sourceBuffer.buffered.end(sourceBuffer.buffered.length - 1);
-            const bufferAhead = bufferedEnd - audioElement.currentTime;
-            if (bufferAhead > MAX_BUFFER_AHEAD) {
-              // Buffer is full, so we pause and check again shortly.
-              setTimeout(pump, 250); // Check again in 250ms
-              return;
-            }
+        if (sourceBuffer.updating || chunkQueue.length === 0) {
+          return;
+        }
+
+        try {
+          const chunk = chunkQueue.shift();
+          if (chunk) {
+            sourceBuffer.appendBuffer(chunk);
+          }
+        } catch (err) {
+          handleError("Error appending to media buffer. Playback may be incomplete.", err);
+        }
+      };
+
+      sourceBuffer.addEventListener("updateend", pump);
+      audioElement.addEventListener("timeupdate", pump);
+
+      const fetchAndQueueStream = async () => {
+        try {
+          const response = await fetch(`/api/tts`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text, voice, stream: true, modelId }),
+            signal
+          });
+
+          if (!response.ok || !response.body) {
+            const error = await response
+              .json()
+              .catch(() => ({ message: "An unknown network error occurred." }));
+            throw new Error(error.message);
           }
 
-          // Read the next chunk from the network.
-          try {
+          const reader = response.body.getReader();
+          audioElement.play().catch((e) => console.warn("Autoplay was blocked:", e));
+
+          // eslint-disable-next-line no-constant-condition
+          while (true) {
+            if (hasEncounteredError) break;
             const { done, value } = await reader.read();
-
             if (done) {
-              ttsGenerating.set(false);
-
-              const audioBlob = new Blob(allChunks, { type: "audio/mpeg" });
-              const downloadUrl = URL.createObjectURL(audioBlob);
-              onDownloadReady({ downloadUrl, filename: generateAudioFilename(text) });
-
-              const finalizeMediaSource = () => {
-                if (!sourceBuffer.updating) {
-                  if (mediaSource.readyState === "open") {
-                    mediaSource.endOfStream();
-                  }
-                } else {
-                  setTimeout(finalizeMediaSource, 100);
-                }
-              };
-              finalizeMediaSource();
-              return;
+              break;
             }
-
-            // We have a chunk. Append it.
             allChunks.push(value);
-            // The 'updateend' event will trigger the next pump cycle.
-            sourceBuffer.addEventListener("updateend", pump, { once: true });
-            sourceBuffer.appendBuffer(value);
-          } catch (readError) {
-            // This catches errors from reader.read() (e.g., network issues).
-            handleError("Error reading audio stream.", readError);
+            chunkQueue.push(value);
+
+            pump();
           }
-        };
 
-        // Add a listener for appendBuffer errors, like QuotaExceeded.
-        sourceBuffer.addEventListener("error", (ev) => {
-          handleError("A media buffer error occurred. Playback may be incomplete.", ev);
-        });
+          isStreamFinished = true;
+          ttsGenerating.set(false);
+          const audioBlob = new Blob(allChunks, { type: "audio/mpeg" });
+          const downloadUrl = URL.createObjectURL(audioBlob);
+          onDownloadReady({ downloadUrl, filename: generateAudioFilename(text) });
 
-        // Start the pump for the first time.
-        pump();
+          pump();
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (err: any) {
+          if (err.name !== "AbortError") {
+            handleError(err.message, err);
+          }
+        }
+      };
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (setupError: any) {
-        // This catches errors from the initial fetch() call.
-        handleError(setupError.message, setupError);
-      }
+      fetchAndQueueStream();
     },
     { once: true }
   );

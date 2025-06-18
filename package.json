@@ -50,6 +50,7 @@
     "superstruct": "^2.0.2",
     "svelte": "^5.0.0",
     "svelte-check": "^4.0.0",
+    "svelte-eslint-parser": "^1.2.0",
     "svelte-exmarkdown": "^5.0.1",
     "svelte-sonner": "^1.0.5",
     "svelte-time": "^2.0.1",

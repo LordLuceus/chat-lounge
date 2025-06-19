@@ -305,7 +305,7 @@ class AIService {
       system: titleGenerator?.instructions ?? undefined
     });
 
-    return text.trim().replaceAll('"', "").replaceAll("*", "");
+    return text.trim().replaceAll('"', "").replaceAll("*", "").replaceAll("#", "");
   }
 
   public async generateFollowUps(

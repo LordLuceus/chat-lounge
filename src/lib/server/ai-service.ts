@@ -293,35 +293,16 @@ class AIService {
       return "New Chat";
     }
 
+    const prompt = `Generate a concise, engaging title of five words or fewer for this conversation based on the following messages. The title should capture the main theme or topic without revealing specific details or spoilers.\n\n---\n\n${messages
+      .map(({ role, content }) => `${role}: ${content}`)
+      .join("\n")}`;
+
     const titleGenerator = await getAgentByName(userId, "Title Generator");
-
-    if (titleGenerator) {
-      const { text } = await generateText({
-        model: this.client(modelId, this.provider === "google" ? this.GOOGLE_SETTINGS : undefined),
-        messages: [...messages, { role: "user", content: "" }],
-        system: titleGenerator.instructions
-      });
-
-      return text.trim().replaceAll('"', "").replaceAll("*", "");
-    }
-
-    // Fallback to a generic title generation if no Title Generator agent is found
-    const prompt =
-      "Create a spoiler-free title for this conversation in five words or fewer. Focus on the general topic, setting, or participants rather than specific outcomes, plot points, or results. For combat scenes, mention the combatants or fighting style but avoid revealing who wins or specific events. Keep it engaging but vague enough to avoid spoilers. Respond only with the title and nothing else.";
-
-    let messageContext: typeof messages;
-
-    if (messages.at(0)?.role === "assistant") {
-      messageContext = messages.slice(0, 3);
-    } else {
-      messageContext = messages.slice(0, 2);
-    }
-
-    const context = messageContext.map(({ role, content }) => `${role}: ${content}`).join("\n");
 
     const { text } = await generateText({
       model: this.client(modelId, this.provider === "google" ? this.GOOGLE_SETTINGS : undefined),
-      messages: [{ role: "user", content: prompt + "\n\n---\n\n" + context }]
+      messages: [{ role: "user", content: prompt }],
+      system: titleGenerator?.instructions ?? undefined
     });
 
     return text.trim().replaceAll('"', "").replaceAll("*", "");

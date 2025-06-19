@@ -4,6 +4,7 @@
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import MoreHorizontal from "@lucide/svelte/icons/more-horizontal";
   import { useQueryClient } from "@tanstack/svelte-query";
+  import { tick } from "svelte";
   import { toast } from "svelte-sonner";
 
   interface Props {
@@ -88,7 +89,11 @@
     <DropdownMenu.Group>
       <DropdownMenu.Label>Actions</DropdownMenu.Label>
       {#if category !== "premade"}
-        <DropdownMenu.Item onclick={() => (deleteDialogOpen = true)}>Delete voice</DropdownMenu.Item
+        <DropdownMenu.Item
+          onclick={async () => {
+            await tick();
+            deleteDialogOpen = true;
+          }}>Delete voice</DropdownMenu.Item
         >
       {/if}
       <DropdownMenu.Item onclick={copyId}>Copy voice ID</DropdownMenu.Item>

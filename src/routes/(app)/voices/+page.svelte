@@ -21,12 +21,16 @@
             <Card.Title class="text-lg">
               <VoicePreviewButton name={voice.name} previewUrl={voice.preview_url} />
             </Card.Title>
-            <VoiceActions id={voice.voice_id} category={voice.category} />
           </div>
         </Card.Header>
         <Card.Content>
           <Card.Description class="capitalize">{voice.category}</Card.Description>
         </Card.Content>
+        <Card.Footer>
+          <div class="flex items-center justify-between">
+            <VoiceActions id={voice.voice_id} category={voice.category} />
+          </div>
+        </Card.Footer>
       </Card.Root>
     {/each}
   </div>

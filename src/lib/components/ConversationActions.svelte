@@ -12,7 +12,7 @@
   import type { PagedResponse } from "$lib/types/api";
   import type { Folder } from "@prisma/client";
   import { createInfiniteQuery, createMutation, useQueryClient } from "@tanstack/svelte-query";
-  import { onDestroy } from "svelte";
+  import { onDestroy, tick } from "svelte";
   import { toast } from "svelte-sonner";
   import { get, writable } from "svelte/store";
 
@@ -198,23 +198,28 @@
   let newName = $state(name);
   let selectedFolderId: string | undefined = $state();
 
-  function renameClick() {
+  async function renameClick() {
+    await tick();
     renameDialogOpen = true;
   }
 
-  function deleteClick() {
+  async function deleteClick() {
+    await tick();
     deleteDialogOpen = true;
   }
 
-  function shareClick() {
+  async function shareClick() {
+    await tick();
     shareDialogOpen = true;
   }
 
-  function unshareClick() {
+  async function unshareClick() {
+    await tick();
     unshareDialogOpen = true;
   }
 
-  function addToFolderClick() {
+  async function addToFolderClick() {
+    await tick();
     addToFolderDialogOpen = true;
   }
 

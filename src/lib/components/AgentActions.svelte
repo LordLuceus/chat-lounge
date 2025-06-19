@@ -6,6 +6,7 @@
   import * as Dialog from "$lib/components/ui/dialog";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
+  import { tick } from "svelte";
   import { toast } from "svelte-sonner";
   import type { PageData as EditData } from "../../routes/(app)/agents/[id]/edit/$types";
   import EditPage from "../../routes/(app)/agents/[id]/edit/+page.svelte";
@@ -47,7 +48,8 @@
     }
   }
 
-  function deleteClick() {
+  async function deleteClick() {
+    await tick();
     deleteDialogOpen = true;
   }
 
@@ -96,7 +98,7 @@
     {/snippet}
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
-    <DropdownMenu.Item onclick={async () => await editClick()}>Edit</DropdownMenu.Item>
+    <DropdownMenu.Item onclick={() => editClick()}>Edit</DropdownMenu.Item>
     <DropdownMenu.Item onclick={() => deleteClick()}>Delete</DropdownMenu.Item>
   </DropdownMenu.Content>
 </DropdownMenu.Root>

@@ -7,6 +7,7 @@
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Input } from "$lib/components/ui/input";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
+  import { tick } from "svelte";
   import { toast } from "svelte-sonner";
 
   const client = useQueryClient();
@@ -49,11 +50,13 @@
   let deleteDialogOpen = $state(false);
   let newName = $state(name);
 
-  function renameClick() {
+  async function renameClick() {
+    await tick();
     renameDialogOpen = true;
   }
 
-  function deleteClick() {
+  async function deleteClick() {
+    await tick();
     deleteDialogOpen = true;
   }
 

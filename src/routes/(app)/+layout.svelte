@@ -10,7 +10,7 @@
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Toaster } from "$lib/components/ui/sonner";
   import { generateTTS } from "$lib/services/tts-service";
-  import { audioFilename, downloadUrl, ttsProps, voices } from "$lib/stores";
+  import { audioFilename, currentAudioUrl, downloadUrl, ttsProps, voices } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
   import type { Voice } from "$lib/types/elevenlabs";
   import { SunMoon } from "@lucide/svelte";
@@ -243,12 +243,15 @@
 
   <main class="flex flex-col items-center">
     {@render children?.()}
-    {#if $ttsProps}
+    {#if $ttsProps || $currentAudioUrl}
       <section
         aria-label="Audio player"
         class="fixed bottom-0 left-0 right-0 border-t bg-background p-4"
       >
         <audio bind:this={audioEl} controls autoplay class="w-full"></audio>
+        {#if $currentAudioUrl && audioEl}
+          {(audioEl.src = $currentAudioUrl)}
+        {/if}
         {#if $downloadUrl}
           <div class="mt-2 text-center">
             <a

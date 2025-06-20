@@ -131,18 +131,33 @@ export async function generateTTS({
         }
       };
       const onPlayBackEnded = () => {
-        cleanup();
-
         audioElement.removeEventListener("ended", onPlayBackEnded);
+        if (audioElement.src === get(downloadUrlStore)) return;
+        cleanup();
 
         URL.revokeObjectURL(audioElement.src);
         audioElement.src = get(downloadUrlStore);
-        audioElement.autoplay = false;
+        audioElement.pause();
+      };
+
+      const onSeeked = () => {
+        if (hasEncounteredError) return;
+
+        if (isStreamFinished && get(downloadUrlStore)) {
+          cleanup();
+          const currentTime = audioElement.currentTime;
+          URL.revokeObjectURL(audioElement.src);
+          audioElement.src = get(downloadUrlStore);
+          audioElement.currentTime = currentTime;
+          audioElement.play().catch((e) => console.warn("Autoplay was blocked:", e));
+          audioElement.removeEventListener("seeked", onSeeked);
+        }
       };
 
       sourceBuffer.addEventListener("updateend", pump);
       audioElement.addEventListener("timeupdate", pump);
       audioElement.addEventListener("ended", onPlayBackEnded);
+      audioElement.addEventListener("seeked", onSeeked);
 
       const fetchAndQueueStream = async () => {
         try {

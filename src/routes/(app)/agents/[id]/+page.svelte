@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { page } from "$app/stores";
+  import { page } from "$app/state";
   import Chat from "$lib/components/Chat.svelte";
   import CheckApiKeys from "$lib/components/CheckApiKeys.svelte";
   import type { Message } from "$lib/helpers";
@@ -7,26 +7,32 @@
   import { v4 as uuidv4 } from "uuid";
   import type { PageData } from "./$types";
 
-  export let data: PageData;
-
-  let initialMessages: Message[];
-  $: if (data.agent.greeting) {
-    initialMessages = [
-      {
-        role: "assistant",
-        content: data.agent.greeting,
-        id: uuidv4(),
-        parentId: null,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ];
+  interface Props {
+    data: PageData;
   }
 
+  const { data }: Props = $props();
+
+  let initialMessages: Message[] = $state([]);
+  $effect(() => {
+    if (data.agent.greeting) {
+      initialMessages = [
+        {
+          role: "assistant",
+          content: data.agent.greeting,
+          id: uuidv4(),
+          parentId: null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ];
+    }
+  });
+
   onMount(async () => {
-    if ($page.url.searchParams.get("shareId")) {
+    if (page.url.searchParams.get("shareId")) {
       const response = await fetch(
-        `/api/conversations/shared/${$page.url.searchParams.get("shareId")}`
+        `/api/conversations/shared/${page.url.searchParams.get("shareId")}`
       );
       if (response.ok) {
         const data = await response.json();

@@ -3,11 +3,10 @@ import { importQueue } from "$lib/server/queue";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const POST = (async ({ locals, request }) => {
-  if (!locals.session?.userId) {
+  const { userId } = locals.auth();
+  if (!userId) {
     return error(401, "Unauthorized");
   }
-
-  const { userId } = locals.session;
 
   const { modelId, data }: { modelId: string; data: MessageImport[] } = await request.json();
 

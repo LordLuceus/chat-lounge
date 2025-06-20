@@ -4,10 +4,12 @@
   import { selectedVoice, voices } from "$lib/stores";
   import Select from "svelte-select";
 
-  $: voiceItems = $voices?.map((voice) => ({
-    label: `${voice.name} (${voice.category})`,
-    value: voice.voice_id
-  }));
+  const voiceItems = $derived(
+    $voices?.map((voice) => ({
+      label: `${voice.name} (${voice.category})`,
+      value: voice.voice_id
+    }))
+  );
 
   function handleVoiceSelection() {
     if (!$selectedVoice) {
@@ -19,9 +21,11 @@
     }
   }
 
-  $: if ($voices) {
-    handleVoiceSelection();
-  }
+  $effect(() => {
+    if ($voices) {
+      handleVoiceSelection();
+    }
+  });
 </script>
 
 <Select

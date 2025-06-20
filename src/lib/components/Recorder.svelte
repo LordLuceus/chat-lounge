@@ -1,15 +1,18 @@
 <script lang="ts">
   import { browser } from "$app/environment";
-  import Toast from "$lib/components/Toast.svelte";
   import { Button } from "$lib/components/ui/button";
-  import { Mic } from "lucide-svelte";
+  import { Mic } from "@lucide/svelte";
   import { onDestroy, onMount } from "svelte";
   import { toast } from "svelte-sonner";
 
-  export let setVoiceMessage: (message: string) => void;
+  interface Props {
+    setVoiceMessage: (message: string) => void;
+  }
+
+  const { setVoiceMessage }: Props = $props();
 
   let mediaRecorder: MediaRecorder;
-  let recordedChunks: BlobPart[] = [];
+  let recordedChunks: Blob[] = [];
   let recStartSound: HTMLAudioElement;
   let recStopSound: HTMLAudioElement;
 
@@ -34,7 +37,7 @@
       }
     };
 
-    const options = { mimeType: "audio/webm" } satisfies MediaRecorderOptions;
+    const options = { mimeType: "audio/webm" };
 
     recStartSound.play();
 
@@ -50,11 +53,7 @@
     } catch (e) {
       console.error(e);
       isRecording = false;
-      toast.warning(Toast, {
-        componentProps: {
-          text: "Failed to start recording. Please check your microphone permissions."
-        }
-      });
+      toast.warning("Failed to start recording. Please check your microphone permissions.");
     }
   }
 
@@ -69,7 +68,7 @@
     recordedChunks = [];
   }
 
-  let isRecording = false;
+  let isRecording = $state(false);
 
   function toggleRecording(): void {
     if (isRecording) {
@@ -109,8 +108,8 @@
   }
 </script>
 
-<svelte:window on:keydown={handleRecordToggle} />
+<svelte:window onkeydown={handleRecordToggle} />
 
-<Button on:click={toggleRecording} aria-label={isRecording ? "Stop recording" : "Start recording"}>
+<Button onclick={toggleRecording} aria-label={isRecording ? "Stop recording" : "Start recording"}>
   <Mic />
 </Button>

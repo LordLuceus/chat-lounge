@@ -1,5 +1,20 @@
 # ChatLounge Changelog
 
+## 20 Jun, 2025
+
+This is a big update with many changes across the app. Highlights include:
+
+- Migrated to Svelte 5, bringing erformance improvements and future-proofing the app.
+- Vastly improved TTS playback experience, fixing a long-standing issue where playback would stop and the UI state would be stuck on "generating" if the file was too long.
+- Added a new title generator agent for better, more relevant, and spoiler-free conversation titles (especially for story-writing agents).
+- Redesigned the voices page.
+
+**Known issues:**
+
+- The edit agent dialog will sometimes not receive focus automatically. When this happens, you can find the dialog manually at the bottom of the page and click on it.
+
+Please let us know if you encounter any other issues or have any feedback on the new features. Enjoy! 🚀
+
 ## 11 Jun, 2025
 
 A small update replacing the soon-to-be-deprecated Gemini 2.5 Pro Preview model with the newer June version. Also added a sound effect when the AI response starts streaming in, useful for reasoning models that can take some time to "think" before responding.

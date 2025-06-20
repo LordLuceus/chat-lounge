@@ -1,21 +1,24 @@
 <script lang="ts">
   import { copyCodeBlocks } from "$lib/actions/copy-code";
-  import Toast from "$lib/components/Toast.svelte";
   import { Button } from "$lib/components/ui/button";
   import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
   import type { Message } from "@ai-sdk/svelte";
-  import { BotMessageSquare } from "lucide-svelte";
+  import { BotMessageSquare } from "@lucide/svelte";
   import Markdown from "svelte-exmarkdown";
   import { gfmPlugin } from "svelte-exmarkdown/gfm";
   import { toast } from "svelte-sonner";
 
   const plugins = [gfmPlugin(), lineBreaksPlugin];
 
-  export let message: Message;
+  interface Props {
+    message: Message;
+  }
+
+  const { message }: Props = $props();
 
   async function copyToClipboard() {
     await navigator.clipboard.writeText(message.content);
-    toast.success(Toast, { componentProps: { text: "Message copied to clipboard" } });
+    toast.success("Message copied to clipboard");
   }
 </script>
 
@@ -27,7 +30,7 @@
       {/if}
       <Markdown md={message.content} {plugins} />
       {#if message.role === "assistant"}
-        <Button on:click={copyToClipboard}>Copy</Button>
+        <Button onclick={copyToClipboard}>Copy</Button>
       {/if}
     </div>
   </section>

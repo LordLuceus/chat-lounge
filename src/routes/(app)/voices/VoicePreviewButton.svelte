@@ -2,8 +2,12 @@
   import { Button } from "$lib/components/ui/button";
   import { playingAudio } from "$lib/stores";
 
-  export let name: string;
-  export let previewUrl: string | null;
+  interface Props {
+    name: string;
+    previewUrl: string | null;
+  }
+
+  const { name, previewUrl }: Props = $props();
 
   function previewVoice() {
     playingAudio.update((currentAudio) => {
@@ -21,7 +25,7 @@
 </script>
 
 {#if previewUrl}
-  <Button on:click={previewVoice}>{name}</Button>
+  <Button onclick={previewVoice}>{name}</Button>
 {:else}
   <span>{name}</span>
 {/if}

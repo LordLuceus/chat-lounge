@@ -1,6 +1,6 @@
 import charPrompt from "$lib/data/character_prompt.txt?raw";
 import { errorHandler } from "$lib/helpers/ai-error-handler";
-import type { AgentWithUsage } from "$lib/server/agents-service";
+import { getAgentByName, type AgentWithUsage } from "$lib/server/agents-service";
 import {
   addConversationMessage,
   getConversationMessage,
@@ -106,7 +106,10 @@ class AIService {
       onCompletion
     );
 
-    const stream = response.toDataStreamResponse({ getErrorMessage: errorHandler });
+    const stream = response.toDataStreamResponse({
+      getErrorMessage: errorHandler,
+      sendReasoning: true
+    });
 
     return stream;
   }
@@ -266,34 +269,29 @@ class AIService {
   }
 
   public async generateConversationName(
-    messages: { role: string; content: string }[],
-    modelId: string
-  ) {
-    const prompt =
-      "Summarise the following conversation in five words or fewer. Be as concise as possible without losing the context of the conversation. Your goal is to extract the key point of the conversation and turn it into a short and interesting title. Respond only with the title and nothing else.";
-
-    let messageContext: typeof messages;
-
-    if (messages.at(0)?.role === "assistant") {
-      messageContext = messages.slice(0, 3);
-    } else {
-      messageContext = messages.slice(0, 2);
+    messages: Message[],
+    modelId: string,
+    userId: string
+  ): Promise<string> {
+    if (messages.length === 0) {
+      return "New Chat";
     }
 
-    const context = messageContext.map(({ role, content }) => `${role}: ${content}`).join("\n");
+    const prompt = `Generate a concise, engaging title of five words or fewer for this conversation based on the following messages. The title should capture the main theme or topic without revealing specific details or spoilers.\n\n---\n\n${messages
+      .map(({ role, content }) => `${role}: ${content}`)
+      .join("\n")}`;
+
+    const titleGenerator = await getAgentByName(userId, "Title Generator");
 
     const { text } = await generateText({
       model: this.client(modelId, this.provider === "google" ? this.GOOGLE_SETTINGS : undefined),
-      messages: [{ role: "user", content: prompt + "\n\n---\n\n" + context }]
+      messages: [{ role: "user", content: prompt }],
+      system: titleGenerator?.instructions ?? undefined
     });
 
-    return text.trim().replaceAll('"', "").replaceAll("*", "");
+    return text.trim().replaceAll('"', "").replaceAll("*", "").replaceAll("#", "");
   }
 
-  /**
-   * Generate follow-up suggestions based on the conversation context.
-   * Returns an array of three suggestion strings.
-   */
   public async generateFollowUps(
     messages: { role: string; content: string }[],
     modelId: string

@@ -7,19 +7,25 @@
   import { AIProvider } from "$lib/types/db";
   import type { ActionData } from "./$types";
 
-  export let provider: AIProvider;
-  export let openText: string;
-  export let form: ActionData;
-  let apiKeyInput: Input;
-  let open = false;
+  interface Props {
+    provider: AIProvider;
+    openText: string;
+    form: ActionData;
+  }
+
+  const { provider, openText, form }: Props = $props();
+  let apiKeyInput: HTMLElement | null = $state(null);
+  let open = $state(false);
 
   function handleApiKeyError() {
     apiKeyInput?.focus();
   }
 
-  $: if (form?.message) {
-    handleApiKeyError();
-  }
+  $effect(() => {
+    if (form?.message) {
+      handleApiKeyError();
+    }
+  });
 </script>
 
 <Dialog.Root bind:open>
@@ -38,7 +44,7 @@
       >
         <Label>
           <span>API Key</span>
-          <Input type="text" name="apiKey" bind:this={apiKeyInput} required />
+          <Input type="text" name="apiKey" ref={apiKeyInput} required />
         </Label>
         {#if form?.message}
           <p role="alert">{form.message}</p>

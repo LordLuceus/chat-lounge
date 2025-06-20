@@ -5,11 +5,11 @@ import type { SharedConversation } from "@prisma/client";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const GET = (async ({ locals, url }) => {
-  if (!locals.session?.userId) {
+  const { userId } = locals.auth();
+  if (!userId) {
     return error(401, "Unauthorized");
   }
 
-  const { userId } = locals.session;
   const page = Number(url.searchParams.get("page")) || 1;
   const pageSize = Number(url.searchParams.get("limit")) || 10;
 

@@ -9,9 +9,8 @@ import type { Conversation } from "@prisma/client";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const GET = (async ({ locals, url }) => {
-  if (!locals.session?.userId) return error(401, "Unauthorized");
-
-  const { userId } = locals.session;
+  const { userId } = locals.auth();
+  if (!userId) return error(401, "Unauthorized");
 
   const page = Number(url.searchParams.get("page")) || 1;
   const pageSize = Number(url.searchParams.get("limit")) || 10;
@@ -40,9 +39,9 @@ export const GET = (async ({ locals, url }) => {
 }) satisfies RequestHandler;
 
 export const POST = (async ({ locals, request }) => {
-  if (!locals.session?.userId) return error(401, "Unauthorized");
+  const { userId } = locals.auth();
+  if (!userId) return error(401, "Unauthorized");
 
-  const { userId } = locals.session;
   const data: ConversationCreateOptions = await request.json();
   data.userId = userId;
 

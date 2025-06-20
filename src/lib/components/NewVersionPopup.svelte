@@ -4,7 +4,7 @@
   import * as Dialog from "$lib/components/ui/dialog";
   import { newVersionAvailable } from "$lib/stores";
 
-  $: showPopup = $newVersionAvailable;
+  let showPopup = $derived($newVersionAvailable);
 </script>
 
 <Dialog.Root bind:open={showPopup}>
@@ -18,7 +18,7 @@
     </Dialog.Description>
     <Dialog.Footer>
       <Button
-        on:click={() => {
+        onclick={() => {
           $newVersionAvailable = false;
           goto("/changelog");
         }}>See what's new</Button

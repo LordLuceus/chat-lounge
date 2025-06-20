@@ -1,5 +1,5 @@
 <script lang="ts">
-  import SignUp from "clerk-sveltekit/client/SignUp.svelte";
+  import { SignUp } from "svelte-clerk";
 </script>
 
 <svelte:head>
@@ -11,5 +11,5 @@
 </svelte:head>
 
 <div>
-  <SignUp redirectUrl="/" />
+  <SignUp />
 </div>

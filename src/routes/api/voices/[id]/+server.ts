@@ -6,12 +6,12 @@ import type { ElevenLabsError } from "$lib/types/elevenlabs";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const DELETE: RequestHandler = async ({ locals, params }) => {
-  if (!locals.session?.userId) {
+  const { userId } = locals.auth();
+  if (!userId) {
     return error(401, { message: "Unauthorized" });
   }
 
   const { id } = params;
-  const { userId } = locals.session;
 
   if (!id) {
     return error(400, { message: "No voice ID provided" });

@@ -5,9 +5,13 @@ import type { PageServerLoad } from "./$types";
 
 export const load = (async (event) => {
   const { id } = event.params;
-  const { userId } = event.locals.session!;
+  const { userId } = event.locals.auth();
 
-  const conversation = await getConversation(userId!, id);
+  if (!userId) {
+    return redirect(307, "/auth/sign-in");
+  }
+
+  const conversation = await getConversation(userId, id);
 
   if (!conversation) {
     return error(404, "Conversation not found");

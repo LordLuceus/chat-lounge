@@ -1,6 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/environment";
-  import { page } from "$app/stores";
+  import { page } from "$app/state";
   import AgentActions from "$lib/components/AgentActions.svelte";
   import DataList from "$lib/components/DataList.svelte";
   import * as Card from "$lib/components/ui/card";
@@ -11,20 +11,27 @@
   import { Visibility } from "$lib/types/db";
   import type { Agent } from "@prisma/client";
   import { createInfiniteQuery } from "@tanstack/svelte-query";
-  import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
   import { onDestroy } from "svelte";
+  import { SignedIn } from "svelte-clerk";
+  import { useClerkContext } from "svelte-clerk/client";
   import Time from "svelte-time";
-  import { derived } from "svelte/store";
   import type { PageData } from "./$types";
   import AgentForm from "./AgentForm.svelte";
 
-  export let data: PageData;
+  const ctx = useClerkContext();
+  const user = $derived(ctx.user);
+
+  interface Props {
+    data: PageData;
+  }
+
+  const { data }: Props = $props();
 
   const fetchAgents = async (
     { pageParam = 1 },
     { search, sortBy, sortOrder, visibility, ownerOnly }: SearchParams
   ) => {
-    const url = new URL("/api/agents", $page.url.origin);
+    const url = new URL("/api/agents", page.url.origin);
 
     url.searchParams.set("page", pageParam.toString());
     if (search) {
@@ -46,20 +53,22 @@
     return fetch(url.toString()).then((res) => res.json());
   };
 
-  const agentsQuery = createInfiniteQuery<PagedResponse<Agent>>(
-    derived(searchParams, ($searchParams) => ({
-      queryKey: ["agents", $searchParams],
-      queryFn: ({ pageParam }: { pageParam: unknown }) =>
-        fetchAgents({ pageParam: pageParam as number }, $searchParams),
-      initialPageParam: 1,
-      getNextPageParam: (lastPage: PagedResponse<Agent>) => {
-        if (lastPage.meta.page < lastPage.meta.totalPages) {
-          return lastPage.meta.page + 1;
-        }
+  const agentsQuery = $derived(
+    createInfiniteQuery<PagedResponse<Agent>>(() => {
+      return {
+        queryKey: ["agents", $searchParams],
+        queryFn: ({ pageParam }: { pageParam: unknown }) =>
+          fetchAgents({ pageParam: pageParam as number }, $searchParams),
+        initialPageParam: 1,
+        getNextPageParam: (lastPage: PagedResponse<Agent>) => {
+          if (lastPage.meta.page < lastPage.meta.totalPages) {
+            return lastPage.meta.page + 1;
+          }
 
-        return undefined;
-      }
-    }))
+          return undefined;
+        }
+      };
+    })
   );
 
   onDestroy(() => {
@@ -111,39 +120,42 @@
   <ToggleGroup.Item value="public">Public agents</ToggleGroup.Item>
 </ToggleGroup.Root>
 
-<SignedIn let:user>
+<SignedIn>
   <DataList
     query={agentsQuery}
-    let:item
     searchLabel="Search agents"
     {searchParams}
     sortOptions={agentSortOptions}
     defaultSortBy="lastUsedAt"
     defaultSortOrder="DESC"
   >
-    <p slot="no-results">No agents found.</p>
-    <Card.Root>
-      <Card.Header>
-        <Card.Title tag="h2">
-          <a href={`/agents/${item.id}`}>{item.name}</a>
-        </Card.Title>
-        {#if item.description}
-          <Card.Description>{item.description}</Card.Description>
+    {#snippet noResults()}
+      <p>No agents found.</p>
+    {/snippet}
+    {#snippet children({ item })}
+      <Card.Root>
+        <Card.Header>
+          <Card.Title level={2}>
+            <a href={`/agents/${item.id}`}>{item.name}</a>
+          </Card.Title>
+          {#if item.description}
+            <Card.Description>{item.description}</Card.Description>
+          {/if}
+        </Card.Header>
+        {#if item.lastUsedAt}
+          <Card.Content>
+            <p>
+              <strong>Last chat </strong>
+              <Time timestamp={item.lastUsedAt} relative />
+            </p>
+          </Card.Content>
         {/if}
-      </Card.Header>
-      {#if item.lastUsedAt}
-        <Card.Content>
-          <p>
-            <strong>Last chat </strong>
-            <Time timestamp={item.lastUsedAt} relative />
-          </p>
-        </Card.Content>
-      {/if}
-      {#if item.userId === user?.id}
-        <Card.Footer>
-          <AgentActions id={item.id} name={item.name} />
-        </Card.Footer>
-      {/if}
-    </Card.Root>
+        {#if item.userId === user?.id}
+          <Card.Footer>
+            <AgentActions id={item.id} name={item.name} />
+          </Card.Footer>
+        {/if}
+      </Card.Root>
+    {/snippet}
   </DataList>
 </SignedIn>

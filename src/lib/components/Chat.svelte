@@ -1,10 +1,9 @@
 <script lang="ts">
   import { browser } from "$app/environment";
   import { afterNavigate, goto } from "$app/navigation";
-  import { page } from "$app/stores";
+  import { page } from "$app/state";
   import Message from "$lib/components/Message.svelte";
   import Recorder from "$lib/components/Recorder.svelte";
-  import Toast from "$lib/components/Toast.svelte";
   import TtsSettings from "$lib/components/TtsSettings.svelte";
   import { Button } from "$lib/components/ui/button";
   import { Textarea } from "$lib/components/ui/textarea";
@@ -24,33 +23,43 @@
   } from "$lib/stores";
   import type { SelectItem } from "$lib/types/client";
   import { ModelID } from "$lib/types/elevenlabs";
-  import { useChat } from "@ai-sdk/svelte";
+  import { Chat } from "@ai-sdk/svelte";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
   import { onDestroy, onMount, tick } from "svelte";
   import Select from "svelte-select";
   import { toast } from "svelte-sonner";
   import { v4 as uuidv4 } from "uuid";
 
-  export let agent: { id: string; name: string } | undefined = undefined;
-  export let apiKeys: { mistral: boolean; openai: boolean; eleven: boolean } | undefined;
-  export let models: SelectItem[] | undefined;
-  export let selectedModel: SelectItem | undefined = undefined;
-  export let initialMessages: ExtendedMessage[] | undefined = undefined;
+  interface Props {
+    agent?: { id: string; name: string } | undefined;
+    apiKeys: { mistral: boolean; openai: boolean; eleven: boolean } | undefined;
+    models: SelectItem[] | undefined;
+    selectedModel?: SelectItem | undefined;
+    initialMessages?: ExtendedMessage[] | undefined;
+  }
 
-  let chatForm: HTMLFormElement;
+  let {
+    agent = undefined,
+    apiKeys,
+    models,
+    selectedModel = $bindable(undefined),
+    initialMessages = undefined
+  }: Props = $props();
+
+  let chatForm: HTMLFormElement | null = $state(null);
   let startSound: HTMLAudioElement;
   let finishSound: HTMLAudioElement;
-  let voiceMessage: string;
+  let voiceMessage: string | null = $state(null);
 
   let controller: AbortController;
   let signal: AbortSignal;
 
   const initialMessageCount = 20;
-  let visibleMessageCount = initialMessageCount;
+  let visibleMessageCount = $state(initialMessageCount);
 
   const client = useQueryClient();
 
-  const createConversationMutation = createMutation<ConversationWithMessageMap>({
+  const createConversationMutation = createMutation<ConversationWithMessageMap>(() => ({
     mutationFn: async () =>
       (
         await fetch("/api/conversations", {
@@ -58,7 +67,7 @@
           body: JSON.stringify({
             agentId: agent?.id,
             modelId: selectedModel?.value,
-            messages: $messages
+            messages: chat.messages
           })
         })
       ).json(),
@@ -66,56 +75,56 @@
       client.invalidateQueries({ queryKey: ["conversations"] });
       client.invalidateQueries({ queryKey: ["agents"] });
     }
+  }));
+
+  const chat = new Chat({
+    onFinish: async (message) => {
+      if (voiceMessage) {
+        ttsProps.set({
+          text: message.content,
+          voice: $selectedVoice?.value,
+          signal,
+          modelId: $selectedTtsModel?.value || ModelID.ElevenTurboV2
+        });
+        setVoiceMessage("");
+      } else {
+        finishSound.play();
+      }
+
+      if (!$conversationStore) {
+        createConversationMutation.mutate(undefined, {
+          onSuccess: async (data) => {
+            if (data.id) {
+              newConversation.set(true);
+              await goto(`${agent?.id ? "/agents/" + agent.id : ""}/conversations/${data.id}`, {
+                keepFocus: true,
+                noScroll: true
+              });
+              newConversation.set(false);
+            }
+          }
+        });
+      } else if ($conversationStore) client.invalidateQueries({ queryKey: ["conversations"] });
+    },
+    onResponse: () => {
+      if (!voiceMessage) {
+        startSound.play();
+      }
+    },
+    body: {
+      modelId: selectedModel?.value,
+      agentId: agent?.id,
+      conversationId: $conversationStore?.id
+    },
+    initialMessages
   });
 
-  const { append, error, handleSubmit, input, isLoading, messages, reload, setMessages, stop } =
-    useChat({
-      onFinish: async (message) => {
-        if (voiceMessage) {
-          ttsProps.set({
-            text: message.content,
-            voice: $selectedVoice?.value,
-            signal,
-            modelId: $selectedTtsModel?.value || ModelID.ElevenTurboV2
-          });
-          setVoiceMessage("");
-        } else {
-          finishSound.play();
-        }
+  const visibleMessages = $derived(
+    chat.messages.filter((message) => message.content).slice(-visibleMessageCount)
+  );
 
-        if (!$conversationStore) {
-          $createConversationMutation.mutate(undefined, {
-            onSuccess: async (data) => {
-              if (data.id) {
-                newConversation.set(true);
-                await goto(`${agent?.id ? "/agents/" + agent.id : ""}/conversations/${data.id}`, {
-                  keepFocus: true,
-                  noScroll: true
-                });
-                newConversation.set(false);
-              }
-            }
-          });
-        } else if ($conversationStore) client.invalidateQueries({ queryKey: ["conversations"] });
-      },
-      onResponse: async () => {
-        if (!voiceMessage) {
-          startSound.play();
-        }
-      },
-      body: {
-        modelId: selectedModel?.value,
-        agentId: agent?.id,
-        conversationId: $conversationStore?.id
-      },
-      initialMessages
-    });
-
-  $: visibleMessages = $messages.filter((message) => message.content).slice(-visibleMessageCount);
-
-  // Follow-up suggestions state and mutation
-  let followups: string[] = [];
-  const followupsMutation = createMutation<string[]>({
+  let followups: string[] = $state([]);
+  const followupsMutation = createMutation<string[]>(() => ({
     mutationFn: async () =>
       (
         await fetch(`/api/conversations/${$conversationStore?.id}/followups`, {
@@ -123,24 +132,22 @@
         })
       ).json(),
     onSuccess: (data) => (followups = data),
-    onError: () =>
-      toast.error(Toast, { componentProps: { text: "Failed to load follow-up suggestions." } })
-  });
+    onError: () => toast.error("Failed to load follow-up suggestions.")
+  }));
 
   function loadMoreMessages() {
-    const newVisibleCount = visibleMessageCount + 20; // Load 20 more messages each time
-    visibleMessageCount = Math.min(newVisibleCount, $messages.length); // Prevent exceeding total
+    const newVisibleCount = visibleMessageCount + 20;
+    visibleMessageCount = Math.min(newVisibleCount, chat.messages.length);
   }
-  /**
-   * Load all messages in the conversation history
-   */
+
   function loadAllMessages() {
-    visibleMessageCount = $messages.length;
+    visibleMessageCount = chat.messages.length;
   }
 
   function handleMessageSubmit(event: KeyboardEvent) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
+      if (!chatForm) return;
       chatForm.requestSubmit();
     }
   }
@@ -157,18 +164,17 @@
     if (!chatForm) return;
     const chatInput = chatForm.querySelector("textarea") as HTMLTextAreaElement;
     if (!chatInput) return;
-    // Delay focus to ensure the DOM update has fully completed
     setTimeout(() => {
       chatInput.focus();
     }, 0);
   }
 
   async function copyLastMessage() {
-    if (!$messages) return;
-    const lastMessage = $messages.at(-1);
+    if (!chat.messages) return;
+    const lastMessage = chat.messages.at(-1);
     if (lastMessage?.role !== "assistant") return;
     await navigator.clipboard.writeText(lastMessage.content);
-    toast.success(Toast, { componentProps: { text: "Last message copied to clipboard." } });
+    toast.success("Last message copied to clipboard.");
   }
 
   function handleCopyLastMessage(event: KeyboardEvent) {
@@ -236,9 +242,9 @@
     signal = controller.signal;
   }
 
-  $: {
+  $effect(() => {
     if (voiceMessage) {
-      append(
+      chat.append(
         { content: voiceMessage, role: "user" },
         {
           body: {
@@ -249,14 +255,14 @@
         }
       );
     }
-  }
+  });
 
   function resetConversation() {
-    setMessages(initialMessages || []);
+    chat.messages = initialMessages || [];
     resetAudio();
     handleModelSelection();
 
-    if ($page.url.pathname === "/") {
+    if (page.url.pathname === "/") {
       conversationStore.set(null);
     }
   }
@@ -268,16 +274,18 @@
     focusChatInput();
   });
 
-  $: if (initialMessages) {
-    tick().then(() => setMessages(initialMessages));
-  }
+  $effect(() => {
+    if (initialMessages) {
+      chat.messages = initialMessages;
+    }
+  });
 
   async function handleEdit(id: string, content: string, regenerate: boolean = true) {
-    const messageIndex = $messages.findIndex((message) => message.id === id);
+    const messageIndex = chat.messages.findIndex((message) => message.id === id);
 
     if (messageIndex === -1) return;
 
-    const updatedMessages = $messages.slice(0, messageIndex);
+    const updatedMessages = chat.messages.slice(0, messageIndex);
     updatedMessages.push({
       role: "user",
       content,
@@ -285,12 +293,12 @@
       parts: [{ type: "text", text: content }]
     });
 
-    setMessages(updatedMessages);
+    chat.messages = updatedMessages;
 
     await tick();
 
     if (regenerate) {
-      reload({
+      chat.reload({
         body: {
           modelId: selectedModel?.value,
           agentId: agent?.id,
@@ -305,9 +313,7 @@
       });
 
       if (!res.ok) {
-        toast.error(Toast, {
-          componentProps: { text: "Failed to update message." }
-        });
+        toast.error("Failed to update message.");
       }
 
       client.invalidateQueries({ queryKey: ["conversations"] });
@@ -320,7 +326,6 @@
     fileInput.style.display = "none"; // Optionally hide the input element
     fileInput.accept = "application/json";
 
-    // Attach a change event listener to handle file selection
     fileInput.addEventListener("change", async () => {
       const file = fileInput.files?.[0];
 
@@ -351,9 +356,7 @@
               `${conversation.agentId ? "/agents/" + conversation.agentId : ""}/conversations/${conversation.id}`
             );
           } else {
-            toast.error(Toast, {
-              componentProps: { text: "Failed to import conversation." }
-            });
+            toast.error("Failed to import conversation.");
           }
         } catch (error) {
           console.error("Error importing conversation:", error);
@@ -363,18 +366,22 @@
       reader.readAsText(file); // Start reading the file once it's selected
     });
 
-    // Trigger the file selection dialog
     fileInput.click();
   }
 </script>
 
-<svelte:window on:keydown={handleCopyLastMessage} on:keydown={handleFocusChatInput} />
+<svelte:window
+  onkeydown={(e) => {
+    handleFocusChatInput(e);
+    handleCopyLastMessage(e);
+  }}
+/>
 
 <Select
   bind:value={selectedModel}
   items={models}
   placeholder="Select model..."
-  on:change={(e) => localStorage.setItem("selectedModel", JSON.stringify(selectedModel))}
+  on:change={() => localStorage.setItem("selectedModel", JSON.stringify(selectedModel))}
   {ariaListOpen}
   clearable={false}
 />
@@ -385,16 +392,16 @@
 
 <section>
   <div class="chat-list">
-    {#if visibleMessageCount < $messages.length}
+    {#if visibleMessageCount < chat.messages.length}
       <div class="load-buttons mb-2 flex space-x-2">
         <Button
           class="load-more-button"
-          on:click={loadMoreMessages}
+          onclick={loadMoreMessages}
           aria-label="Load previous messages"
         >
           Load More Messages
         </Button>
-        <Button class="load-all-button" on:click={loadAllMessages} aria-label="Load all messages">
+        <Button class="load-all-button" onclick={loadAllMessages} aria-label="Load all messages">
           Load All Messages
         </Button>
       </div>
@@ -405,20 +412,20 @@
         {message}
         siblings={getMessageSiblings($conversationStore?.messages, message.id)}
         onEdit={handleEdit}
-        isLoading={$isLoading}
-        isLastMessage={message.id === $messages.at(-1)?.id}
+        isLoading={chat.status === "streaming" || chat.status === "submitted"}
+        isLastMessage={message.id === chat.messages.at(-1)?.id}
       />
     {/each}
   </div>
   <div class="chat-actions flex space-x-2">
-    {#if $isLoading}
-      <Button on:click={stop}>Stop generating</Button>
+    {#if chat.status === "streaming" || chat.status === "submitted"}
+      <Button onclick={chat.stop}>Stop generating</Button>
     {/if}
-    {#if $messages.at(-1)?.role === "assistant" && !$isLoading}
+    {#if chat.messages.at(-1)?.role === "assistant" && chat.status !== "streaming" && chat.status !== "submitted"}
       <Button
-        on:click={() => {
+        onclick={() => {
           followups = [];
-          reload({
+          chat.reload({
             body: {
               modelId: selectedModel?.value,
               agentId: agent?.id,
@@ -430,21 +437,21 @@
       >
       <Button
         class="ml-2"
-        on:click={() => $followupsMutation.mutate()}
-        disabled={$followupsMutation.isPending}
+        onclick={() => followupsMutation.mutate()}
+        disabled={followupsMutation.isPending}
       >
-        {#if $followupsMutation.isPending}
+        {#if followupsMutation.isPending}
           Loading suggestions...
         {:else}
           Suggest Follow-ups
         {/if}
       </Button>
     {/if}
-    {#if $error}
+    {#if chat.status === "error"}
       <p class="error">There was an error while getting a response from the AI.</p>
       <Button
-        on:click={() =>
-          reload({
+        onclick={() =>
+          chat.reload({
             body: {
               modelId: selectedModel?.value,
               agentId: agent?.id,
@@ -465,8 +472,8 @@
       {#each followups as suggestion (suggestion)}
         <Button
           variant="outline"
-          on:click={() => {
-            input.set(suggestion);
+          onclick={() => {
+            chat.input = suggestion;
             focusChatInput();
           }}
         >
@@ -477,9 +484,9 @@
   {/if}
 
   <form
-    on:submit={(e) => {
+    onsubmit={(e) => {
       followups = [];
-      handleSubmit(e, {
+      chat.handleSubmit(e, {
         body: {
           modelId: selectedModel?.value,
           agentId: agent?.id,
@@ -491,21 +498,21 @@
     bind:this={chatForm}
   >
     <Textarea
-      bind:value={$input}
-      on:keydown={handleMessageSubmit}
+      bind:value={chat.input}
+      onkeydown={handleMessageSubmit}
       placeholder={agent ? `Message ${agent.name}:` : "Type your message:"}
       class="chat-input"
       rows={1}
       cols={200}
     />
   </form>
-  {#if apiKeys?.openai && apiKeys.eleven && !$isLoading}
+  {#if apiKeys?.openai && apiKeys.eleven && chat.status !== "streaming" && chat.status !== "submitted"}
     <Recorder {setVoiceMessage} />
   {/if}
 
   {#if !$conversationStore}
     <div class="import-conversation">
-      <Button on:click={importConversation}>Import conversation</Button>
+      <Button onclick={importConversation}>Import conversation</Button>
     </div>
   {/if}
 </section>

@@ -5,9 +5,8 @@ import { error, text, type RequestHandler } from "@sveltejs/kit";
 import { OpenAI } from "openai";
 
 export const POST = (async ({ locals, request }) => {
-  if (!locals.session?.userId) return error(401, "Unauthorized");
-
-  const { userId } = locals.session;
+  const { userId } = locals.auth();
+  if (!userId) return error(401, "Unauthorized");
 
   const user = await getUser(userId);
 

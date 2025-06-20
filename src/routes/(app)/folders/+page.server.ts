@@ -13,11 +13,10 @@ export const load = (async () => {
 
 export const actions: Actions = {
   default: async ({ locals, request }) => {
-    if (!locals.session) {
+    const { userId } = locals.auth();
+    if (!userId) {
       return fail(401, { message: "Unauthorized" });
     }
-
-    const { userId } = locals.session;
 
     const form = await superValidate(request, zod(folderSchema), { strict: true });
 
@@ -27,7 +26,7 @@ export const actions: Actions = {
 
     const { name } = form.data;
     const folder = await createFolder({
-      userId: userId!,
+      userId,
       name
     });
 

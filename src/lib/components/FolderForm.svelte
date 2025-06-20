@@ -7,9 +7,13 @@
   import { zodClient } from "sveltekit-superforms/adapters";
   import { folderSchema, type FolderSchema } from "../../routes/(app)/folders/schema";
 
-  export let data: SuperValidated<Infer<FolderSchema>>;
-  export let closeDialog: () => void = () => {};
-  export let action: string = "";
+  interface Props {
+    data: SuperValidated<Infer<FolderSchema>>;
+    closeDialog?: () => void;
+    action?: string;
+  }
+
+  const { data, closeDialog = () => {}, action = "" }: Props = $props();
 
   const client = useQueryClient();
 
@@ -32,9 +36,11 @@
 
 <form method="POST" use:enhance {action}>
   <Form.Field {form} name="name">
-    <Form.Control let:attrs>
-      <Form.Label>Name</Form.Label>
-      <Input {...attrs} bind:value={$formData.name} />
+    <Form.Control>
+      {#snippet children({ props })}
+        <Form.Label>Name</Form.Label>
+        <Input {...props} bind:value={$formData.name} />
+      {/snippet}
     </Form.Control>
     <Form.Description>The name of this folder</Form.Description>
     <Form.FieldErrors />

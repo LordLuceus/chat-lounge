@@ -1,29 +1,38 @@
 <script lang="ts">
   import InfiniteScroll from "$lib/components/InfiniteScroll.svelte";
-  import * as Collapsible from "$lib/components/ui/collapsible";
+  import * as Collapsible from "$lib/components/ui";
   import type { PagedResponse } from "$lib/types/api";
   import type { CreateInfiniteQueryResult, InfiniteData } from "@tanstack/svelte-query";
 
-  export let query: CreateInfiniteQueryResult<InfiniteData<PagedResponse<any>, unknown>, Error>;
-  export let itemType: string;
+  interface Props {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    query: CreateInfiniteQueryResult<InfiniteData<PagedResponse<any>, unknown>, Error>;
+    itemType: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    link?: import("svelte").Snippet<[any]>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    menu?: import("svelte").Snippet<[any]>;
+  }
 
-  let open = false;
+  const { query, itemType, link, menu }: Props = $props();
+
+  let open = $state(false);
 </script>
 
 <Collapsible.Root bind:open>
   <Collapsible.Trigger aria-expanded={open}>{itemType}</Collapsible.Trigger>
   <Collapsible.Content>
-    {#if $query.isSuccess}
+    {#if query.isSuccess}
       <InfiniteScroll
-        hasMore={$query.hasNextPage}
-        fetchMore={() => !$query.isFetching && $query.fetchNextPage()}
+        hasMore={query.hasNextPage}
+        fetchMore={() => !query.isFetching && query.fetchNextPage()}
       >
         <ul class="list-none">
-          {#each $query.data.pages as { data }}
-            {#each data as item}
+          {#each query.data.pages as { data }, index (index)}
+            {#each data as item (item.id)}
               <li class="flex items-center">
-                <slot name="link" {item} />
-                <slot name="menu" {item} />
+                {@render link?.({ item })}
+                {@render menu?.({ item })}
               </li>
             {/each}
           {/each}

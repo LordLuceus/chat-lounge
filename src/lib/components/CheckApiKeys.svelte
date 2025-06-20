@@ -1,10 +1,10 @@
 <script lang="ts">
-  import SignedIn from "clerk-sveltekit/client/SignedIn.svelte";
+  import { SignedIn } from "svelte-clerk";
 
-  export let data;
+  const { data, children } = $props();
 </script>
 
-<SignedIn let:user>
+<SignedIn>
   {#if !data.keys.eleven && !data.keys.mistral && !data.keys.openai && !data.keys.google && !data.keys.anthropic}
     <p>You don't have any API keys set.</p>
     <p>
@@ -18,6 +18,6 @@
       <a href="/getting-started">Read the getting started guide</a>.
     </p>
   {:else}
-    <slot />
+    {@render children?.()}
   {/if}
 </SignedIn>

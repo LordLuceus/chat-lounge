@@ -1,9 +1,8 @@
 <script lang="ts">
   import { browser } from "$app/environment";
   import { goto } from "$app/navigation";
-  import { page } from "$app/stores";
+  import { page } from "$app/state";
   import DataList from "$lib/components/DataList.svelte";
-  import Toast from "$lib/components/Toast.svelte";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { Button } from "$lib/components/ui/button";
   import * as Dialog from "$lib/components/ui/dialog";
@@ -13,15 +12,19 @@
   import type { PagedResponse } from "$lib/types/api";
   import type { Folder } from "@prisma/client";
   import { createInfiniteQuery, createMutation, useQueryClient } from "@tanstack/svelte-query";
-  import { onDestroy } from "svelte";
+  import { onDestroy, tick } from "svelte";
   import { toast } from "svelte-sonner";
-  import { derived, writable } from "svelte/store";
+  import { get, writable } from "svelte/store";
 
-  export let id: string;
-  export let name: string;
-  export let isPinned: boolean;
-  export let sharedConversationId: string | undefined;
-  export let folderId: string | undefined;
+  interface Props {
+    id: string;
+    name: string;
+    isPinned: boolean;
+    sharedConversationId: string | undefined;
+    folderId: string | undefined;
+  }
+
+  const { id, name, isPinned, sharedConversationId, folderId }: Props = $props();
 
   const searchParams = writable<SearchParams>({
     search: "",
@@ -35,7 +38,7 @@
     { pageParam = 1 },
     { search, sortBy, sortOrder, folderId }: SearchParams
   ) => {
-    const url = new URL("/api/folders", $page.url.origin);
+    const url = new URL("/api/folders", page.url.origin);
 
     url.searchParams.set("page", pageParam.toString());
     if (search) {
@@ -54,11 +57,12 @@
     return fetch(url.toString()).then((res) => res.json());
   };
 
-  const foldersQuery = createInfiniteQuery<PagedResponse<Folder>>(
-    derived(searchParams, ($searchParams) => ({
-      queryKey: ["folders", $searchParams],
+  const foldersQuery = createInfiniteQuery<PagedResponse<Folder>>(() => {
+    const params = get(searchParams);
+    return {
+      queryKey: ["folders", params],
       queryFn: ({ pageParam }: { pageParam: unknown }) =>
-        fetchFolders({ pageParam: pageParam as number }, $searchParams),
+        fetchFolders({ pageParam: pageParam as number }, params),
       initialPageParam: 1,
       getNextPageParam: (lastPage: PagedResponse<Folder>) => {
         if (lastPage.meta.page < lastPage.meta.totalPages) {
@@ -67,9 +71,8 @@
 
         return undefined;
       }
-    }))
-  );
-
+    };
+  });
   onDestroy(() => {
     if (browser)
       searchParams.set({
@@ -82,7 +85,7 @@
       });
   });
 
-  const renameConversationMutation = createMutation({
+  const renameConversationMutation = createMutation(() => ({
     mutationFn: async (newName: string) =>
       (
         await fetch(`/api/conversations/${id}`, {
@@ -94,9 +97,9 @@
         })
       ).json(),
     onSuccess: () => client.invalidateQueries({ queryKey: ["conversations"] })
-  });
+  }));
 
-  const deleteConversationMutation = createMutation({
+  const deleteConversationMutation = createMutation(() => ({
     mutationFn: async (id: string) =>
       (
         await fetch(`/api/conversations/${id}`, {
@@ -109,9 +112,9 @@
         predicate: (query) => query.queryKey[0] === "conversations" && query.queryKey[1] !== id
       });
     }
-  });
+  }));
 
-  const shareConversationMutation = createMutation({
+  const shareConversationMutation = createMutation(() => ({
     mutationFn: async (id: string) =>
       (
         await fetch(`/api/conversations/${id}/share`, {
@@ -119,18 +122,15 @@
         })
       ).json(),
     onSuccess: ({ id }) => {
-      // Copy the shared conversation link to the clipboard
       const url = `${window.location.origin}/conversations/shared/${id}`;
       navigator.clipboard.writeText(url);
-      toast.success(Toast, {
-        componentProps: { text: "Conversation shared successfully. Copied link to clipboard." }
-      });
+      toast.success("Conversation shared successfully. Copied link to clipboard.");
       client.invalidateQueries({ queryKey: ["sharedConversations"] });
       client.invalidateQueries({ queryKey: ["conversations"] });
     }
-  });
+  }));
 
-  const unshareConversationMutation = createMutation({
+  const unshareConversationMutation = createMutation(() => ({
     mutationFn: async (id: string) =>
       (
         await fetch(`/api/conversations/shared/${id}`, {
@@ -141,9 +141,9 @@
       client.invalidateQueries({ queryKey: ["sharedConversations"] });
       client.invalidateQueries({ queryKey: ["conversations"] });
     }
-  });
+  }));
 
-  const togglePinnedConversationMutation = createMutation({
+  const togglePinnedConversationMutation = createMutation(() => ({
     mutationFn: async (id: string) =>
       (
         await fetch(`/api/conversations/${id}/toggle-pin`, {
@@ -152,13 +152,11 @@
       ).json(),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ["conversations"] });
-      toast.success(Toast, {
-        componentProps: { text: `Conversation ${isPinned ? "unpinned" : "pinned"} successfully.` }
-      });
+      toast.success(`Conversation ${isPinned ? "unpinned" : "pinned"} successfully.`);
     }
-  });
+  }));
 
-  const addToFolderMutation = createMutation({
+  const addToFolderMutation = createMutation(() => ({
     mutationFn: async (id: string) =>
       (
         await fetch(`/api/folders/${selectedFolderId}/add-conversation`, {
@@ -173,9 +171,9 @@
       client.invalidateQueries({ queryKey: ["conversations"] });
       client.invalidateQueries({ queryKey: ["folders"] });
     }
-  });
+  }));
 
-  const removeFromFolderMutation = createMutation({
+  const removeFromFolderMutation = createMutation(() => ({
     mutationFn: async (id: string) =>
       (
         await fetch(`/api/folders/${folderId}/remove-conversation`, {
@@ -190,40 +188,43 @@
       client.invalidateQueries({ queryKey: ["conversations"] });
       client.invalidateQueries({ queryKey: ["folders"] });
     }
-  });
+  }));
 
-  let renameDialogOpen = false;
-  let deleteDialogOpen = false;
-  let shareDialogOpen = false;
-  let unshareDialogOpen = false;
-  let addToFolderDialogOpen = false;
-  let newName = "";
-  let selectedFolderId: string | undefined;
+  let renameDialogOpen = $state(false);
+  let deleteDialogOpen = $state(false);
+  let shareDialogOpen = $state(false);
+  let unshareDialogOpen = $state(false);
+  let addToFolderDialogOpen = $state(false);
+  let newName = $state(name);
+  let selectedFolderId: string | undefined = $state();
 
-  $: newName = name;
-
-  function renameClick() {
+  async function renameClick() {
+    await tick();
     renameDialogOpen = true;
   }
 
-  function deleteClick() {
+  async function deleteClick() {
+    await tick();
     deleteDialogOpen = true;
   }
 
-  function shareClick() {
+  async function shareClick() {
+    await tick();
     shareDialogOpen = true;
   }
 
-  function unshareClick() {
+  async function unshareClick() {
+    await tick();
     unshareDialogOpen = true;
   }
 
-  function addToFolderClick() {
+  async function addToFolderClick() {
+    await tick();
     addToFolderDialogOpen = true;
   }
 
   function handleRename() {
-    $renameConversationMutation.mutate(newName, {
+    renameConversationMutation.mutate(newName, {
       onSuccess: () => {
         renameDialogOpen = false;
       }
@@ -231,12 +232,12 @@
   }
 
   function handleDelete(conversationId: string) {
-    $deleteConversationMutation.mutate(conversationId, {
+    deleteConversationMutation.mutate(conversationId, {
       onSuccess: () => {
         deleteDialogOpen = false;
-        toast.success(Toast, { componentProps: { text: "Conversation deleted." } });
+        toast.success("Conversation deleted.");
 
-        if ($page.url.pathname.includes(conversationId)) {
+        if (page.url.pathname.includes(conversationId)) {
           goto("/");
         }
       }
@@ -244,7 +245,7 @@
   }
 
   function handleShare() {
-    $shareConversationMutation.mutate(id, {
+    shareConversationMutation.mutate(id, {
       onSuccess: () => {
         shareDialogOpen = false;
       }
@@ -253,7 +254,7 @@
 
   function handleUnshare() {
     if (!sharedConversationId) return;
-    $unshareConversationMutation.mutate(sharedConversationId, {
+    unshareConversationMutation.mutate(sharedConversationId, {
       onSuccess: () => {
         unshareDialogOpen = false;
       }
@@ -261,22 +262,18 @@
   }
 
   function handleAddToFolder() {
-    $addToFolderMutation.mutate(id, {
+    addToFolderMutation.mutate(id, {
       onSuccess: () => {
-        toast.success(Toast, {
-          componentProps: { text: "Conversation added to folder successfully." }
-        });
+        toast.success("Conversation added to folder successfully.");
         addToFolderDialogOpen = false;
       }
     });
   }
 
   function handleRemoveFromFolder() {
-    $removeFromFolderMutation.mutate(id, {
+    removeFromFolderMutation.mutate(id, {
       onSuccess: () => {
-        toast.success(Toast, {
-          componentProps: { text: "Conversation removed from folder successfully." }
-        });
+        toast.success("Conversation removed from folder successfully.");
       }
     });
   }
@@ -289,7 +286,7 @@
     </Dialog.Header>
     <Input bind:value={newName} />
     <Dialog.Footer>
-      <Button disabled={!newName} on:click={handleRename}>Rename</Button>
+      <Button disabled={!newName} onclick={handleRename}>Rename</Button>
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>
@@ -302,7 +299,7 @@
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-      <AlertDialog.Action on:click={() => handleDelete(id)}>Delete</AlertDialog.Action>
+      <AlertDialog.Action onclick={() => handleDelete(id)}>Delete</AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>
@@ -317,7 +314,7 @@
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-      <AlertDialog.Action on:click={handleUnshare}>Unshare</AlertDialog.Action>
+      <AlertDialog.Action onclick={handleUnshare}>Unshare</AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>
@@ -332,7 +329,7 @@
       >
     </Dialog.Header>
     <Dialog.Footer>
-      <Button on:click={handleShare}>Share</Button>
+      <Button onclick={handleShare}>Share</Button>
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>
@@ -342,16 +339,20 @@
     <Dialog.Header>
       <Dialog.Title>Add conversation to folder</Dialog.Title>
       <Dialog.Description>Add this conversation to a folder.</Dialog.Description>
-      <DataList query={foldersQuery} let:item searchLabel="Search folders" {searchParams}>
-        <p slot="no-results">No folders found.</p>
-        <div>
-          <Button
-            on:click={() => {
-              selectedFolderId = item.id;
-              handleAddToFolder();
-            }}>{item.name}</Button
-          >
-        </div>
+      <DataList query={foldersQuery} searchLabel="Search folders" {searchParams}>
+        {#snippet noResults()}
+          <p>No folders found.</p>
+        {/snippet}
+        {#snippet children({ item })}
+          <div>
+            <Button
+              onclick={() => {
+                selectedFolderId = item.id;
+                handleAddToFolder();
+              }}>{item.name}</Button
+            >
+          </div>
+        {/snippet}
       </DataList>
     </Dialog.Header>
   </Dialog.Content>
@@ -360,20 +361,20 @@
 <DropdownMenu.Root>
   <DropdownMenu.Trigger>Actions</DropdownMenu.Trigger>
   <DropdownMenu.Content>
-    <DropdownMenu.Item on:click={renameClick}>Rename</DropdownMenu.Item>
-    <DropdownMenu.Item on:click={() => $togglePinnedConversationMutation.mutate(id)}
+    <DropdownMenu.Item onclick={renameClick}>Rename</DropdownMenu.Item>
+    <DropdownMenu.Item onclick={() => togglePinnedConversationMutation.mutate(id)}
       >{isPinned ? "Unpin" : "Pin to top"}</DropdownMenu.Item
     >
     {#if folderId}
-      <DropdownMenu.Item on:click={handleRemoveFromFolder}>Remove from folder</DropdownMenu.Item>
+      <DropdownMenu.Item onclick={handleRemoveFromFolder}>Remove from folder</DropdownMenu.Item>
     {:else}
-      <DropdownMenu.Item on:click={addToFolderClick}>Add to folder</DropdownMenu.Item>
+      <DropdownMenu.Item onclick={addToFolderClick}>Add to folder</DropdownMenu.Item>
     {/if}
     {#if sharedConversationId}
-      <DropdownMenu.Item on:click={unshareClick}>Unshare</DropdownMenu.Item>
+      <DropdownMenu.Item onclick={unshareClick}>Unshare</DropdownMenu.Item>
     {:else}
-      <DropdownMenu.Item on:click={shareClick}>Share</DropdownMenu.Item>
+      <DropdownMenu.Item onclick={shareClick}>Share</DropdownMenu.Item>
     {/if}
-    <DropdownMenu.Item on:click={deleteClick}>Delete</DropdownMenu.Item>
+    <DropdownMenu.Item onclick={deleteClick}>Delete</DropdownMenu.Item>
   </DropdownMenu.Content>
 </DropdownMenu.Root>

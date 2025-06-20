@@ -6,11 +6,10 @@ import type { ElevenLabsError, ElevenLabsModel } from "$lib/types/elevenlabs";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const GET = (async ({ locals, request }) => {
-  if (!locals.session?.userId) {
+  const { userId } = locals.auth();
+  if (!userId) {
     return error(401, "Unauthorized");
   }
-
-  const { userId } = locals.session;
 
   const user = await getUser(userId);
 

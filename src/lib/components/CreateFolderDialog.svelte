@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { page } from "$app/stores";
+  import { page } from "$app/state";
   import * as Dialog from "$lib/components/ui/dialog";
   import FolderForm from "./FolderForm.svelte";
 </script>
@@ -10,6 +10,6 @@
     <Dialog.Header>
       <Dialog.Title>Create a new folder</Dialog.Title>
     </Dialog.Header>
-    <FolderForm data={$page.data.form} />
+    <FolderForm data={page.data.form} />
   </Dialog.Content>
 </Dialog.Root>

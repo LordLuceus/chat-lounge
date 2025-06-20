@@ -1,18 +1,18 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
-  import { page } from "$app/stores";
-  import Toast from "$lib/components/Toast.svelte";
+  import { page } from "$app/state";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { Button } from "$lib/components/ui/button";
   import * as Dialog from "$lib/components/ui/dialog";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Input } from "$lib/components/ui/input";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
+  import { tick } from "svelte";
   import { toast } from "svelte-sonner";
 
   const client = useQueryClient();
 
-  const renameFolderMutation = createMutation({
+  const renameFolderMutation = createMutation(() => ({
     mutationFn: async (newName: string) =>
       (
         await fetch(`/api/folders/${id}`, {
@@ -24,9 +24,9 @@
         })
       ).json(),
     onSuccess: () => client.invalidateQueries({ queryKey: ["folders"] })
-  });
+  }));
 
-  const deleteFolderMutation = createMutation({
+  const deleteFolderMutation = createMutation(() => ({
     mutationFn: async (id: string) => {
       await fetch(`/api/folders/${id}`, { method: "DELETE" });
     },
@@ -37,32 +37,36 @@
         predicate: (query) => query.queryKey[0] === "folders" && query.queryKey[1] !== id
       });
     }
-  });
+  }));
 
-  export let id: string;
-  export let name: string;
+  interface Props {
+    id: string;
+    name: string;
+  }
 
-  let renameDialogOpen = false;
-  let deleteDialogOpen = false;
-  let newName = "";
+  const { id, name }: Props = $props();
 
-  $: newName = name;
+  let renameDialogOpen = $state(false);
+  let deleteDialogOpen = $state(false);
+  let newName = $state(name);
 
-  function renameClick() {
+  async function renameClick() {
+    await tick();
     renameDialogOpen = true;
   }
 
-  function deleteClick() {
+  async function deleteClick() {
+    await tick();
     deleteDialogOpen = true;
   }
 
   function handleDelete(folderId: string) {
-    $deleteFolderMutation.mutate(folderId, {
+    deleteFolderMutation.mutate(folderId, {
       onSuccess: () => {
         deleteDialogOpen = false;
-        toast.success(Toast, { componentProps: { text: "Folder deleted." } });
+        toast.success("Folder deleted.");
 
-        if ($page.url.pathname.includes(folderId)) {
+        if (page.url.pathname.includes(folderId)) {
           goto("/");
         }
       }
@@ -70,7 +74,7 @@
   }
 
   function handleRename() {
-    $renameFolderMutation.mutate(newName, {
+    renameFolderMutation.mutate(newName, {
       onSuccess: () => {
         renameDialogOpen = false;
       }
@@ -85,7 +89,7 @@
     </Dialog.Header>
     <Input bind:value={newName} />
     <Dialog.Footer>
-      <Button disabled={!newName} on:click={handleRename}>Rename</Button>
+      <Button disabled={!newName} onclick={handleRename}>Rename</Button>
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>
@@ -98,17 +102,19 @@
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-      <AlertDialog.Action on:click={() => handleDelete(id)}>Delete</AlertDialog.Action>
+      <AlertDialog.Action onclick={() => handleDelete(id)}>Delete</AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>
 
 <DropdownMenu.Root>
-  <DropdownMenu.Trigger asChild let:builder>
-    <Button builders={[builder]}>Actions</Button>
+  <DropdownMenu.Trigger>
+    {#snippet child({ props })}
+      <Button {...props}>Actions</Button>
+    {/snippet}
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
-    <DropdownMenu.Item on:click={() => renameClick()}>Rename</DropdownMenu.Item>
-    <DropdownMenu.Item on:click={() => deleteClick()}>Delete</DropdownMenu.Item>
+    <DropdownMenu.Item onclick={() => renameClick()}>Rename</DropdownMenu.Item>
+    <DropdownMenu.Item onclick={() => deleteClick()}>Delete</DropdownMenu.Item>
   </DropdownMenu.Content>
 </DropdownMenu.Root>

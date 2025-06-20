@@ -8,13 +8,13 @@ import { AIProvider } from "$lib/types/db";
 import { error, type RequestHandler } from "@sveltejs/kit";
 
 export const POST = (async ({ locals, request }) => {
-  if (!locals.session?.userId) {
+  const { userId } = locals.auth();
+  if (!userId) {
     return error(401, { message: "Unauthorized" });
   }
 
   const { messages, modelId, agentId, conversationId, regenerate, messageId } =
     await request.json();
-  const { userId } = locals.session;
 
   const user = await getUser(userId);
 

@@ -2,9 +2,13 @@
   import AgentForm from "../../AgentForm.svelte";
   import type { PageData } from "./$types";
 
-  export let data: PageData;
-  export let closeDialog: () => void = () => {};
-  export let action: string = "";
+  interface Props {
+    data: PageData;
+    closeDialog?: () => void;
+    action?: string;
+  }
+
+  const { data, closeDialog = () => {}, action = "" }: Props = $props();
 </script>
 
 <AgentForm data={data.editForm} {closeDialog} {action} />

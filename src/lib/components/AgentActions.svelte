@@ -1,19 +1,19 @@
 <script lang="ts">
   import { goto, preloadData } from "$app/navigation";
-  import { page } from "$app/stores";
-  import Toast from "$lib/components/Toast.svelte";
+  import { page } from "$app/state";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { Button } from "$lib/components/ui/button";
   import * as Dialog from "$lib/components/ui/dialog";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
+  import { tick } from "svelte";
   import { toast } from "svelte-sonner";
   import type { PageData as EditData } from "../../routes/(app)/agents/[id]/edit/$types";
   import EditPage from "../../routes/(app)/agents/[id]/edit/+page.svelte";
 
   const client = useQueryClient();
 
-  const deleteAgentMutation = createMutation({
+  const deleteAgentMutation = createMutation(() => ({
     mutationFn: async (id: string) => {
       await fetch(`/api/agents/${id}`, { method: "DELETE" });
     },
@@ -24,16 +24,20 @@
         predicate: (query) => query.queryKey[0] === "agents" && query.queryKey[1] !== id
       });
     }
-  });
+  }));
 
-  export let id: string;
-  export let name: string;
+  interface Props {
+    id: string;
+    name: string;
+  }
 
-  let editDialogOpen = false;
-  let deleteDialogOpen = false;
-  let editData: EditData;
+  const { id, name }: Props = $props();
 
-  $: editUrl = `/agents/${id}/edit`;
+  let editDialogOpen = $state(false);
+  let deleteDialogOpen = $state(false);
+  let editData: EditData | null = $state(null);
+
+  const editUrl = $derived(`/agents/${id}/edit`);
 
   async function editClick() {
     const result = await preloadData(editUrl);
@@ -44,17 +48,18 @@
     }
   }
 
-  function deleteClick() {
+  async function deleteClick() {
+    await tick();
     deleteDialogOpen = true;
   }
 
   function handleDelete(agentId: string) {
-    $deleteAgentMutation.mutate(agentId, {
+    deleteAgentMutation.mutate(agentId, {
       onSuccess: () => {
         deleteDialogOpen = false;
-        toast.success(Toast, { componentProps: { text: "Agent deleted." } });
+        toast.success("Agent deleted.");
 
-        if ($page.url.pathname.includes(agentId)) {
+        if (page.url.pathname.includes(agentId)) {
           goto("/");
         }
       }
@@ -81,17 +86,19 @@
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-      <AlertDialog.Action on:click={() => handleDelete(id)}>Delete</AlertDialog.Action>
+      <AlertDialog.Action onclick={() => handleDelete(id)}>Delete</AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>
 
 <DropdownMenu.Root>
-  <DropdownMenu.Trigger asChild let:builder>
-    <Button builders={[builder]}>Actions</Button>
+  <DropdownMenu.Trigger>
+    {#snippet child({ props })}
+      <Button {...props}>Actions</Button>
+    {/snippet}
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
-    <DropdownMenu.Item on:click={async () => await editClick()}>Edit</DropdownMenu.Item>
-    <DropdownMenu.Item on:click={() => deleteClick()}>Delete</DropdownMenu.Item>
+    <DropdownMenu.Item onclick={() => editClick()}>Edit</DropdownMenu.Item>
+    <DropdownMenu.Item onclick={() => deleteClick()}>Delete</DropdownMenu.Item>
   </DropdownMenu.Content>
 </DropdownMenu.Root>

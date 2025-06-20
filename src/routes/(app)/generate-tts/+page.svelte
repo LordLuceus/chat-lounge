@@ -13,10 +13,10 @@
     ttsGenerating,
     ttsProps
   } from "$lib/stores";
-  import { Loader, Speech } from "lucide-svelte";
+  import { Loader, Speech } from "@lucide/svelte";
   import { onDestroy, onMount } from "svelte";
 
-  let text: string;
+  let text: string = $state("");
 
   let controller: AbortController;
   let signal: AbortSignal;
@@ -65,9 +65,9 @@
   maxlength={$selectedTtsModel?.characterLimit}
 />
 <CharacterCounter characterLimit={$selectedTtsModel?.characterLimit || 10000} value={text} />
-<Button on:click={handleSubmit} disabled={$ttsGenerating}>
+<Button onclick={handleSubmit} disabled={$ttsGenerating}>
   {#if $ttsGenerating}
-    <Loader />
+    <Loader class="animate-spin" />
   {:else}
     <Speech />
   {/if}

@@ -2,12 +2,12 @@ import { rewindConversation } from "$lib/server/conversations-service";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const POST = (async ({ locals, params, request }) => {
-  if (!locals.session?.userId) {
+  const { userId } = locals.auth();
+  if (!userId) {
     return error(401, "Unauthorized");
   }
 
   const { id } = params;
-  const { userId } = locals.session;
 
   const { messageId } = await request.json();
 

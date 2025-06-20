@@ -1,12 +1,16 @@
 import { getFolder } from "$lib/server/folders-service";
-import { error } from "@sveltejs/kit";
+import { error, redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 
 export const load = (async (event) => {
   const { id } = event.params;
-  const { userId } = event.locals.session!;
+  const { userId } = event.locals.auth();
 
-  const folder = await getFolder(userId!, id);
+  if (!userId) {
+    return redirect(307, "/auth/sign-in");
+  }
+
+  const folder = await getFolder(userId, id);
 
   if (!folder) {
     return error(404, "Folder not found");

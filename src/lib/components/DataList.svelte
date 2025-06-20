@@ -5,23 +5,40 @@
   import { ToggleGroup, ToggleGroupItem } from "$lib/components/ui/toggle-group";
   import { type SearchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
+  import { Loader } from "@lucide/svelte";
   import type { CreateInfiniteQueryResult, InfiniteData } from "@tanstack/svelte-query";
-  import { Loader } from "lucide-svelte";
   import { onMount } from "svelte";
   import Search from "svelte-search";
   import type { Writable } from "svelte/store";
   import { get } from "svelte/store";
 
-  export let query: CreateInfiniteQueryResult<InfiniteData<PagedResponse<any>, unknown>, Error>;
-  export let searchLabel: string;
-  export let searchParams: Writable<SearchParams>;
-  export let sortOptions: { label: string; value: string }[] = [];
-  export let defaultSortBy: string = "";
-  export let defaultSortOrder: string = "";
+  interface Props {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    query: CreateInfiniteQueryResult<InfiniteData<PagedResponse<any>, unknown>, Error>;
+    searchLabel: string;
+    searchParams: Writable<SearchParams>;
+    sortOptions?: { label: string; value: string }[];
+    defaultSortBy?: string;
+    defaultSortOrder?: string;
+    noResults?: import("svelte").Snippet;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    children?: import("svelte").Snippet<[any]>;
+  }
 
-  let value = "";
-  let selectedSortBy: string = defaultSortBy;
-  let selectedSortOrder: string = defaultSortOrder;
+  const {
+    query,
+    searchLabel,
+    searchParams,
+    sortOptions = [],
+    defaultSortBy = "",
+    defaultSortOrder = "",
+    noResults,
+    children
+  }: Props = $props();
+
+  let value = $state("");
+  let selectedSortBy: string = $state(defaultSortBy);
+  let selectedSortOrder: string = $state(defaultSortOrder);
 
   function setSearch(value: string) {
     searchParams.update((params) => ({ ...params, search: value }));
@@ -32,10 +49,10 @@
     searchParams.update((params) => ({ ...params, sortBy, sortOrder }));
   }
 
-  let srAlertMessage = "";
+  let srAlertMessage = $state("");
 
   function setAlertMessage() {
-    const total = $query.data?.pages[0].meta.total;
+    const total = query.data?.pages[0].meta.total;
 
     if (total === 0 || !total) {
       srAlertMessage = "No results found";
@@ -44,7 +61,9 @@
     }
   }
 
-  $: if ($query.isSuccess && $searchParams.search) setAlertMessage();
+  $effect(() => {
+    if (query.isSuccess && $searchParams.search) setAlertMessage();
+  });
 
   onMount(() => {
     const initial = get(searchParams);
@@ -66,7 +85,7 @@
 />
 
 {#if value}
-  <Button on:click={() => (value = "")}>Clear search</Button>
+  <Button onclick={() => (value = "")}>Clear search</Button>
 {/if}
 
 {#if sortOptions.length}
@@ -75,7 +94,7 @@
       Sort by:
       <select
         bind:value={selectedSortBy}
-        on:change={() => setSort(selectedSortBy, selectedSortOrder)}
+        onchange={() => setSort(selectedSortBy, selectedSortOrder)}
         class="rounded border px-2 py-1"
       >
         {#each sortOptions as { label, value }}
@@ -103,20 +122,20 @@
   </div>
 {/if}
 
-{#if $query.isSuccess}
-  {#if $query.data.pages[0].meta.total === 0}
-    <slot name="no-results" />
+{#if query.isSuccess}
+  {#if query.data.pages[0].meta.total === 0}
+    {@render noResults?.()}
   {/if}
 
   <InfiniteScroll
-    hasMore={$query.hasNextPage}
-    fetchMore={() => !$query.isFetching && $query.fetchNextPage()}
+    hasMore={query.hasNextPage}
+    fetchMore={() => !query.isFetching && query.fetchNextPage()}
   >
     <ul class="list-none">
-      {#each $query.data.pages as { data }}
-        {#each data as item}
+      {#each query.data.pages as { data }, index (index)}
+        {#each data as item (item.id)}
           <li class="flex items-center">
-            <slot {item} />
+            {@render children?.({ item })}
           </li>
         {/each}
       {/each}
@@ -124,12 +143,12 @@
   </InfiniteScroll>
 {/if}
 
-{#if $query.isFetching}
-  <Loader />
+{#if query.isFetching}
+  <Loader class="animate-spin" />
 {/if}
 
-{#if $query.isError}
-  <p>Error: {$query.error.message}</p>
+{#if query.isError}
+  <p>Error: {query.error.message}</p>
 {/if}
 
 {#if srAlertMessage && $searchParams.search}

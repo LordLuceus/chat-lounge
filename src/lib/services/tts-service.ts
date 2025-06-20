@@ -1,5 +1,6 @@
 import { generateAudioFilename, ttsCleanup } from "$lib/helpers";
-import { ttsGenerating } from "$lib/stores";
+import { downloadUrl as downloadUrlStore, ttsGenerating } from "$lib/stores";
+import { get } from "svelte/store";
 
 interface TTSOptions {
   audioElement: HTMLAudioElement;
@@ -129,9 +130,19 @@ export async function generateTTS({
           handleError("Error appending to media buffer. Playback may be incomplete.", err);
         }
       };
+      const onPlayBackEnded = () => {
+        cleanup();
+
+        audioElement.removeEventListener("ended", onPlayBackEnded);
+
+        URL.revokeObjectURL(audioElement.src);
+        audioElement.src = get(downloadUrlStore);
+        audioElement.autoplay = false;
+      };
 
       sourceBuffer.addEventListener("updateend", pump);
       audioElement.addEventListener("timeupdate", pump);
+      audioElement.addEventListener("ended", onPlayBackEnded);
 
       const fetchAndQueueStream = async () => {
         try {
@@ -169,6 +180,7 @@ export async function generateTTS({
           ttsGenerating.set(false);
           const audioBlob = new Blob(allChunks, { type: "audio/mpeg" });
           const downloadUrl = URL.createObjectURL(audioBlob);
+          downloadUrlStore.set(downloadUrl);
           onDownloadReady({ downloadUrl, filename: generateAudioFilename(text) });
 
           pump();

@@ -1,4 +1,4 @@
-import { setModel } from "$lib/helpers";
+import { getConversationMessages, setModel } from "$lib/helpers";
 import AIService from "$lib/server/ai-service";
 import { getApiKey } from "$lib/server/api-keys-service";
 import { getConversation } from "$lib/server/conversations-service";
@@ -35,7 +35,7 @@ export const POST = (async ({ locals, params }) => {
   }
 
   const aiService = new AIService(model.provider as AIProvider, apiKey.key);
-  const context = conversation.messages.map((m) => ({ role: m.role, content: m.content }));
+  const context = getConversationMessages(conversation);
 
   const followupModelId = setModel(apiKey, model.id);
 

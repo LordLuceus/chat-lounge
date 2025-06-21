@@ -286,7 +286,8 @@ class AIService {
     const { text } = await generateText({
       model: this.client(modelId, this.provider === "google" ? this.GOOGLE_SETTINGS : undefined),
       messages: [{ role: "user", content: prompt }],
-      system: titleGenerator?.instructions ?? undefined
+      system: titleGenerator?.instructions ?? undefined,
+      temperature: 1.0
     });
 
     return text.trim().replaceAll('"', "").replaceAll("*", "").replaceAll("#", "");
@@ -304,7 +305,6 @@ class AIService {
     const { text } = await generateText({
       model: this.client(modelId, this.provider === "google" ? this.GOOGLE_SETTINGS : undefined),
       messages: [{ role: "user", content: prompt + "\n\n---\n\n" + context }],
-      system: undefined,
       temperature: 1.0
     });
 

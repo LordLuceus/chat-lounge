@@ -6,12 +6,14 @@ import type { ElevenLabsError, Voices } from "$lib/types/elevenlabs";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const GET = (async ({ locals }) => {
-  const { userId } = locals.auth();
-  if (!userId) {
+  const auth = locals.auth();
+  console.log(`Time: ${new Date().toISOString()}:`);
+  console.log(auth);
+  if (!auth.userId) {
     return error(401, { message: "Unauthorized" });
   }
 
-  const user = await getUser(userId);
+  const user = await getUser(auth.userId);
 
   if (!user) {
     return error(404, { message: "User not found" });

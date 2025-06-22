@@ -6,7 +6,7 @@ export const load = (async ({ locals }) => {
   const { userId } = locals.auth();
 
   if (!userId) {
-    return redirect(307, "/auth-sign-in");
+    return redirect(307, "/auth/sign-in");
   }
   return { models: await getUserModels(userId) };
 }) satisfies PageServerLoad;

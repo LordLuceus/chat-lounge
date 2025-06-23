@@ -23,18 +23,15 @@ API keys are unique identifiers that authenticate your requests to these service
 ## Step 2: Obtain Your API Keys
 
 1. **Mistral AI**:
-
    - Visit the official [Mistral AI](https://mistral.ai) website.
    - Sign up or log in to your account.
    - Navigate to the La Plateforme section and follow the instructions to get your API key.
 
 2. **ElevenLabs**:
-
    - Go to the [ElevenLabs](https://elevenlabs.io) website and create an account or sign in.
    - Click on your profile icon and select the "Profile + API keys" option.
 
 3. **OpenAI**:
-
    - Access the [OpenAI Platform](https://platform.openai.com) and log in.
    - Go to the API Keys section and create a new API key.
 

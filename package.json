@@ -82,7 +82,7 @@
     "remark-breaks": "^4.0.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
-    "svelte-clerk": "0.13.0",
+    "svelte-clerk": "^0.13.2",
     "svelte-persisted-store": "^0.11.0",
     "svelte-search": "^2.1.1",
     "svelte-select": "^5.8.3",

@@ -66,8 +66,8 @@ importers:
         specifier: ^4.8.1
         version: 4.8.1
       svelte-clerk:
-        specifier: ^0.13.2
-        version: 0.13.2(@sveltejs/kit@2.22.0(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.34.7)(vite@5.4.19(@types/node@24.0.3)))(svelte@5.34.7)(vite@5.4.19(@types/node@24.0.3)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(svelte@5.34.7)
+        specifier: ^0.13.0
+        version: 0.13.0(@sveltejs/kit@2.22.0(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.34.7)(vite@5.4.19(@types/node@24.0.3)))(svelte@5.34.7)(vite@5.4.19(@types/node@24.0.3)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(svelte@5.34.7)
       svelte-persisted-store:
         specifier: ^0.11.0
         version: 0.11.0(svelte@5.34.7)
@@ -2742,11 +2742,14 @@ packages:
       svelte: ^4.0.0 || ^5.0.0-next.0
       typescript: '>=5.0.0'
 
-  svelte-clerk@0.13.2:
-    resolution: {integrity: sha512-3sGJDRbcF22Tbv7KzGDwtIyc6jtJZvbSMuFtc46VQxkkstkQ0O/BkW/qmkOSuJt6gh9lz2O4qESiKE0zZyUPcg==}
+  svelte-clerk@0.13.0:
+    resolution: {integrity: sha512-ZutdC666WCih6tGfLvmwLgHZxr/sJVqWMRna2NvbVALuoHbD77ctRrELR36leNlxTp9DIXBT76Glc/VY2IAxdQ==}
     peerDependencies:
       '@sveltejs/kit': ^2.20.0
       svelte: ^5.11.0
+    peerDependenciesMeta:
+      '@sveltejs/kit':
+        optional: true
 
   svelte-eslint-parser@0.43.0:
     resolution: {integrity: sha512-GpU52uPKKcVnh8tKN5P4UZpJ/fUDndmq7wfsvoVXsyP+aY0anol7Yqo01fyrlaWGMFfm4av5DyrjlaXdLRJvGA==}
@@ -5746,14 +5749,15 @@ snapshots:
     transitivePeerDependencies:
       - picomatch
 
-  svelte-clerk@0.13.2(@sveltejs/kit@2.22.0(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.34.7)(vite@5.4.19(@types/node@24.0.3)))(svelte@5.34.7)(vite@5.4.19(@types/node@24.0.3)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(svelte@5.34.7):
+  svelte-clerk@0.13.0(@sveltejs/kit@2.22.0(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.34.7)(vite@5.4.19(@types/node@24.0.3)))(svelte@5.34.7)(vite@5.4.19(@types/node@24.0.3)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(svelte@5.34.7):
     dependencies:
       '@clerk/backend': 2.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@clerk/shared': 3.9.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@clerk/types': 4.60.1
-      '@sveltejs/kit': 2.22.0(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.34.7)(vite@5.4.19(@types/node@24.0.3)))(svelte@5.34.7)(vite@5.4.19(@types/node@24.0.3))
       set-cookie-parser: 2.7.1
       svelte: 5.34.7
+    optionalDependencies:
+      '@sveltejs/kit': 2.22.0(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.34.7)(vite@5.4.19(@types/node@24.0.3)))(svelte@5.34.7)(vite@5.4.19(@types/node@24.0.3))
     transitivePeerDependencies:
       - react
       - react-dom

@@ -14,7 +14,7 @@
   import { createInfiniteQuery, createMutation, useQueryClient } from "@tanstack/svelte-query";
   import { onDestroy, tick } from "svelte";
   import { toast } from "svelte-sonner";
-  import { get, writable } from "svelte/store";
+  import { writable } from "svelte/store";
 
   interface Props {
     id: string;
@@ -57,22 +57,24 @@
     return fetch(url.toString()).then((res) => res.json());
   };
 
-  const foldersQuery = createInfiniteQuery<PagedResponse<Folder>>(() => {
-    const params = get(searchParams);
-    return {
-      queryKey: ["folders", params],
-      queryFn: ({ pageParam }: { pageParam: unknown }) =>
-        fetchFolders({ pageParam: pageParam as number }, params),
-      initialPageParam: 1,
-      getNextPageParam: (lastPage: PagedResponse<Folder>) => {
-        if (lastPage.meta.page < lastPage.meta.totalPages) {
-          return lastPage.meta.page + 1;
-        }
+  const foldersQuery = $derived(
+    createInfiniteQuery<PagedResponse<Folder>>(() => {
+      return {
+        queryKey: ["folders", $searchParams],
+        queryFn: ({ pageParam }: { pageParam: unknown }) =>
+          fetchFolders({ pageParam: pageParam as number }, $searchParams),
+        initialPageParam: 1,
+        getNextPageParam: (lastPage: PagedResponse<Folder>) => {
+          if (lastPage.meta.page < lastPage.meta.totalPages) {
+            return lastPage.meta.page + 1;
+          }
 
-        return undefined;
-      }
-    };
-  });
+          return undefined;
+        }
+      };
+    })
+  );
+
   onDestroy(() => {
     if (browser)
       searchParams.set({

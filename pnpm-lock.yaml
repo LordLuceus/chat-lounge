@@ -66,8 +66,8 @@ importers:
         specifier: ^4.8.1
         version: 4.8.1
       svelte-clerk:
-        specifier: ^0.13.2
-        version: 0.13.2(@sveltejs/kit@2.22.0(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.34.7)(vite@5.4.19(@types/node@24.0.3)))(svelte@5.34.7)(vite@5.4.19(@types/node@24.0.3)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(svelte@5.34.7)
+        specifier: ^0.14.0
+        version: 0.14.0(@sveltejs/kit@2.22.0(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.34.7)(vite@5.4.19(@types/node@24.0.3)))(svelte@5.34.7)(vite@5.4.19(@types/node@24.0.3)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(svelte@5.34.7)
       svelte-persisted-store:
         specifier: ^0.11.0
         version: 0.11.0(svelte@5.34.7)
@@ -306,6 +306,22 @@ packages:
     resolution: {integrity: sha512-Ltb3IzdGeahM1Jr+u0UAVnVjEIYXUsq9/mTb1adolsOc9oR2LCKHE7rTRnmkwY8y+IwCzXVuywIYW+zLTk47+Q==}
     engines: {node: '>=18.17.0'}
 
+  '@clerk/backend@2.4.0':
+    resolution: {integrity: sha512-CTnd6Ut7lQDSvfEBtD+JHbGE4wIbKIp2zbeYkeGN9IP6wA6gZ++T7FQPGItLzGQmipCX3GPQ6mvEFf/ch39BwA==}
+    engines: {node: '>=18.17.0'}
+
+  '@clerk/shared@3.10.2':
+    resolution: {integrity: sha512-4bp080EPX9Z/qLSdf9V22NNATC5GFjfEOtlfAOw2Xq24IAIxve3ePd92TcAsMHYThn3Pmwcj7upnvUB24IXKQw==}
+    engines: {node: '>=18.17.0'}
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0 || ^19.0.0-0
+      react-dom: ^18.0.0 || ^19.0.0 || ^19.0.0-0
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-dom:
+        optional: true
+
   '@clerk/shared@3.9.7':
     resolution: {integrity: sha512-D3iuzuDoadK6BKb7qFZEH332z4Sl5mxLuHMf8rKdIMHuOu1RQK0RqFJtKPcFvDxq0RvJ9MC+rK24P2Sa2tOoNA==}
     engines: {node: '>=18.17.0'}
@@ -320,6 +336,10 @@ packages:
 
   '@clerk/types@4.60.1':
     resolution: {integrity: sha512-Lbt0/Q9W9BJtGz1IITdmeqal7y1zp9EaxOEMvsTEDhOxKf/0F/M1d0gJmHEU0puQzYPp9zJsIWC2yJjbgy3Y3Q==}
+    engines: {node: '>=18.17.0'}
+
+  '@clerk/types@4.63.0':
+    resolution: {integrity: sha512-U3FTDzKx8uGve8gtaRv/QpfhEjK/dg9m9BuzIhYEowZ56jNimXDaXuijAcCZEeKwf+DDQmAPaNOinev6D2qtiQ==}
     engines: {node: '>=18.17.0'}
 
   '@elevenlabs/elevenlabs-js@2.3.0':
@@ -2687,6 +2707,9 @@ packages:
   standard-as-callback@2.1.0:
     resolution: {integrity: sha512-qoRRSyROncaz1z0mvYqIE4lCd9p2R90i6GxW3uZv5ucSu8tU7B5HXUP1gG8pVZsYNVaXjk8ClXHPttLyxAL48A==}
 
+  standardwebhooks@1.0.0:
+    resolution: {integrity: sha512-BbHGOQK9olHPMvQNHWul6MYlrRTAOKn03rOe4A8O3CLWhNf4YHBqq2HJKKC+sfqpxiBY52pNeesD6jIiLDz8jg==}
+
   std-env@3.9.0:
     resolution: {integrity: sha512-UGvjygr6F6tpH7o2qyqR6QYpwraIjKSdtzyBdyytFOHmPZY917kwdwLG0RbOjWOnKmnm3PeHjaoLLMie7kPLQw==}
 
@@ -2742,8 +2765,8 @@ packages:
       svelte: ^4.0.0 || ^5.0.0-next.0
       typescript: '>=5.0.0'
 
-  svelte-clerk@0.13.2:
-    resolution: {integrity: sha512-3sGJDRbcF22Tbv7KzGDwtIyc6jtJZvbSMuFtc46VQxkkstkQ0O/BkW/qmkOSuJt6gh9lz2O4qESiKE0zZyUPcg==}
+  svelte-clerk@0.14.0:
+    resolution: {integrity: sha512-WHP9aQBKF0d0EcsVBX6XXNM+mcuKAMxOw3EDA4KpUVrcEVS23o2rNAf9gA4pM5u9DzzZQsD/QAFkG9Vz42hD7Q==}
     peerDependencies:
       '@sveltejs/kit': ^2.20.0
       svelte: ^5.11.0
@@ -3232,6 +3255,30 @@ snapshots:
       - react
       - react-dom
 
+  '@clerk/backend@2.4.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@clerk/shared': 3.10.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@clerk/types': 4.63.0
+      cookie: 1.0.2
+      snakecase-keys: 8.0.1
+      standardwebhooks: 1.0.0
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - react
+      - react-dom
+
+  '@clerk/shared@3.10.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@clerk/types': 4.63.0
+      dequal: 2.0.3
+      glob-to-regexp: 0.4.1
+      js-cookie: 3.0.5
+      std-env: 3.9.0
+      swr: 2.3.3(react@18.3.1)
+    optionalDependencies:
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+
   '@clerk/shared@3.9.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@clerk/types': 4.60.1
@@ -3245,6 +3292,10 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
 
   '@clerk/types@4.60.1':
+    dependencies:
+      csstype: 3.1.3
+
+  '@clerk/types@4.63.0':
     dependencies:
       csstype: 3.1.3
 
@@ -5686,6 +5737,11 @@ snapshots:
 
   standard-as-callback@2.1.0: {}
 
+  standardwebhooks@1.0.0:
+    dependencies:
+      '@stablelib/base64': 1.0.1
+      fast-sha256: 1.3.0
+
   std-env@3.9.0: {}
 
   string-width@4.2.3:
@@ -5746,11 +5802,11 @@ snapshots:
     transitivePeerDependencies:
       - picomatch
 
-  svelte-clerk@0.13.2(@sveltejs/kit@2.22.0(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.34.7)(vite@5.4.19(@types/node@24.0.3)))(svelte@5.34.7)(vite@5.4.19(@types/node@24.0.3)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(svelte@5.34.7):
+  svelte-clerk@0.14.0(@sveltejs/kit@2.22.0(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.34.7)(vite@5.4.19(@types/node@24.0.3)))(svelte@5.34.7)(vite@5.4.19(@types/node@24.0.3)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(svelte@5.34.7):
     dependencies:
-      '@clerk/backend': 2.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@clerk/shared': 3.9.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@clerk/types': 4.60.1
+      '@clerk/backend': 2.4.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@clerk/shared': 3.10.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@clerk/types': 4.63.0
       '@sveltejs/kit': 2.22.0(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.34.7)(vite@5.4.19(@types/node@24.0.3)))(svelte@5.34.7)(vite@5.4.19(@types/node@24.0.3))
       set-cookie-parser: 2.7.1
       svelte: 5.34.7

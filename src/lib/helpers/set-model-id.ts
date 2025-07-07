@@ -11,6 +11,8 @@ export function setModel(apiKey: ApiKey, originalModelId: string): string {
     modelId = "models/gemini-2.0-flash";
   } else if (apiKey.provider === AIProvider.Anthropic) {
     modelId = "claude-3-5-haiku-20241022";
+  } else if (apiKey.provider === AIProvider.XAI) {
+    modelId = "grok-3-mini";
   }
   return modelId;
 }

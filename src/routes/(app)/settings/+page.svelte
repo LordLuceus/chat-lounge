@@ -29,7 +29,7 @@
     <h2>API Keys</h2>
     <p>
       Manage your API keys for supported providers. To use the app, at least one of Mistral, OpenAI,
-      or Google is required. ElevenLabs and OpenAI are required for voice conversations.
+      Google, Anthropic, or XAI is required. ElevenLabs is required for voice conversations.
     </p>
     <h3>Mistral</h3>
     {#if data.keys?.mistral}
@@ -71,6 +71,19 @@
       <p>You haven't set your Anthropic API key yet.</p>
       <ApiKeyForm provider={AIProvider.Anthropic} openText="Set" {form} />
     {/if}
+    <h3>XAI</h3>
+    {#if data.keys?.xai}
+      <p>Your XAI API key is set.</p>
+      <ApiKeyForm provider={AIProvider.XAI} openText="Change" {form} />
+    {:else}
+      <p>You haven't set your XAI API key yet.</p>
+      <ApiKeyForm provider={AIProvider.XAI} openText="Set" {form} />
+    {/if}
+    <h2>Account</h2>
+    <p>
+      You can manage your account settings, such as your username and email, directly in the
+      <a href="/profile">profile page</a>.
+    </p>
   </SignedIn>
 </section>
 

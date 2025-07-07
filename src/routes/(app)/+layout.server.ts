@@ -16,7 +16,8 @@ export const load = (async ({ locals }) => {
     eleven: storedKeys.some((key) => key.provider === AIProvider.ElevenLabs),
     openai: storedKeys.some((key) => key.provider === AIProvider.OpenAI),
     google: storedKeys.some((key) => key.provider === AIProvider.Google),
-    anthropic: storedKeys.some((key) => key.provider === AIProvider.Anthropic)
+    anthropic: storedKeys.some((key) => key.provider === AIProvider.Anthropic),
+    xai: storedKeys.some((key) => key.provider === AIProvider.XAI)
   };
 
   return {

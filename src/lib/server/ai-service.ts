@@ -12,6 +12,7 @@ import { createAnthropic, type AnthropicProvider } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI, type GoogleGenerativeAIProvider } from "@ai-sdk/google";
 import { createMistral, type MistralProvider } from "@ai-sdk/mistral";
 import { createOpenAI, type OpenAIProvider } from "@ai-sdk/openai";
+import { createXai, type XaiProvider } from "@ai-sdk/xai";
 import type { Agent, Model } from "@prisma/client";
 import { generateText, streamText } from "ai";
 import type { ChatMessage } from "gpt-tokenizer/GptEncoding";
@@ -36,7 +37,12 @@ interface GoogleSettings {
 }
 
 class AIService {
-  private client: MistralProvider | OpenAIProvider | GoogleGenerativeAIProvider | AnthropicProvider;
+  private client:
+    | MistralProvider
+    | OpenAIProvider
+    | GoogleGenerativeAIProvider
+    | AnthropicProvider
+    | XaiProvider;
   private readonly LIMIT_MULTIPLIER = 0.9; // We use 90% of the token limit to give us some headroom
   private readonly GOOGLE_SETTINGS: GoogleSettings = {
     safetySettings: [
@@ -59,6 +65,8 @@ class AIService {
       this.client = createGoogleGenerativeAI({ apiKey: apiKey });
     } else if (provider === "anthropic") {
       this.client = createAnthropic({ apiKey: apiKey });
+    } else if (provider === "xai") {
+      this.client = createXai({ apiKey: apiKey });
     } else {
       throw new Error("Unsupported AI provider");
     }

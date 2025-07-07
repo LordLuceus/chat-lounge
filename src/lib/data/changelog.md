@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 7 Jul, 2025
+
+Added support for XAI's Grok 3 and Grok 3 Mini models. As usual, you can set your API key on the settings page and start chatting with Grok right away!
+
 ## 20 Jun, 2025
 
 This is a big update with many changes across the app. Highlights include:

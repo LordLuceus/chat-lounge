@@ -58,15 +58,17 @@ class AIService {
     private apiKey: string
   ) {
     if (provider === "mistral") {
-      this.client = createMistral({ apiKey: apiKey });
+      this.client = createMistral({ apiKey });
     } else if (provider === "openai") {
-      this.client = createOpenAI({ apiKey: apiKey });
+      this.client = createOpenAI({ apiKey });
     } else if (provider === "google") {
-      this.client = createGoogleGenerativeAI({ apiKey: apiKey });
+      this.client = createGoogleGenerativeAI({ apiKey });
     } else if (provider === "anthropic") {
-      this.client = createAnthropic({ apiKey: apiKey });
+      this.client = createAnthropic({ apiKey });
     } else if (provider === "xai") {
-      this.client = createXai({ apiKey: apiKey });
+      this.client = createXai({ apiKey });
+    } else if (provider === "openrouter") {
+      this.client = createOpenAI({ apiKey, baseURL: "https://openrouter.ai/api/v1" });
     } else {
       throw new Error("Unsupported AI provider");
     }

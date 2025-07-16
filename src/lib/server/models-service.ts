@@ -23,7 +23,7 @@ export async function getProviderModels(providers: AIProvider[]) {
   });
 
   return models.map((model) => ({
-    label: model.name,
+    label: `${model.name} (${model.provider[0].toUpperCase()}${model.provider.slice(1)})`,
     value: model.id
   }));
 }

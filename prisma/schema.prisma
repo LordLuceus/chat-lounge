@@ -226,4 +226,5 @@ enum AIProvider {
   google
   anthropic
   xai
+  openrouter
 }

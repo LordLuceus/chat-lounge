@@ -17,7 +17,8 @@ export const load = (async ({ locals }) => {
     openai: storedKeys.some((key) => key.provider === AIProvider.OpenAI),
     google: storedKeys.some((key) => key.provider === AIProvider.Google),
     anthropic: storedKeys.some((key) => key.provider === AIProvider.Anthropic),
-    xai: storedKeys.some((key) => key.provider === AIProvider.XAI)
+    xai: storedKeys.some((key) => key.provider === AIProvider.XAI),
+    openrouter: storedKeys.some((key) => key.provider === AIProvider.OpenRouter)
   };
 
   return {

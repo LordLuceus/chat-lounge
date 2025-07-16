@@ -79,6 +79,14 @@
       <p>You haven't set your XAI API key yet.</p>
       <ApiKeyForm provider={AIProvider.XAI} openText="Set" {form} />
     {/if}
+    <h3>OpenRouter</h3>
+    {#if data.keys?.openrouter}
+      <p>Your OpenRouter API key is set.</p>
+      <ApiKeyForm provider={AIProvider.OpenRouter} openText="Change" {form} />
+    {:else}
+      <p>You haven't set your OpenRouter API key yet.</p>
+      <ApiKeyForm provider={AIProvider.OpenRouter} openText="Set" {form} />
+    {/if}
     <h2>Account</h2>
     <p>
       You can manage your account settings, such as your username and email, directly in the

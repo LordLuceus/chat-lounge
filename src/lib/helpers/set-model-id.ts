@@ -13,6 +13,8 @@ export function setModel(apiKey: ApiKey, originalModelId: string): string {
     modelId = "claude-3-5-haiku-20241022";
   } else if (apiKey.provider === AIProvider.XAI) {
     modelId = "grok-3-mini";
+  } else if (apiKey.provider === AIProvider.OpenRouter) {
+    modelId = "deepseek/deepseek-chat-v3-0324";
   }
   return modelId;
 }

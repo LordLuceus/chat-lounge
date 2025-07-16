@@ -4,7 +4,8 @@ export enum AIProvider {
   ElevenLabs = "elevenlabs",
   Google = "google",
   Anthropic = "anthropic",
-  XAI = "xai"
+  XAI = "xai",
+  OpenRouter = "openrouter"
 }
 
 export enum Visibility {

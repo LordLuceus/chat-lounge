@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 16 Jul, 2025
+
+Added support for OpenRouter. This gives us access to the vast library of models available on OpenRouter. For now, we've enabled [DeepSeek V3 03-24](https://openrouter.ai/deepseek/deepseek-chat-v3-0324) and [Venice Uncensored](https://openrouter.ai/cognitivecomputations/dolphin-mistral-24b-venice-edition), but we expect to add more in the future. Feel free to suggest new models. As usual, you can set your OpenRouter API key on the settings page and start chatting with the new models right away!
+
 ## 7 Jul, 2025
 
 Added support for XAI's Grok 3 and Grok 3 Mini models. As usual, you can set your API key on the settings page and start chatting with Grok right away!

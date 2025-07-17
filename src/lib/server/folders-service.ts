@@ -29,7 +29,14 @@ export async function getFolders(
       SELECT DISTINCT f.id, f.userId, f.name, f.createdAt, f.updatedAt
       FROM folder f
       WHERE f.userId = ${userId}
-      AND ${search ? Prisma.sql`(MATCH(f.name) AGAINST(${"*" + search + "*"} IN BOOLEAN MODE))` : Prisma.sql`true`}
+      AND ${
+        search
+          ? Prisma.sql`(
+        MATCH(f.name) AGAINST(${'"' + search + '"'} IN BOOLEAN MODE) OR
+        MATCH(f.name) AGAINST(${"*" + search.split(" ").join("* *") + "*"} IN BOOLEAN MODE)
+      )`
+          : Prisma.sql`true`
+      }
       ORDER BY ${orderByClause}
       LIMIT ${limit} OFFSET ${offset}
     `
@@ -39,7 +46,14 @@ export async function getFolders(
     Prisma.sql`
       SELECT COUNT(DISTINCT f.id) AS count FROM folder f
       WHERE f.userId = ${userId}
-      AND ${search ? Prisma.sql`(MATCH(f.name) AGAINST(${"*" + search + "*"} IN BOOLEAN MODE))` : Prisma.sql`true`}
+      AND ${
+        search
+          ? Prisma.sql`(
+        MATCH(f.name) AGAINST(${'"' + search + '"'} IN BOOLEAN MODE) OR
+        MATCH(f.name) AGAINST(${"*" + search.split(" ").join("* *") + "*"} IN BOOLEAN MODE)
+      )`
+          : Prisma.sql`true`
+      }
     `
   );
 

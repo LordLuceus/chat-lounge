@@ -80,7 +80,12 @@ export async function getConversations(
 
   // Create search condition
   const searchCondition = search
-    ? Prisma.sql`(MATCH(c.name) AGAINST(${"*" + search + "*"} IN BOOLEAN MODE) OR MATCH(m.content) AGAINST(${"*" + search + "*"} IN BOOLEAN MODE))`
+    ? Prisma.sql`(
+        MATCH(c.name) AGAINST(${'"' + search + '"'} IN BOOLEAN MODE) OR 
+        MATCH(m.content) AGAINST(${'"' + search + '"'} IN BOOLEAN MODE) OR
+        MATCH(c.name) AGAINST(${"*" + search.split(" ").join("* *") + "*"} IN BOOLEAN MODE) OR
+        MATCH(m.content) AGAINST(${"*" + search.split(" ").join("* *") + "*"} IN BOOLEAN MODE)
+      )`
     : Prisma.sql`TRUE`;
 
   // Create folder condition
@@ -628,7 +633,14 @@ export async function getSharedConversations(
         sc.sharedAt
       FROM sharedConversation sc
       WHERE sc.userId = ${userId}
-      AND ${search ? Prisma.sql`(sc.name LIKE ${"%" + search + "%"})` : Prisma.sql`true`}
+      AND ${
+        search
+          ? Prisma.sql`(
+        MATCH(sc.name) AGAINST(${'"' + search + '"'} IN BOOLEAN MODE) OR
+        MATCH(sc.name) AGAINST(${"*" + search.split(" ").join("* *") + "*"} IN BOOLEAN MODE)
+      )`
+          : Prisma.sql`true`
+      }
       ORDER BY ${orderByClause}
       LIMIT ${limit} OFFSET ${offset}
     `
@@ -639,7 +651,14 @@ export async function getSharedConversations(
       SELECT COUNT(DISTINCT sc.id) as count
       FROM sharedConversation sc
       WHERE sc.userId = ${userId}
-      AND ${search ? Prisma.sql`(sc.name LIKE ${"%" + search + "%"})` : Prisma.sql`true`}
+      AND ${
+        search
+          ? Prisma.sql`(
+        MATCH(sc.name) AGAINST(${'"' + search + '"'} IN BOOLEAN MODE) OR
+        MATCH(sc.name) AGAINST(${"*" + search.split(" ").join("* *") + "*"} IN BOOLEAN MODE)
+      )`
+          : Prisma.sql`true`
+      }
     `
   );
 

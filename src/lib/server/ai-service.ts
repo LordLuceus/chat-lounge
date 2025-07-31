@@ -103,7 +103,8 @@ class AIService {
           undefined,
           undefined,
           false,
-          regenerate
+          regenerate,
+          model.id
         );
         this.postProcess(processedMessages as Message[], model, userId, agent, conversationId);
       }

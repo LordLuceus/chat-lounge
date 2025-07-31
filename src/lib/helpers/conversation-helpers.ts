@@ -8,6 +8,8 @@ export interface Message {
   parentId: string | null;
   createdAt: Date;
   updatedAt: Date;
+  modelId?: string | null;
+  model?: { id: string; name: string } | null;
 }
 
 export function getConversationMessages(conversation: ConversationWithMessageMap) {
@@ -51,7 +53,9 @@ export function getConversationMessages(conversation: ConversationWithMessageMap
       childIds: node.childIds,
       parentId: node.parentId,
       createdAt: node.createdAt,
-      updatedAt: node.updatedAt
+      updatedAt: node.updatedAt,
+      modelId: node.modelId,
+      model: node.model
     };
   }
 

@@ -33,7 +33,10 @@ interface Message {
 }
 
 export type ConversationWithMessageMap = Prisma.ConversationGetPayload<{
-  include: { messages: true };
+  include: {
+    messages: { include: { model: true } };
+    model: true;
+  };
 }> & {
   messageMap: Record<string, Message>;
 };
@@ -153,7 +156,12 @@ export async function getConversation(userId: string, conversationId: string) {
   const conversation = await prisma.conversation.findUniqueOrThrow({
     where: { id: conversationId, conversationUsers: { some: { userId } } },
     include: {
-      messages: { where: { isInternal: false }, orderBy: { createdAt: "asc" } }
+      messages: {
+        where: { isInternal: false },
+        orderBy: { createdAt: "asc" },
+        include: { model: true }
+      },
+      model: true
     }
   });
 
@@ -198,7 +206,11 @@ export async function createConversation({
       conversation.id,
       message.content,
       message.role,
-      message.role === "user" ? userId : undefined
+      message.role === "user" ? userId : undefined,
+      undefined,
+      false,
+      false,
+      message.role === "assistant" ? modelId : undefined
     );
   }
 
@@ -275,7 +287,8 @@ export async function addConversationMessage(
   userId?: string,
   messageId?: string,
   isInternal: boolean = false,
-  regenerate: boolean = false
+  regenerate: boolean = false,
+  modelId?: string | null
 ) {
   const message = await prisma.message.create({
     data: {
@@ -283,7 +296,8 @@ export async function addConversationMessage(
       userId,
       content,
       role,
-      isInternal
+      isInternal,
+      modelId
     }
   });
 
@@ -472,7 +486,11 @@ export async function importChat(
       conversationId,
       message.content,
       message.role,
-      message.role === "user" ? userId : undefined
+      message.role === "user" ? userId : undefined,
+      undefined,
+      false,
+      false,
+      message.role === "assistant" ? modelId : undefined
     );
 
     if (updateProgress)

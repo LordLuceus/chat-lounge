@@ -6,9 +6,10 @@
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import * as Avatar from "$lib/components/ui/avatar";
   import { Button } from "$lib/components/ui/button";
+  import type { Message as DBMessage } from "$lib/helpers";
   import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
   import { conversationStore } from "$lib/stores";
-  import type { Message } from "@ai-sdk/svelte";
+  import type { Message as UIMessage } from "@ai-sdk/svelte";
   import { BotMessageSquare } from "@lucide/svelte";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
   import { SignedIn } from "svelte-clerk";
@@ -22,9 +23,11 @@
 
   const plugins = [gfmPlugin(), lineBreaksPlugin];
 
+  type MessageType = UIMessage | DBMessage;
+
   interface Props {
-    message: Message;
-    siblings?: Message[];
+    message: MessageType;
+    siblings?: DBMessage[];
     onEdit: (id: string, content: string, regenerate: boolean) => void;
     isLoading: boolean | undefined;
     isLastMessage: boolean | undefined;
@@ -90,21 +93,27 @@
           <BotMessageSquare />
         {/if}
 
-        {#if message.parts && message.parts.length > 0}
+        {#if "parts" in message && message.parts && message.parts.length > 0}
           {#each message.parts as part}
             {#if part.type === "text"}
-              <Markdown md={part.text} {plugins} />
+              <Markdown md={part.text || ""} {plugins} />
             {:else if part.type === "reasoning"}
               <details class="reasoning-container">
                 <summary>Reasoning</summary>
                 <div class="reasoning-content">
-                  <Markdown md={part.reasoning} {plugins} />
+                  <Markdown md={part.reasoning || ""} {plugins} />
                 </div>
               </details>
             {/if}
           {/each}
         {:else}
           <Markdown md={message.content} {plugins} />
+        {/if}
+
+        {#if message.role === "assistant" && "model" in message && message.model && $conversationStore?.model && message.model.id !== $conversationStore.model.id}
+          <div class="model-indicator">
+            <small>{message.model.name}</small>
+          </div>
         {/if}
 
         {#if message.role === "user" && !isLoading}
@@ -178,5 +187,11 @@
     background-color: blue;
     padding: 0.5rem;
     border-radius: 0.5rem;
+  }
+
+  .model-indicator {
+    margin-top: 0.25rem;
+    opacity: 0.7;
+    font-style: italic;
   }
 </style>

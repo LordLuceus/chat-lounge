@@ -40,20 +40,39 @@
 <form method="POST" use:enhance {action}>
   <Form.Fieldset {form} name="type">
     <Form.Legend>Agent Type</Form.Legend>
-    <RadioGroup.Root bind:value={$formData.type} class="flex flex-col space-y-1" name="type">
-      <div class="flex items-center space-x-3 space-y-0">
+    <RadioGroup.Root bind:value={$formData.type} class="flex flex-col space-y-3" name="type">
+      <div class="flex items-start space-x-3 space-y-0">
         <Form.Control>
           {#snippet children({ props })}
-            <RadioGroup.Item value="default" {...props} />
-            <Form.Label class="font-normal">Default</Form.Label>
+            <RadioGroup.Item value="default" {...props} class="mt-1" />
+            <div class="flex flex-col">
+              <Form.Label class="font-normal">Default</Form.Label>
+              <p class="text-sm text-muted-foreground">
+                A standard agent with a custom system prompt. Best for task-oriented interactions
+                and general assistance.
+              </p>
+            </div>
           {/snippet}
         </Form.Control>
       </div>
-      <div class="flex items-center space-x-3 space-y-0">
+      <div class="flex items-start space-x-3 space-y-0">
         <Form.Control>
           {#snippet children({ props })}
-            <RadioGroup.Item value="character" {...props} />
-            <Form.Label class="font-normal">Character</Form.Label>
+            <RadioGroup.Item value="character" {...props} class="mt-1" />
+            <div class="flex flex-col">
+              <Form.Label class="font-normal">Character</Form.Label>
+              <p class="text-sm text-muted-foreground">
+                A character card designed for immersive roleplay. Uses <code>{`{{char}}`}</code> and
+                <code>{`{{user}}`}</code> placeholders in instructions and supports custom greeting messages.
+              </p>
+              <p class="mt-1 text-sm text-muted-foreground">
+                Need help? Try the <a
+                  href="/agents/0f063ee3-7616-4d6e-b25e-dbd58c745453"
+                  class="text-blue-600 underline hover:text-blue-800"
+                  target="_blank">Character Designer</a
+                > agent to create robust character cards based on your concept.
+              </p>
+            </div>
           {/snippet}
         </Form.Control>
       </div>
@@ -87,9 +106,13 @@
         <Textarea {...props} bind:value={$formData.instructions} />
       {/snippet}
     </Form.Control>
-    <Form.Description
-      >What does this agent do? How does it behave? What should it avoid doing?</Form.Description
-    >
+    <Form.Description>
+      What does this agent do? How does it behave? What should it avoid doing?
+      {#if $formData.type === AgentType.Character}
+        <br /><strong>Character placeholders:</strong> Use <code>{`{{char}}`}</code> for the
+        character name and <code>{`{{user}}`}</code> for the user's name.
+      {/if}
+    </Form.Description>
     <Form.FieldErrors />
   </Form.Field>
   {#if $formData.type === AgentType.Character}

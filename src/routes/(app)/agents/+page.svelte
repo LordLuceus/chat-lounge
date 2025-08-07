@@ -5,10 +5,11 @@
   import DataList from "$lib/components/DataList.svelte";
   import * as Card from "$lib/components/ui/card";
   import * as Dialog from "$lib/components/ui/dialog";
+  import * as Popover from "$lib/components/ui/popover";
   import * as ToggleGroup from "$lib/components/ui/toggle-group";
   import { searchParams, type SearchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
-  import { Visibility } from "$lib/types/db";
+  import { AgentType, Visibility } from "$lib/types/db";
   import type { Agent } from "@prisma/client";
   import { createInfiniteQuery } from "@tanstack/svelte-query";
   import { onDestroy } from "svelte";
@@ -135,8 +136,34 @@
     {#snippet children({ item })}
       <Card.Root>
         <Card.Header>
-          <Card.Title level={2}>
+          <Card.Title level={2} class="flex items-center gap-2">
             <a href={`/agents/${item.id}`}>{item.name}</a>
+            <Popover.Root>
+              <Popover.Trigger class="inline-flex">
+                <span
+                  class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+                >
+                  {item.type === AgentType.Character ? "Character" : "Default"}
+                </span>
+              </Popover.Trigger>
+              <Popover.Content class="w-80">
+                <div class="space-y-2">
+                  <h4 class="font-medium leading-none">Agent Type</h4>
+                  {#if item.type === AgentType.Character}
+                    <p class="text-sm text-muted-foreground">
+                      <strong>Character:</strong> A character card designed for immersive roleplay.
+                      Uses {`{{char}}`} and {`{{user}}`} placeholders and can have a custom greeting
+                      message.
+                    </p>
+                  {:else}
+                    <p class="text-sm text-muted-foreground">
+                      <strong>Default:</strong> A standard agent with a custom system prompt. Best for
+                      task-oriented interactions and general assistance.
+                    </p>
+                  {/if}
+                </div>
+              </Popover.Content>
+            </Popover.Root>
           </Card.Title>
           {#if item.description}
             <Card.Description>{item.description}</Card.Description>

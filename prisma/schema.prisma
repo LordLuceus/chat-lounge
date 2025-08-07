@@ -128,7 +128,7 @@ model Message {
   children       Message[]      @relation("messageTomessage")
   user           User?          @relation(fields: [userId], references: [id], onUpdate: NoAction, map: "message_userId_user_id_fk")
   Conversation   Conversation[]
-  model          Model?         @relation(fields: [modelId], references: [id], onUpdate: NoAction, map: "message_modelId_model_id_fk")
+  model          Model?         @relation(fields: [modelId], references: [id], onUpdate: Cascade, map: "message_modelId_model_id_fk")
 
   @@index([conversationId], map: "message_conversationId_conversation_id_fk")
   @@index([parentId], map: "message_parentId_message_id_fk")

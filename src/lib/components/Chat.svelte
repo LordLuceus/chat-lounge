@@ -507,7 +507,7 @@
       cols={200}
     />
   </form>
-  {#if apiKeys?.eleven && chat.status !== "streaming" && chat.status !== "submitted"}
+  {#if apiKeys?.elevenlabs && chat.status !== "streaming" && chat.status !== "submitted"}
     <Recorder {setVoiceMessage} />
   {/if}
 

@@ -1,5 +1,5 @@
+import { ALL_PROVIDERS } from "$lib/helpers/api-key-utils";
 import { getApiKeys } from "$lib/server/api-keys-service";
-import { AIProvider } from "$lib/types/db";
 import { redirect } from "@sveltejs/kit";
 import type { LayoutServerLoad } from "./$types";
 
@@ -10,16 +10,15 @@ export const load = (async ({ locals }) => {
   }
 
   const storedKeys = await getApiKeys(userId);
+  const availableProviders = new Set(storedKeys.map((key) => key.provider));
 
-  const keys = {
-    mistral: storedKeys.some((key) => key.provider === AIProvider.Mistral),
-    eleven: storedKeys.some((key) => key.provider === AIProvider.ElevenLabs),
-    openai: storedKeys.some((key) => key.provider === AIProvider.OpenAI),
-    google: storedKeys.some((key) => key.provider === AIProvider.Google),
-    anthropic: storedKeys.some((key) => key.provider === AIProvider.Anthropic),
-    xai: storedKeys.some((key) => key.provider === AIProvider.XAI),
-    openrouter: storedKeys.some((key) => key.provider === AIProvider.OpenRouter)
-  };
+  const keys = ALL_PROVIDERS.reduce(
+    (acc, provider) => {
+      acc[provider] = availableProviders.has(provider);
+      return acc;
+    },
+    {} as Record<string, boolean>
+  );
 
   return {
     keys

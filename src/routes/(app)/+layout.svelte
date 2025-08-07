@@ -84,7 +84,7 @@
 
   let voicesQuery: CreateQueryResult<Voice[], Error> | undefined = $state();
   $effect(() => {
-    if (data.keys?.eleven)
+    if (data.keys?.elevenlabs)
       voicesQuery = createQuery<Voice[]>(() => ({
         queryKey: ["voices"],
         queryFn: async () => (await fetch("/api/voices")).json(),
@@ -184,7 +184,7 @@
       {:else}
         <a href="/folders">Folders</a>
       {/if}
-      {#if data?.keys?.eleven}
+      {#if data?.keys?.elevenlabs}
         <Collapsible.Root bind:open={ttsOpen}>
           <Collapsible.Trigger aria-expanded={ttsOpen}>TTS</Collapsible.Trigger>
           <Collapsible.Content>

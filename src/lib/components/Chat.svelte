@@ -9,6 +9,7 @@
   import { Textarea } from "$lib/components/ui/textarea";
   import type { Message as ExtendedMessage } from "$lib/helpers";
   import { ariaListOpen, getMessageSiblings } from "$lib/helpers";
+  import type { ApiKeyMap } from "$lib/helpers/api-key-utils";
   import type { ConversationWithMessageMap } from "$lib/server/conversations-service";
   import {
     audioFilename,
@@ -32,7 +33,7 @@
 
   interface Props {
     agent?: { id: string; name: string } | undefined;
-    apiKeys: { mistral: boolean; openai: boolean; eleven: boolean } | undefined;
+    apiKeys: ApiKeyMap | undefined;
     models: SelectItem[] | undefined;
     selectedModel?: SelectItem | undefined;
     initialMessages?: ExtendedMessage[] | undefined;
@@ -386,7 +387,7 @@
   clearable={false}
 />
 
-{#if apiKeys?.eleven && $voices}
+{#if apiKeys?.elevenlabs && $voices}
   <TtsSettings />
 {/if}
 

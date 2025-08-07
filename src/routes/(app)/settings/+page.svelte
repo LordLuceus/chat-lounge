@@ -49,7 +49,7 @@
       <ApiKeyForm provider={AIProvider.OpenAI} openText="Set" {form} />
     {/if}
     <h3>ElevenLabs</h3>
-    {#if data.keys?.eleven}
+    {#if data.keys?.elevenlabs}
       <p>Your ElevenLabs API key is set.</p>
       <ApiKeyForm provider={AIProvider.ElevenLabs} openText="Change" {form} />
     {:else}

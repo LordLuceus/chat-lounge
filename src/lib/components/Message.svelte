@@ -119,7 +119,7 @@
         {#if message.role === "user" && !isLoading}
           <EditMessage id={message.id} content={message.content} onSubmit={onEdit} />
         {/if}
-        {#if page.data.keys.eleven && message.role === "assistant"}
+        {#if page.data.keys.elevenlabs && message.role === "assistant"}
           <Tts text={message.content} />
         {/if}
         <Button onclick={copyToClipboard}>Copy</Button>

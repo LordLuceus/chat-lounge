@@ -506,7 +506,7 @@
       cols={200}
     />
   </form>
-  {#if apiKeys?.openai && apiKeys.eleven && chat.status !== "streaming" && chat.status !== "submitted"}
+  {#if apiKeys?.eleven && chat.status !== "streaming" && chat.status !== "submitted"}
     <Recorder {setVoiceMessage} />
   {/if}
 

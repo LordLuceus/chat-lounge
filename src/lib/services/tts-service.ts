@@ -124,7 +124,7 @@ export async function generateTTS({
         try {
           const chunk = chunkQueue.shift();
           if (chunk) {
-            sourceBuffer.appendBuffer(chunk);
+            sourceBuffer.appendBuffer(new Uint8Array(chunk));
           }
         } catch (err) {
           handleError("Error appending to media buffer. Playback may be incomplete.", err);
@@ -193,7 +193,10 @@ export async function generateTTS({
 
           isStreamFinished = true;
           ttsGenerating.set(false);
-          const audioBlob = new Blob(allChunks, { type: "audio/mpeg" });
+          const audioBlob = new Blob(
+            allChunks.map((chunk) => chunk.buffer as ArrayBuffer),
+            { type: "audio/mpeg" }
+          );
           const downloadUrl = URL.createObjectURL(audioBlob);
           downloadUrlStore.set(downloadUrl);
           onDownloadReady({ downloadUrl, filename: generateAudioFilename(text) });

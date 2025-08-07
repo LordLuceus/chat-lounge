@@ -29,7 +29,8 @@
     <h2>API Keys</h2>
     <p>
       Manage your API keys for supported providers. To use the app, at least one of Mistral, OpenAI,
-      Google, Anthropic, or XAI is required. ElevenLabs is required for voice conversations.
+      Google, Anthropic, XAI, or OpenRouter is required. ElevenLabs is required for voice
+      conversations.
     </p>
     <h3>Mistral</h3>
     {#if data.keys?.mistral}

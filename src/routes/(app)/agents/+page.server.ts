@@ -33,7 +33,8 @@ export const actions: Actions = {
       instructions,
       visibility: visibility as Visibility,
       type: type as AgentType,
-      greeting
+      greeting,
+      preferredModelId: form.data.preferredModel?.value
     });
 
     return message(form, { agentId, created: true });

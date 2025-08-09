@@ -10,6 +10,7 @@ export interface AgentCreateOptions {
   visibility: Visibility;
   type: AgentType;
   greeting?: string | null;
+  preferredModelId?: string | null;
 }
 
 export type AgentWithUsage = Agent & {
@@ -114,6 +115,14 @@ export async function getAgent(userId: string, agentId: string) {
       visibility: true,
       type: true,
       greeting: true,
+      preferredModelId: true,
+      preferredModel: {
+        select: {
+          id: true,
+          name: true,
+          provider: true
+        }
+      },
       agentUsers: {
         where: {
           userId
@@ -144,7 +153,8 @@ export async function createAgent({
   instructions,
   visibility,
   type,
-  greeting
+  greeting,
+  preferredModelId
 }: AgentCreateOptions) {
   const result = await prisma.agent.create({
     data: {
@@ -154,7 +164,8 @@ export async function createAgent({
       instructions,
       visibility,
       type,
-      greeting
+      greeting,
+      preferredModelId
     }
   });
 

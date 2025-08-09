@@ -4,8 +4,10 @@
   import { Input } from "$lib/components/ui/input";
   import * as RadioGroup from "$lib/components/ui/radio-group";
   import { Textarea } from "$lib/components/ui/textarea";
+  import { ariaListOpen } from "$lib/helpers";
   import { AgentType } from "$lib/types/db";
   import { useQueryClient } from "@tanstack/svelte-query";
+  import Select from "svelte-select";
   import { superForm, type Infer, type SuperValidated } from "sveltekit-superforms";
   import { zodClient } from "sveltekit-superforms/adapters";
   import { agentSchema, type AgentSchema } from "./schema";
@@ -22,6 +24,7 @@
 
   const form = superForm(data, {
     validators: zodClient(agentSchema),
+    dataType: "json",
     onUpdated: ({ form }) => {
       if (form.valid) {
         closeDialog();
@@ -35,6 +38,14 @@
   });
 
   const { form: formData, enhance } = form;
+
+  async function fetchModels(searchText?: string) {
+    const response = await fetch(`/api/models?search=${encodeURIComponent(searchText ?? "")}`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch models");
+    }
+    return response.json();
+  }
 </script>
 
 <form method="POST" use:enhance {action}>
@@ -159,6 +170,25 @@
         </Form.Control>
       </div>
     </RadioGroup.Root>
+    <Form.FieldErrors />
+  </Form.Fieldset>
+  <Form.Fieldset {form} name="preferredModel">
+    <Form.Legend>Preferred Model</Form.Legend>
+    <Form.Control>
+      {#snippet children({ props })}
+        <Select
+          {...props}
+          bind:value={$formData.preferredModel}
+          loadOptions={fetchModels}
+          placeholder="Select a model"
+          {ariaListOpen}
+          clearable={true}
+        />
+      {/snippet}
+    </Form.Control>
+    <Form.Description>
+      Choose a default model for this agent. This will be used when no specific model is selected.
+    </Form.Description>
     <Form.FieldErrors />
   </Form.Fieldset>
 

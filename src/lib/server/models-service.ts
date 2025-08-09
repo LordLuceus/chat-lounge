@@ -14,10 +14,15 @@ export async function getModels() {
   }));
 }
 
-export async function getProviderModels(providers: AIProvider[]) {
+export async function getProviderModels(providers: AIProvider[], searchText?: string) {
   const models = await prisma.model.findMany({
     where: {
-      provider: { in: providers }
+      provider: { in: providers },
+      name: searchText
+        ? {
+            contains: searchText
+          }
+        : undefined
     },
     orderBy: { updatedAt: "desc" }
   });
@@ -40,7 +45,7 @@ export async function getModel(id: string) {
   return model;
 }
 
-export async function getUserModels(userId: string) {
+export async function getUserModels(userId: string, searchText?: string) {
   const apiKeys = await getApiKeys(userId);
 
   if (apiKeys.length === 0) {
@@ -49,5 +54,5 @@ export async function getUserModels(userId: string) {
 
   const providers = apiKeys.map((key) => key.provider);
 
-  return getProviderModels(providers);
+  return getProviderModels(providers, searchText);
 }

@@ -22,7 +22,13 @@ export const load = (async (event) => {
   const formData = {
     ...agent,
     description: agent.description ?? undefined,
-    greeting: agent.greeting ?? undefined
+    greeting: agent.greeting ?? undefined,
+    preferredModel: agent.preferredModel
+      ? {
+          value: agent.preferredModel.id,
+          label: `${agent.preferredModel.name} (${agent.preferredModel.provider})`
+        }
+      : undefined
   };
 
   return {
@@ -44,7 +50,11 @@ export const actions: Actions = {
       return fail(400, { form });
     }
 
-    await updateAgent(form.id, form.data as AgentCreateOptions);
+    const { preferredModel, ...data } = form.data;
+
+    const updateRequest = { ...data, preferredModelId: preferredModel?.value };
+
+    await updateAgent(form.id, updateRequest as AgentCreateOptions);
     return message(form, "Agent updated successfully");
   }
 };

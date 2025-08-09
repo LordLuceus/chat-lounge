@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 9 Aug, 2025
+
+Added preferred model to agents. If you have an agent that works best with a specific model, you can now set that model as the preferred one. This will make it easier to use the agent without having to manually select the model each time. The preferred model will be used by default when starting a new conversation with the agent.
+
 ## 7 Aug, 2025
 
 We've made several minor user experience and technical improvements in this update:

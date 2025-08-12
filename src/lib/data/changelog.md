@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 12 Aug, 2025
+
+Added a verbosity option to characters to control how much they say in response to user messages. This allows you to create characters that are more concise or more verbose, depending on your needs. The verbosity option can be set when creating or editing a character.
+
 ## 9 Aug, 2025
 
 Added preferred model to agents. If you have an agent that works best with a specific model, you can now set that model as the preferred one. This will make it easier to use the agent without having to manually select the model each time. The preferred model will be used by default when starting a new conversation with the agent.

@@ -22,6 +22,7 @@ export const load = (async (event) => {
   const formData = {
     ...agent,
     description: agent.description ?? undefined,
+    verbosity: agent.verbosity ?? undefined,
     greeting: agent.greeting ?? undefined,
     preferredModel: agent.preferredModel
       ? {

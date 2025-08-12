@@ -15,6 +15,7 @@ model Agent {
   instructions        String               @db.Text
   visibility          AgentVisibility      @default(private)
   type                AgentType            @default(default)
+  verbosity           AgentVerbosity?      @default(default)
   greeting            String?              @db.Text
   preferredModelId    String?              @db.VarChar(100)
   createdAt           DateTime             @default(now()) @db.Timestamp(3)
@@ -223,6 +224,12 @@ enum AgentVisibility {
 enum AgentType {
   default
   character
+}
+
+enum AgentVerbosity {
+  concise
+  default
+  verbose
 }
 
 enum AIProvider {

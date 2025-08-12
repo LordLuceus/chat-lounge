@@ -1,5 +1,5 @@
 import { createAgent } from "$lib/server/agents-service";
-import { AgentType, Visibility } from "$lib/types/db";
+import { AgentType, AgentVerbosity, Visibility } from "$lib/types/db";
 import { fail } from "@sveltejs/kit";
 import { message, superValidate } from "sveltekit-superforms";
 import { zod } from "sveltekit-superforms/adapters";
@@ -25,7 +25,7 @@ export const actions: Actions = {
       return fail(400, { form });
     }
 
-    const { name, description, instructions, visibility, type, greeting } = form.data;
+    const { name, description, instructions, visibility, type, verbosity, greeting } = form.data;
     const agentId = await createAgent({
       userId,
       name,
@@ -33,6 +33,7 @@ export const actions: Actions = {
       instructions,
       visibility: visibility as Visibility,
       type: type as AgentType,
+      verbosity: verbosity as AgentVerbosity | null,
       greeting,
       preferredModelId: form.data.preferredModel?.value
     });

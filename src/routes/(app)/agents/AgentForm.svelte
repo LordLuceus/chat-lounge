@@ -8,7 +8,7 @@
   import { AgentType } from "$lib/types/db";
   import { useQueryClient } from "@tanstack/svelte-query";
   import Select from "svelte-select";
-  import { superForm, type Infer, type SuperValidated } from "sveltekit-superforms";
+  import SuperDebug, { superForm, type Infer, type SuperValidated } from "sveltekit-superforms";
   import { zodClient } from "sveltekit-superforms/adapters";
   import { agentSchema, type AgentSchema } from "./schema";
 
@@ -38,6 +38,14 @@
   });
 
   const { form: formData, enhance } = form;
+
+  // Handle verbosity value for RadioGroup compatibility
+  let verbosityValue = $state($formData.verbosity ?? undefined);
+
+  // Update formData when verbosityValue changes
+  $effect(() => {
+    $formData.verbosity = verbosityValue;
+  });
 
   async function fetchModels(searchText?: string) {
     const response = await fetch(`/api/models?search=${encodeURIComponent(searchText ?? "")}`);
@@ -127,6 +135,52 @@
     <Form.FieldErrors />
   </Form.Field>
   {#if $formData.type === AgentType.Character}
+    <Form.Fieldset {form} name="verbosity">
+      <Form.Legend>Response Style</Form.Legend>
+      <RadioGroup.Root bind:value={verbosityValue} class="flex flex-col space-y-3" name="verbosity">
+        <div class="flex items-start space-x-3 space-y-0">
+          <Form.Control>
+            {#snippet children({ props })}
+              <RadioGroup.Item value="concise" {...props} class="mt-1" />
+              <div class="flex flex-col">
+                <Form.Label class="font-normal">Concise</Form.Label>
+                <p class="text-sm text-muted-foreground">
+                  Keep responses short (~200 words), focused, and allow space for user interaction.
+                </p>
+              </div>
+            {/snippet}
+          </Form.Control>
+        </div>
+        <div class="flex items-start space-x-3 space-y-0">
+          <Form.Control>
+            {#snippet children({ props })}
+              <RadioGroup.Item value="default" {...props} class="mt-1" />
+              <div class="flex flex-col">
+                <Form.Label class="font-normal">Default</Form.Label>
+                <p class="text-sm text-muted-foreground">
+                  Standard response length with no specific verbosity constraints.
+                </p>
+              </div>
+            {/snippet}
+          </Form.Control>
+        </div>
+        <div class="flex items-start space-x-3 space-y-0">
+          <Form.Control>
+            {#snippet children({ props })}
+              <RadioGroup.Item value="verbose" {...props} class="mt-1" />
+              <div class="flex flex-col">
+                <Form.Label class="font-normal">Verbose</Form.Label>
+                <p class="text-sm text-muted-foreground">
+                  Detailed, comprehensive responses that fully explore thoughts, emotions, and
+                  scenes.
+                </p>
+              </div>
+            {/snippet}
+          </Form.Control>
+        </div>
+      </RadioGroup.Root>
+      <Form.FieldErrors />
+    </Form.Fieldset>
     <Form.Field {form} name="greeting">
       <Form.Control>
         {#snippet children({ props })}
@@ -194,3 +248,4 @@
 
   <Form.Button>Save</Form.Button>
 </form>
+<SuperDebug data={$formData} />

@@ -18,3 +18,9 @@ export enum AgentType {
   Default = "default",
   Character = "character"
 }
+
+export enum AgentVerbosity {
+  Concise = "concise",
+  Default = "default",
+  Verbose = "verbose"
+}

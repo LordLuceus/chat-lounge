@@ -345,10 +345,24 @@ class AIService {
       return agent.instructions;
     }
 
+    // Get verbosity instruction based on agent's verbosity setting
+    const getVerbosityInstruction = (verbosity: string | null | undefined): string => {
+      switch (verbosity) {
+        case "concise":
+          return "- Keep responses concise (no longer than ~200 words), and allow {{user}} to respond to {{char}}'s actions or statements. I.E., avoid skipping forward or having {{char}} do multiple things in one response.";
+        case "verbose":
+          return "- Provide detailed, comprehensive responses that fully explore {{char}}'s thoughts, emotions, and actions. Take time to describe the scene, {{char}}'s internal state, and the nuances of their interactions. Feel free to write longer responses that capture the depth of the moment.";
+        case "default":
+        default:
+          return ""; // No specific verbosity instruction for default
+      }
+    };
+
     const prompt = charPrompt
       .replace("{{character_definition}}", agent.instructions)
       .replaceAll("{{char}}", agent.name)
-      .replaceAll("{{user}}", user.username.charAt(0).toUpperCase() + user.username.slice(1));
+      .replaceAll("{{user}}", user.username.charAt(0).toUpperCase() + user.username.slice(1))
+      .replace("{{verbosity}}", getVerbosityInstruction(agent.verbosity));
 
     return prompt;
   }

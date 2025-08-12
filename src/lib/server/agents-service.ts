@@ -1,5 +1,5 @@
 import { prisma } from "$lib/server/db";
-import { AgentType, Visibility } from "$lib/types/db";
+import { AgentType, AgentVerbosity, Visibility } from "$lib/types/db";
 import { Prisma, type Agent } from "@prisma/client";
 
 export interface AgentCreateOptions {
@@ -9,6 +9,7 @@ export interface AgentCreateOptions {
   instructions: string;
   visibility: Visibility;
   type: AgentType;
+  verbosity?: AgentVerbosity | null;
   greeting?: string | null;
   preferredModelId?: string | null;
 }
@@ -48,7 +49,7 @@ export async function getAgents(
   const result = await prisma.$queryRaw<AgentWithUsage[]>(
     Prisma.sql`
       SELECT DISTINCT a.id, a.userId, a.name, a.description, a.instructions, 
-             a.createdAt, a.updatedAt, a.visibility, a.type, a.greeting, au.lastUsedAt 
+             a.createdAt, a.updatedAt, a.visibility, a.type, a.verbosity, a.greeting, au.lastUsedAt 
       FROM agent a 
       LEFT JOIN agentUser au on (a.id = au.agentId AND au.userId = ${userId})
       WHERE ${ownerOnly ? Prisma.sql`(au.userId = ${userId} AND au.isOwner = true)` : Prisma.sql`(au.userId = ${userId} OR ${visibility} = ${Visibility.Public})`}
@@ -114,6 +115,7 @@ export async function getAgent(userId: string, agentId: string) {
       updatedAt: true,
       visibility: true,
       type: true,
+      verbosity: true,
       greeting: true,
       preferredModelId: true,
       preferredModel: {
@@ -153,6 +155,7 @@ export async function createAgent({
   instructions,
   visibility,
   type,
+  verbosity,
   greeting,
   preferredModelId
 }: AgentCreateOptions) {
@@ -164,6 +167,7 @@ export async function createAgent({
       instructions,
       visibility,
       type,
+      verbosity,
       greeting,
       preferredModelId
     }

@@ -5,7 +5,7 @@
   import * as RadioGroup from "$lib/components/ui/radio-group";
   import { Textarea } from "$lib/components/ui/textarea";
   import { ariaListOpen } from "$lib/helpers";
-  import { AgentType } from "$lib/types/db";
+  import { AgentType, AgentVerbosity } from "$lib/types/db";
   import { useQueryClient } from "@tanstack/svelte-query";
   import Select from "svelte-select";
   import { superForm, type Infer, type SuperValidated } from "sveltekit-superforms";
@@ -40,7 +40,7 @@
   const { form: formData, enhance } = form;
 
   // Handle verbosity value for RadioGroup compatibility
-  let verbosityValue = $state($formData.verbosity ?? undefined);
+  let verbosityValue = $state($formData.verbosity ?? AgentVerbosity.Default);
 
   // Update formData when verbosityValue changes
   $effect(() => {

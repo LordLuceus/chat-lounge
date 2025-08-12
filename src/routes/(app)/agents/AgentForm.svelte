@@ -8,7 +8,7 @@
   import { AgentType } from "$lib/types/db";
   import { useQueryClient } from "@tanstack/svelte-query";
   import Select from "svelte-select";
-  import SuperDebug, { superForm, type Infer, type SuperValidated } from "sveltekit-superforms";
+  import { superForm, type Infer, type SuperValidated } from "sveltekit-superforms";
   import { zodClient } from "sveltekit-superforms/adapters";
   import { agentSchema, type AgentSchema } from "./schema";
 
@@ -248,4 +248,3 @@
 
   <Form.Button>Save</Form.Button>
 </form>
-<SuperDebug data={$formData} />

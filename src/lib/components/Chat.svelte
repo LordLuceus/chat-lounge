@@ -107,11 +107,6 @@
         });
       } else if ($conversationStore) client.invalidateQueries({ queryKey: ["conversations"] });
     },
-    onResponse: () => {
-      if (!voiceMessage) {
-        startSound.play();
-      }
-    },
     body: {
       modelId: selectedModel?.value,
       agentId: agent?.id,
@@ -369,6 +364,12 @@
 
     fileInput.click();
   }
+
+  $effect(() => {
+    if (chat.status === "streaming") {
+      startSound.play();
+    }
+  });
 </script>
 
 <svelte:window

@@ -366,7 +366,7 @@
   }
 
   $effect(() => {
-    if (chat.status === "streaming") {
+    if (chat.status === "streaming" && !voiceMessage) {
       startSound.play();
     }
   });

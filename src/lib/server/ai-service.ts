@@ -141,7 +141,10 @@ class AIService {
       system,
       temperature: 1.0,
       providerOptions: {
-        google: this.GOOGLE_SETTINGS as GoogleGenerativeAIProviderOptions
+        google: {
+          ...this.GOOGLE_SETTINGS,
+          thinkingConfig: { includeThoughts: true }
+        } as GoogleGenerativeAIProviderOptions
       }
     });
 

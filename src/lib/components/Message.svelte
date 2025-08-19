@@ -100,12 +100,14 @@
             {#if part.type === "text"}
               <Markdown md={part.text || ""} {plugins} />
             {:else if part.type === "reasoning"}
-              <details class="reasoning-container">
-                <summary>Reasoning</summary>
-                <div class="reasoning-content">
-                  <Markdown md={part.text || ""} {plugins} />
-                </div>
-              </details>
+              <aside class="reasoning-container" aria-labelledby="reasoning-summary">
+                <details>
+                  <summary id="reasoning-summary">Reasoning</summary>
+                  <div class="reasoning-content">
+                    <Markdown md={part.text || ""} {plugins} />
+                  </div>
+                </details>
+              </aside>
             {/if}
           {/each}
         {/if}

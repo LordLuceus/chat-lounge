@@ -70,6 +70,7 @@
     "@ai-sdk/svelte": "^3.0.15",
     "@ai-sdk/xai": "^2.0.7",
     "@elevenlabs/elevenlabs-js": "^2.9.0",
+    "@openrouter/ai-sdk-provider": "^1.1.2",
     "@prisma/client": "^6.14.0",
     "@tanstack/svelte-query": "https://pkg.pr.new/@tanstack/svelte-query@746b9c5",
     "ai": "^5.0.15",

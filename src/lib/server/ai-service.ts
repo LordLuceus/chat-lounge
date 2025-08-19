@@ -18,6 +18,7 @@ import {
 import { createMistral, type MistralProvider } from "@ai-sdk/mistral";
 import { createOpenAI, type OpenAIProvider } from "@ai-sdk/openai";
 import { createXai, type XaiProvider } from "@ai-sdk/xai";
+import { createOpenRouter, type OpenRouterProvider } from "@openrouter/ai-sdk-provider";
 import type { Agent, Model } from "@prisma/client";
 import {
   convertToModelMessages,
@@ -51,7 +52,8 @@ class AIService {
     | OpenAIProvider
     | GoogleGenerativeAIProvider
     | AnthropicProvider
-    | XaiProvider;
+    | XaiProvider
+    | OpenRouterProvider;
   private readonly LIMIT_MULTIPLIER = 0.9; // We use 90% of the token limit to give us some headroom
   private readonly GOOGLE_SETTINGS: GoogleSettings = {
     safetySettings: [
@@ -77,7 +79,7 @@ class AIService {
     } else if (provider === "xai") {
       this.client = createXai({ apiKey });
     } else if (provider === "openrouter") {
-      this.client = createOpenAI({ apiKey, baseURL: "https://openrouter.ai/api/v1" });
+      this.client = createOpenRouter({ apiKey });
     } else {
       throw new Error("Unsupported AI provider");
     }

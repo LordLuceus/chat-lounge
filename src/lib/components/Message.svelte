@@ -6,11 +6,12 @@
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import * as Avatar from "$lib/components/ui/avatar";
   import { Button } from "$lib/components/ui/button";
-  import type { Message as DBMessage } from "$lib/helpers";
+  import { formatMessageContent } from "$lib/helpers";
   import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
   import { conversationStore } from "$lib/stores";
-  import type { Message as UIMessage } from "@ai-sdk/svelte";
+  import type { DBMessage } from "$lib/types/db";
   import { BotMessageSquare } from "@lucide/svelte";
+  import type { Message } from "@prisma/client";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
   import { SignedIn } from "svelte-clerk";
   import { useClerkContext } from "svelte-clerk/client";
@@ -23,11 +24,9 @@
 
   const plugins = [gfmPlugin(), lineBreaksPlugin];
 
-  type MessageType = UIMessage | DBMessage;
-
   interface Props {
-    message: MessageType;
-    siblings?: DBMessage[];
+    message: DBMessage;
+    siblings?: Message[];
     onEdit: (id: string, content: string, regenerate: boolean) => void;
     isLoading: boolean | undefined;
     isLastMessage: boolean | undefined;
@@ -38,7 +37,7 @@
   let rewindDialogOpen = $state(false);
 
   async function copyToClipboard() {
-    await navigator.clipboard.writeText(message.content);
+    await navigator.clipboard.writeText(formatMessageContent(message.parts));
     toast.success("Message copied to clipboard");
   }
 
@@ -83,7 +82,10 @@
 <SignedIn>
   {#if message.role === "user" || message.role === "assistant"}
     <section aria-label="{message.role} message">
-      <div class="{message.role}-message" use:copyCodeBlocks={{ content: message.content }}>
+      <div
+        class="{message.role}-message"
+        use:copyCodeBlocks={{ content: formatMessageContent(message.parts) }}
+      >
         {#if message.role === "user"}
           <Avatar.Root>
             <Avatar.Image src={user?.imageUrl} alt={user?.username} />
@@ -94,20 +96,18 @@
         {/if}
 
         {#if "parts" in message && message.parts && message.parts.length > 0}
-          {#each message.parts as part}
+          {#each message.parts as part, index (index)}
             {#if part.type === "text"}
               <Markdown md={part.text || ""} {plugins} />
             {:else if part.type === "reasoning"}
               <details class="reasoning-container">
                 <summary>Reasoning</summary>
                 <div class="reasoning-content">
-                  <Markdown md={part.reasoning || ""} {plugins} />
+                  <Markdown md={part.text || ""} {plugins} />
                 </div>
               </details>
             {/if}
           {/each}
-        {:else}
-          <Markdown md={message.content} {plugins} />
         {/if}
 
         {#if message.role === "assistant" && "model" in message && message.model && $conversationStore?.model && message.model.id !== $conversationStore.model.id}
@@ -117,10 +117,14 @@
         {/if}
 
         {#if message.role === "user" && !isLoading}
-          <EditMessage id={message.id} content={message.content} onSubmit={onEdit} />
+          <EditMessage
+            id={message.id}
+            content={formatMessageContent(message.parts)}
+            onSubmit={onEdit}
+          />
         {/if}
         {#if page.data.keys.elevenlabs && message.role === "assistant"}
-          <Tts text={message.content} />
+          <Tts text={formatMessageContent(message.parts)} />
         {/if}
         <Button onclick={copyToClipboard}>Copy</Button>
         {#if siblings.length > 1}

@@ -2,8 +2,8 @@
   import { page } from "$app/state";
   import Chat from "$lib/components/Chat.svelte";
   import CheckApiKeys from "$lib/components/CheckApiKeys.svelte";
-  import type { Message } from "$lib/helpers";
   import type { SelectItem } from "$lib/types/client";
+  import type { DBMessage } from "$lib/types/db";
   import { onMount } from "svelte";
   import { v4 as uuidv4 } from "uuid";
   import type { PageData } from "./$types";
@@ -14,15 +14,16 @@
 
   const { data }: Props = $props();
 
-  let initialMessages: Message[] = $state([]);
+  let initialMessages: DBMessage[] = $state([]);
   $effect(() => {
     if (data.agent.greeting) {
       initialMessages = [
         {
           role: "assistant",
-          content: data.agent.greeting,
+          parts: [{ type: "text", text: data.agent.greeting }],
           id: uuidv4(),
           parentId: null,
+          childIds: [],
           createdAt: new Date(),
           updatedAt: new Date()
         }

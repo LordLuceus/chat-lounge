@@ -7,8 +7,7 @@
   import TtsSettings from "$lib/components/TtsSettings.svelte";
   import { Button } from "$lib/components/ui/button";
   import { Textarea } from "$lib/components/ui/textarea";
-  import type { Message as ExtendedMessage } from "$lib/helpers";
-  import { ariaListOpen, getMessageSiblings } from "$lib/helpers";
+  import { ariaListOpen, formatMessageContent, getMessageSiblings } from "$lib/helpers";
   import type { ApiKeyMap } from "$lib/helpers/api-key-utils";
   import type { ConversationWithMessageMap } from "$lib/server/conversations-service";
   import {
@@ -23,9 +22,11 @@
     voices
   } from "$lib/stores";
   import type { SelectItem } from "$lib/types/client";
+  import type { DBMessage } from "$lib/types/db";
   import { ModelID } from "$lib/types/elevenlabs";
   import { Chat } from "@ai-sdk/svelte";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
+  import { DefaultChatTransport } from "ai";
   import { onDestroy, onMount, tick } from "svelte";
   import Select from "svelte-select";
   import { toast } from "svelte-sonner";
@@ -36,7 +37,7 @@
     apiKeys: ApiKeyMap | undefined;
     models: SelectItem[] | undefined;
     selectedModel?: SelectItem | undefined;
-    initialMessages?: ExtendedMessage[] | undefined;
+    initialMessages?: DBMessage[] | undefined;
   }
 
   let {
@@ -57,6 +58,7 @@
 
   const initialMessageCount = 20;
   let visibleMessageCount = $state(initialMessageCount);
+  let chatInput = $state("");
 
   const client = useQueryClient();
 
@@ -79,10 +81,10 @@
   }));
 
   const chat = new Chat({
-    onFinish: async (message) => {
+    onFinish: async ({ message }) => {
       if (voiceMessage) {
         ttsProps.set({
-          text: message.content,
+          text: formatMessageContent(message.parts),
           voice: $selectedVoice?.value,
           signal,
           modelId: $selectedTtsModel?.value || ModelID.ElevenTurboV2
@@ -107,16 +109,14 @@
         });
       } else if ($conversationStore) client.invalidateQueries({ queryKey: ["conversations"] });
     },
-    body: {
-      modelId: selectedModel?.value,
-      agentId: agent?.id,
-      conversationId: $conversationStore?.id
-    },
-    initialMessages
+    messages: initialMessages,
+    transport: new DefaultChatTransport({ api: "/api/chat" })
   });
 
   const visibleMessages = $derived(
-    chat.messages.filter((message) => message.content).slice(-visibleMessageCount)
+    chat.messages
+      .filter((message) => formatMessageContent(message.parts))
+      .slice(-visibleMessageCount)
   );
 
   let followups: string[] = $state([]);
@@ -169,7 +169,7 @@
     if (!chat.messages) return;
     const lastMessage = chat.messages.at(-1);
     if (lastMessage?.role !== "assistant") return;
-    await navigator.clipboard.writeText(lastMessage.content);
+    await navigator.clipboard.writeText(formatMessageContent(lastMessage.parts));
     toast.success("Last message copied to clipboard.");
   }
 
@@ -240,8 +240,8 @@
 
   $effect(() => {
     if (voiceMessage) {
-      chat.append(
-        { content: voiceMessage, role: "user" },
+      chat.sendMessage(
+        { text: voiceMessage },
         {
           body: {
             modelId: selectedModel?.value,
@@ -281,12 +281,13 @@
 
     if (messageIndex === -1) return;
 
+    const message = chat.messages[messageIndex];
+
     const updatedMessages = chat.messages.slice(0, messageIndex);
     updatedMessages.push({
-      role: "user",
-      content,
-      id: regenerate ? uuidv4() : id,
-      parts: [{ type: "text", text: content }]
+      ...message,
+      parts: [{ type: "text", text: content }],
+      id: regenerate ? uuidv4() : id
     });
 
     chat.messages = updatedMessages;
@@ -294,7 +295,7 @@
     await tick();
 
     if (regenerate) {
-      chat.reload({
+      chat.regenerate({
         body: {
           modelId: selectedModel?.value,
           agentId: agent?.id,
@@ -305,7 +306,7 @@
     } else {
       const res = await fetch(`/api/conversations/${$conversationStore?.id}/messages/${id}`, {
         method: "PUT",
-        body: JSON.stringify({ content })
+        body: JSON.stringify({ parts: [{ type: "text", text: content }] })
       });
 
       if (!res.ok) {
@@ -427,7 +428,7 @@
       <Button
         onclick={() => {
           followups = [];
-          chat.reload({
+          chat.regenerate({
             body: {
               modelId: selectedModel?.value,
               agentId: agent?.id,
@@ -453,7 +454,7 @@
       <p class="error">There was an error while getting a response from the AI.</p>
       <Button
         onclick={() =>
-          chat.reload({
+          chat.regenerate({
             body: {
               modelId: selectedModel?.value,
               agentId: agent?.id,
@@ -475,7 +476,7 @@
         <Button
           variant="outline"
           onclick={() => {
-            chat.input = suggestion;
+            chatInput = suggestion;
             focusChatInput();
           }}
         >
@@ -487,20 +488,24 @@
 
   <form
     onsubmit={(e) => {
+      e.preventDefault();
       followups = [];
-      chat.handleSubmit(e, {
-        body: {
-          modelId: selectedModel?.value,
-          agentId: agent?.id,
-          conversationId: $conversationStore?.id
-        },
-        allowEmptySubmit: true
-      });
+      chat.sendMessage(
+        { text: chatInput },
+        {
+          body: {
+            modelId: selectedModel?.value,
+            agentId: agent?.id,
+            conversationId: $conversationStore?.id
+          }
+        }
+      );
+      chatInput = "";
     }}
     bind:this={chatForm}
   >
     <Textarea
-      bind:value={chat.input}
+      bind:value={chatInput}
       onkeydown={handleMessageSubmit}
       placeholder={agent ? `Message ${agent.name}:` : "Type your message:"}
       class="chat-input"

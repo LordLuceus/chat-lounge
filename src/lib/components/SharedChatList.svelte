@@ -1,9 +1,9 @@
 <script lang="ts">
   import SharedMessage from "$lib/components/SharedMessage.svelte";
-  import type { Message } from "@ai-sdk/svelte";
+  import type { UIMessage } from "@ai-sdk/svelte";
 
   interface Props {
-    messages: Message[];
+    messages: UIMessage[];
   }
 
   const { messages }: Props = $props();

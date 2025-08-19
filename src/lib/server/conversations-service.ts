@@ -1,5 +1,6 @@
 import {
   findLastNodeInBranch,
+  formatMessageContent,
   getConversationMessages as getMessages,
   setModel
 } from "$lib/helpers";
@@ -7,8 +8,15 @@ import AIService from "$lib/server/ai-service";
 import { getApiKey } from "$lib/server/api-keys-service";
 import { prisma } from "$lib/server/db";
 import { getModel } from "$lib/server/models-service";
-import { AIProvider } from "$lib/types/db";
-import { Prisma, type Conversation, type SharedConversation } from "@prisma/client";
+import { AIProvider, type DBMessage } from "$lib/types/db";
+import {
+  Prisma,
+  type Conversation,
+  type Message,
+  type Model,
+  type SharedConversation
+} from "@prisma/client";
+import type { UIDataTypes, UIMessage, UIMessagePart, UITools } from "ai";
 import { getFolder } from "./folders-service";
 
 export interface ConversationCreateOptions {
@@ -16,20 +24,10 @@ export interface ConversationCreateOptions {
   agentId: string | null;
   modelId: string | null;
   userId: string;
-  messages: { role: "user" | "assistant"; content: string }[];
+  messages: Array<DBMessage>;
   currentNode?: string;
   isImporting?: boolean;
   isPinned?: boolean;
-}
-
-interface Message {
-  id: string;
-  content: string;
-  role: "user" | "assistant";
-  parentId: string | null;
-  childIds: string[];
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 export type ConversationWithMessageMap = Prisma.ConversationGetPayload<{
@@ -38,8 +36,13 @@ export type ConversationWithMessageMap = Prisma.ConversationGetPayload<{
     model: true;
   };
 }> & {
-  messageMap: Record<string, Message>;
+  messageMap: Record<string, DBMessage>;
 };
+
+interface MessageWithModelAndChildIds extends Message {
+  model: Model | null;
+  childIds: string[];
+}
 
 export interface MessageImport {
   id: string;
@@ -167,10 +170,11 @@ export async function getConversation(userId: string, conversationId: string) {
 
   const messagesWithChildIds = conversation.messages.map((message) => ({
     ...message,
-    childIds: conversation.messages.filter((m) => m.parentId === message.id).map((m) => m.id)
+    childIds: conversation.messages.filter((m) => m.parentId === message.id).map((m) => m.id),
+    parts: message.parts as Array<UIMessagePart<UIDataTypes, UITools>>
   }));
 
-  conversation.messages = messagesWithChildIds;
+  conversation.messages = messagesWithChildIds as Array<MessageWithModelAndChildIds>;
 
   const messageMap = createMessageMap(messagesWithChildIds);
 
@@ -204,7 +208,7 @@ export async function createConversation({
   for (const message of messages) {
     await addConversationMessage(
       conversation.id,
-      message.content,
+      message.parts,
       message.role,
       message.role === "user" ? userId : undefined,
       undefined,
@@ -282,8 +286,8 @@ export async function getConversationUsers(conversationId: string) {
 
 export async function addConversationMessage(
   conversationId: string,
-  content: string,
-  role: "user" | "assistant",
+  parts: Array<UIMessagePart<UIDataTypes, UITools>>,
+  role: "user" | "assistant" | "system",
   userId?: string,
   messageId?: string,
   isInternal: boolean = false,
@@ -294,7 +298,8 @@ export async function addConversationMessage(
     data: {
       conversationId,
       userId,
-      content,
+      parts: parts as Prisma.InputJsonArray,
+      content: formatMessageContent(parts),
       role,
       isInternal,
       modelId
@@ -429,11 +434,15 @@ export async function getLastSummary(conversationId: string) {
 export async function updateConversationMessage(
   conversationId: string,
   messageId: string,
-  data: { content?: string; parentId?: string }
+  data: { parts?: UIMessagePart<UIDataTypes, UITools>[]; parentId?: string }
 ) {
   return prisma.message.update({
     where: { id: messageId, conversationId },
-    data
+    data: {
+      parts: data.parts ? (data.parts as Prisma.InputJsonArray) : undefined,
+      parentId: data.parentId,
+      content: data.parts ? formatMessageContent(data.parts) : undefined
+    }
   });
 }
 
@@ -443,15 +452,15 @@ export async function deleteConversationMessage(conversationId: string, messageI
   });
 }
 
-function createMessageMap(messages: Message[]): Record<string, Message> {
-  return messages.reduce<Record<string, Message>>((obj, message) => {
+function createMessageMap(messages: DBMessage[]): Record<string, DBMessage> {
+  return messages.reduce<Record<string, DBMessage>>((obj, message) => {
     obj[message.id] = message;
     return obj;
   }, {});
 }
 
 async function generateConversationName(
-  messages: { role: string; content: string }[],
+  messages: Array<Omit<UIMessage, "id">>,
   modelId: string | null,
   userId: string
 ) {
@@ -469,7 +478,7 @@ async function generateConversationName(
 
   const service = new AIService(apiKey.provider as AIProvider, apiKey.key);
 
-  return service.generateConversationName(messages as Message[], modelIdToUse, userId);
+  return service.generateConversationName(messages, modelIdToUse, userId);
 }
 
 export async function importChat(
@@ -479,12 +488,15 @@ export async function importChat(
   data: MessageImport[],
   updateProgress?: (progress: number) => void
 ) {
-  const messages = data.map((m) => ({ role: m.role, content: m.content }));
+  const messages = data.map((m) => ({
+    role: m.role,
+    parts: [{ type: "text", text: m.content }] as Array<UIMessagePart<UIDataTypes, UITools>>
+  }));
 
   for (const message of messages) {
     await addConversationMessage(
       conversationId,
-      message.content,
+      message.parts,
       message.role,
       message.role === "user" ? userId : undefined,
       undefined,
@@ -590,7 +602,8 @@ export async function shareConversation(conversationId: string, userId: string) 
   await prisma.sharedMessage.createMany({
     data: messages.map((message) => ({
       sharedConversationId: result.id,
-      content: message.content,
+      content: formatMessageContent(message.parts),
+      parts: message.parts as Prisma.InputJsonArray,
       role: message.role,
       createdAt: message.createdAt,
       updatedAt: message.updatedAt

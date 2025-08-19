@@ -2,10 +2,11 @@
   import { page } from "$app/state";
   import Chat from "$lib/components/Chat.svelte";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
-  import { getConversationMessages, type Message } from "$lib/helpers";
+  import { formatMessageContent, getConversationMessages } from "$lib/helpers";
   import type { ConversationWithMessageMap } from "$lib/server/conversations-service";
   import { conversationStore } from "$lib/stores";
   import type { SelectItem } from "$lib/types/client";
+  import type { DBMessage } from "$lib/types/db";
   import { createQuery, useQueryClient } from "@tanstack/svelte-query";
   import { io, type Socket } from "socket.io-client";
   import { onDestroy, onMount } from "svelte";
@@ -28,7 +29,7 @@
     conversationStore.set(conversationQuery.data);
   });
 
-  let messages: Message[] = $state([]);
+  let messages: DBMessage[] = $state([]);
 
   $effect(() => {
     if ($conversationStore) messages = getConversationMessages($conversationStore);
@@ -38,7 +39,7 @@
     page.data.models?.find((m: SelectItem) => m.value === page.data.conversation.modelId)
   );
 
-  function exportChatAsText(messages: Message[], userName?: string | null) {
+  function exportChatAsText(messages: DBMessage[], userName?: string | null) {
     if (!messages || messages.length === 0) return;
 
     const assistantName = page.data.agent?.name || "Assistant";
@@ -47,7 +48,7 @@
     const chatText = messages
       .map(
         (message) =>
-          `${message.role === "assistant" ? assistantName : userNameText}\n${message.content}`
+          `${message.role === "assistant" ? assistantName : userNameText}\n${formatMessageContent(message.parts)}`
       )
       .join("\n\n");
 
@@ -62,7 +63,7 @@
     URL.revokeObjectURL(url);
   }
 
-  function exportChatAsJson(messages: Message[], userName?: string | null, userId?: string) {
+  function exportChatAsJson(messages: DBMessage[], userName?: string | null, userId?: string) {
     if (!messages || messages.length === 0) return;
 
     const assistantName = page.data.agent?.name || "Assistant";
@@ -70,7 +71,7 @@
 
     const chatJson = messages.map((message) => ({
       role: message.role,
-      content: message.content,
+      content: formatMessageContent(message.parts),
       name: message.role === "assistant" ? assistantName : userNameText,
       id: message.id,
       parentId: message.parentId,

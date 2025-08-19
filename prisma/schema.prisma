@@ -120,6 +120,7 @@ model Message {
   conversationId String         @db.Char(36)
   userId         String?        @db.VarChar(100)
   parts          Json
+  content        String         @db.MediumText
   role           MessageRole
   modelId        String?        @db.VarChar(100)
   parentId       String?        @db.Char(36)
@@ -136,6 +137,7 @@ model Message {
   @@index([conversationId], map: "message_conversationId_conversation_id_fk")
   @@index([parentId], map: "message_parentId_message_id_fk")
   @@index([userId], map: "message_userId_user_id_fk")
+  @@fulltext([content])
   @@map("message")
 }
 
@@ -178,6 +180,7 @@ model SharedMessage {
   id                   String             @id @default(uuid()) @db.Char(36)
   sharedConversationId String             @db.Char(36)
   content              String             @db.MediumText
+  parts                Json
   role                 String             @db.VarChar(20)
   parentId             String?            @db.Char(36)
   createdAt            DateTime           @default(now()) @db.Timestamp(3)
@@ -212,6 +215,7 @@ model User {
 enum MessageRole {
   user
   assistant
+  system
 }
 
 enum AgentVisibility {

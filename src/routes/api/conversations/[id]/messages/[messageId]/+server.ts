@@ -37,13 +37,13 @@ export const PUT = (async ({ locals, params, request }) => {
     return error(400, "No message ID provided");
   }
 
-  const { content } = await request.json();
+  const { parts } = await request.json();
 
-  if (!content) {
+  if (!parts) {
     return error(400, "No content provided");
   }
 
-  await updateConversationMessage(id, messageId, { content });
+  await updateConversationMessage(id, messageId, { parts });
 
   return json({ message: "Message updated" });
 }) satisfies RequestHandler;

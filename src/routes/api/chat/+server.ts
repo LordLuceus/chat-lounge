@@ -13,8 +13,14 @@ export const POST = (async ({ locals, request }) => {
     return error(401, { message: "Unauthorized" });
   }
 
-  const { messages, modelId, agentId, conversationId, regenerate, messageId } =
-    await request.json();
+  const {
+    messages,
+    modelId,
+    agentId,
+    conversationId,
+    regenerate,
+    editedMessageId: messageId
+  } = await request.json();
 
   const user = await getUser(userId);
 

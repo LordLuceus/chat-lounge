@@ -284,15 +284,19 @@
     const message = chat.messages[messageIndex];
 
     const updatedMessages = chat.messages.slice(0, messageIndex);
-    updatedMessages.push({
+
+    const editedMessage = {
       ...message,
-      parts: [{ type: "text", text: content }],
+      parts: [{ type: "text" as const, text: content }],
       id: regenerate ? uuidv4() : id
-    });
+    };
+    updatedMessages.push(editedMessage);
 
     chat.messages = updatedMessages;
 
     await tick();
+
+    console.log(chat.messages);
 
     if (regenerate) {
       chat.regenerate({
@@ -300,7 +304,7 @@
           modelId: selectedModel?.value,
           agentId: agent?.id,
           conversationId: $conversationStore?.id,
-          messageId: id
+          editedMessageId: id
         }
       });
     } else {

@@ -2,7 +2,7 @@
   import { page } from "$app/state";
   import Chat from "$lib/components/Chat.svelte";
   import CheckApiKeys from "$lib/components/CheckApiKeys.svelte";
-  import type { Message } from "$lib/helpers";
+  import type { DBMessage } from "$lib/types/db";
   import { onMount } from "svelte";
   import type { PageData } from "./$types";
 
@@ -12,7 +12,7 @@
 
   const { data }: Props = $props();
 
-  let initialMessages: Message[] | undefined = $state(undefined);
+  let initialMessages: DBMessage[] | undefined = $state(undefined);
 
   onMount(async () => {
     if (page.url.searchParams.get("shareId")) {

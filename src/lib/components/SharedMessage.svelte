@@ -1,8 +1,9 @@
 <script lang="ts">
   import { copyCodeBlocks } from "$lib/actions/copy-code";
   import { Button } from "$lib/components/ui/button";
+  import { formatMessageContent } from "$lib/helpers";
   import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
-  import type { Message } from "@ai-sdk/svelte";
+  import type { UIMessage } from "@ai-sdk/svelte";
   import { BotMessageSquare } from "@lucide/svelte";
   import Markdown from "svelte-exmarkdown";
   import { gfmPlugin } from "svelte-exmarkdown/gfm";
@@ -11,24 +12,41 @@
   const plugins = [gfmPlugin(), lineBreaksPlugin];
 
   interface Props {
-    message: Message;
+    message: UIMessage;
   }
 
   const { message }: Props = $props();
 
   async function copyToClipboard() {
-    await navigator.clipboard.writeText(message.content);
+    await navigator.clipboard.writeText(formatMessageContent(message.parts));
     toast.success("Message copied to clipboard");
   }
 </script>
 
 {#if message.role === "user" || message.role === "assistant"}
   <section aria-label="{message.role} message">
-    <div class="{message.role}-message" use:copyCodeBlocks={{ content: message.content }}>
+    <div
+      class="{message.role}-message"
+      use:copyCodeBlocks={{ content: formatMessageContent(message.parts) }}
+    >
       {#if message.role === "assistant"}
         <BotMessageSquare />
       {/if}
-      <Markdown md={message.content} {plugins} />
+      {#if "parts" in message && message.parts && message.parts.length > 0}
+        {#each message.parts as part, index (index)}
+          {#if part.type === "text"}
+            <Markdown md={part.text || ""} {plugins} />
+          {:else if part.type === "reasoning"}
+            <details class="reasoning-container">
+              <summary>Reasoning</summary>
+              <div class="reasoning-content">
+                <Markdown md={part.text || ""} {plugins} />
+              </div>
+            </details>
+          {/if}
+        {/each}
+      {/if}
+
       {#if message.role === "assistant"}
         <Button onclick={copyToClipboard}>Copy</Button>
       {/if}

@@ -1,26 +1,17 @@
 import type { ConversationWithMessageMap } from "$lib/server/conversations-service";
+import type { DBMessage } from "$lib/types/db";
+import type { Message } from "@prisma/client";
+import type { UIDataTypes, UIMessagePart, UITools } from "ai";
 
-export interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  childIds?: string[];
-  parentId: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  modelId?: string | null;
-  model?: { id: string; name: string } | null;
-}
-
-export function getConversationMessages(conversation: ConversationWithMessageMap) {
-  const messages: Message[] = [];
+export function getConversationMessages(conversation: ConversationWithMessageMap): DBMessage[] {
+  const messages: DBMessage[] = [];
 
   // Collect messages by traversing upwards from the current node
   let currentNode = conversation.currentNode;
   while (currentNode != null) {
     const node = conversation.messageMap[currentNode];
     if (node) {
-      messages.unshift(formatMessage(node)); // Prepend to maintain chronological order
+      messages.unshift(node); // Prepend to maintain chronological order
       currentNode = node.parentId;
     } else {
       break;
@@ -37,26 +28,11 @@ export function getConversationMessages(conversation: ConversationWithMessageMap
     const firstChildId = node.childIds[0];
     const childNode = conversation.messageMap[firstChildId];
     if (childNode) {
-      messages.push(formatMessage(childNode));
+      messages.push(childNode);
       node = childNode;
     } else {
       break;
     }
-  }
-
-  // Helper function to format a node into Message type
-  function formatMessage(node: Message): Message {
-    return {
-      id: node.id,
-      role: node.role as "user" | "assistant",
-      content: node.content,
-      childIds: node.childIds,
-      parentId: node.parentId,
-      createdAt: node.createdAt,
-      updatedAt: node.updatedAt,
-      modelId: node.modelId,
-      model: node.model
-    };
   }
 
   return messages;
@@ -91,4 +67,11 @@ export function findLastNodeInBranch(
   }
 
   return currentNodeId;
+}
+
+export function formatMessageContent(parts: UIMessagePart<UIDataTypes, UITools>[]): string {
+  return parts
+    .filter((part) => part.type === "text")
+    .map((part) => part.text)
+    .join("\n\n");
 }

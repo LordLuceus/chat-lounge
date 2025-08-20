@@ -119,6 +119,7 @@ model Message {
   id             String         @id @default(uuid()) @db.Char(36)
   conversationId String         @db.Char(36)
   userId         String?        @db.VarChar(100)
+  parts          Json
   content        String         @db.MediumText
   role           MessageRole
   modelId        String?        @db.VarChar(100)
@@ -179,6 +180,7 @@ model SharedMessage {
   id                   String             @id @default(uuid()) @db.Char(36)
   sharedConversationId String             @db.Char(36)
   content              String             @db.MediumText
+  parts                Json
   role                 String             @db.VarChar(20)
   parentId             String?            @db.Char(36)
   createdAt            DateTime           @default(now()) @db.Timestamp(3)
@@ -213,6 +215,7 @@ model User {
 enum MessageRole {
   user
   assistant
+  system
 }
 
 enum AgentVisibility {

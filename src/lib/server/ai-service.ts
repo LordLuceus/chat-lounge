@@ -1,4 +1,5 @@
 import charPrompt from "$lib/data/character_prompt.txt?raw";
+import { formatMessageContent } from "$lib/helpers";
 import { errorHandler } from "$lib/helpers/ai-error-handler";
 import { getAgentByName, type AgentWithUsage } from "$lib/server/agents-service";
 import {
@@ -7,34 +8,30 @@ import {
   getLastSummary
 } from "$lib/server/conversations-service";
 import { getUser } from "$lib/server/users-service";
-import { AgentType, AIProvider } from "$lib/types/db";
+import { AgentType, AIProvider, type DBMessage } from "$lib/types/db";
 import { createAnthropic, type AnthropicProvider } from "@ai-sdk/anthropic";
-import { createGoogleGenerativeAI, type GoogleGenerativeAIProvider } from "@ai-sdk/google";
+import {
+  createGoogleGenerativeAI,
+  type GoogleGenerativeAIProvider,
+  type GoogleGenerativeAIProviderOptions
+} from "@ai-sdk/google";
 import { createMistral, type MistralProvider } from "@ai-sdk/mistral";
 import { createOpenAI, type OpenAIProvider } from "@ai-sdk/openai";
 import { createXai, type XaiProvider } from "@ai-sdk/xai";
+import { createOpenRouter, type OpenRouterProvider } from "@openrouter/ai-sdk-provider";
 import type { Agent, Model } from "@prisma/client";
-import { generateText, streamText } from "ai";
+import {
+  convertToModelMessages,
+  generateText,
+  streamText,
+  type UIDataTypes,
+  type UIMessage,
+  type UIMessagePart,
+  type UITools
+} from "ai";
 import type { ChatMessage } from "gpt-tokenizer/GptEncoding";
 import { isWithinTokenLimit } from "gpt-tokenizer/model/gpt-4";
-
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-}
-
-interface safetySettings {
-  category:
-    | "HARM_CATEGORY_DANGEROUS_CONTENT"
-    | "HARM_CATEGORY_HARASSMENT"
-    | "HARM_CATEGORY_HATE_SPEECH"
-    | "HARM_CATEGORY_SEXUALLY_EXPLICIT";
-  threshold: "BLOCK_NONE";
-}
-
-interface GoogleSettings {
-  safetySettings: safetySettings[];
-}
+import { v4 as uuidv4 } from "uuid";
 
 class AIService {
   private client:
@@ -42,15 +39,17 @@ class AIService {
     | OpenAIProvider
     | GoogleGenerativeAIProvider
     | AnthropicProvider
-    | XaiProvider;
+    | XaiProvider
+    | OpenRouterProvider;
   private readonly LIMIT_MULTIPLIER = 0.9; // We use 90% of the token limit to give us some headroom
-  private readonly GOOGLE_SETTINGS: GoogleSettings = {
+  private readonly GOOGLE_SETTINGS: GoogleGenerativeAIProviderOptions = {
     safetySettings: [
       { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
       { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
       { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
       { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" }
-    ]
+    ],
+    thinkingConfig: { includeThoughts: true }
   };
 
   constructor(
@@ -68,14 +67,14 @@ class AIService {
     } else if (provider === "xai") {
       this.client = createXai({ apiKey });
     } else if (provider === "openrouter") {
-      this.client = createOpenAI({ apiKey, baseURL: "https://openrouter.ai/api/v1" });
+      this.client = createOpenRouter({ apiKey });
     } else {
       throw new Error("Unsupported AI provider");
     }
   }
 
   async run(
-    messages: Message[],
+    messages: UIMessage[],
     model: Model,
     userId: string,
     agent?: AgentWithUsage,
@@ -85,70 +84,68 @@ class AIService {
   ) {
     const processedMessages = await this.preProcess(messages, model, userId, agent, conversationId);
 
-    const onCompletion = async ({ text }: { text: string }) => {
-      if (conversationId) {
-        if (!regenerate && messages.at(-1)?.role === "user") {
-          await addConversationMessage(
-            conversationId,
-            messages.at(-1)?.content as string,
-            "user",
-            userId,
-            messageId
-          );
-        }
-        await addConversationMessage(
-          conversationId,
-          text,
-          "assistant",
-          undefined,
-          undefined,
-          false,
-          regenerate,
-          model.id
-        );
-        this.postProcess(processedMessages as Message[], model, userId, agent, conversationId);
-      }
-    };
-
     const response = this.getResponse(
-      processedMessages as Message[],
+      processedMessages,
       model.id,
-      await this.prepareSystemPrompt(agent, userId),
-      onCompletion
+      await this.prepareSystemPrompt(agent, userId)
     );
 
-    const stream = response.toDataStreamResponse({
-      getErrorMessage: errorHandler,
-      sendReasoning: true
+    const stream = response.toUIMessageStreamResponse({
+      onError: errorHandler,
+      originalMessages: messages,
+      onFinish: async ({ responseMessage }) => {
+        if (conversationId) {
+          if (!regenerate && messages.at(-1)?.role === "user") {
+            await addConversationMessage(
+              conversationId,
+              messages.at(-1)?.parts || [],
+              "user",
+              userId,
+              messageId
+            );
+          }
+          await addConversationMessage(
+            conversationId,
+            responseMessage.parts,
+            "assistant",
+            undefined,
+            undefined,
+            false,
+            regenerate,
+            model.id
+          );
+          this.postProcess(processedMessages, model, userId, agent, conversationId);
+        }
+      }
     });
 
     return stream;
   }
 
-  private getResponse(
-    messages: Message[],
-    modelId: string,
-    system?: string,
-    onFinish?: ({ text }: { text: string }) => void
-  ) {
+  private getResponse(messages: UIMessage[], modelId: string, system?: string) {
     const result = streamText({
-      model: this.client(modelId, this.provider === "google" ? this.GOOGLE_SETTINGS : undefined),
-      messages,
+      model: this.client(modelId),
+      messages: convertToModelMessages(messages),
       system,
       temperature: 1.0,
-      onFinish
+      providerOptions: {
+        google: this.GOOGLE_SETTINGS
+      }
     });
 
     return result;
   }
 
-  private async generateSummary(messages: Message[], modelId: string, system?: string) {
+  private async generateSummary(messages: UIMessage[], modelId: string, system?: string) {
     const prompt =
       "Summarise this conversation. Keep it concise, but retain as much information as possible.";
 
     const { text } = await generateText({
-      model: this.client(modelId, this.provider === "google" ? this.GOOGLE_SETTINGS : undefined),
-      messages: [...messages.slice(0, -1), { role: "user", content: prompt }],
+      model: this.client(modelId),
+      messages: convertToModelMessages([
+        ...messages.slice(0, -1),
+        { role: "user", parts: [{ type: "text", text: prompt }] }
+      ]),
       system,
       temperature: 0.5
     });
@@ -156,30 +153,43 @@ class AIService {
     return text;
   }
 
-  private isWithinLimit(messages: { role: string; content: string }[], limit: number): boolean {
-    const isWithinLimit = isWithinTokenLimit(messages as ChatMessage[], limit);
+  private isWithinLimit(messages: ChatMessage[], limit: number): boolean {
+    const isWithinLimit = isWithinTokenLimit(messages, limit);
 
     return !!isWithinLimit;
   }
 
   private async preProcess(
-    messages: Message[],
+    messages: UIMessage[],
     model: Model,
     userId: string,
     agent?: Agent,
     conversationId?: string
-  ) {
+  ): Promise<UIMessage[]> {
     if (!conversationId) {
       return messages;
     }
 
     // First, see if we fit as-is (with agent instructions if any)
     const systemPrompt = agent?.instructions
-      ? [{ role: "system", content: (await this.prepareSystemPrompt(agent, userId)) ?? "" }]
+      ? [
+          {
+            id: uuidv4(),
+            role: "system" as const,
+            parts: [
+              { type: "text" as const, text: (await this.prepareSystemPrompt(agent, userId)) ?? "" }
+            ]
+          }
+        ]
       : [];
     let testFull = [...systemPrompt, ...messages];
 
-    if (this.isWithinLimit(testFull, model.tokenLimit * this.LIMIT_MULTIPLIER)) {
+    if (
+      this.isWithinLimit(
+        this.convertToChatMessages(testFull),
+        model.tokenLimit * this.LIMIT_MULTIPLIER
+      )
+    ) {
       return messages;
     }
 
@@ -197,7 +207,7 @@ class AIService {
       }
       // Find where that parent message appears in the local messages array
       parentIndex = messages.findLastIndex(
-        (message) => message.content === parentMsg.content && message.role === parentMsg.role
+        (message) => message.parts === parentMsg.parts && message.role === parentMsg.role
       );
       if (parentIndex === -1) {
         throw new Error("Message not found");
@@ -213,7 +223,7 @@ class AIService {
     const messagesAfterSummary = messages.slice(parentIndex + 1);
 
     let chunkSize = Math.min(20, messagesBeforeSummary.length);
-    let finalMessages: Message[] = [];
+    let finalMessages: UIMessage[] = [];
 
     // Try decreasing chunkSize by 2 until we fit
     while (chunkSize >= 0) {
@@ -222,7 +232,11 @@ class AIService {
 
       // Insert the summary as a message just after that context
       finalMessages = [
-        { role: summary.role, content: summary.content },
+        {
+          role: summary.role,
+          parts: summary.parts as UIMessagePart<UIDataTypes, UITools>[],
+          id: summary.id
+        },
         ...contextSlice,
         ...messagesAfterSummary
       ];
@@ -230,12 +244,26 @@ class AIService {
       // Re-check with agent instructions
       testFull = agent?.instructions
         ? [
-            { role: "system", content: (await this.prepareSystemPrompt(agent, userId)) ?? "" },
+            {
+              id: uuidv4(),
+              role: "system",
+              parts: [
+                {
+                  type: "text" as const,
+                  text: (await this.prepareSystemPrompt(agent, userId)) ?? ""
+                }
+              ]
+            },
             ...finalMessages
           ]
         : finalMessages;
 
-      if (this.isWithinLimit(testFull, model.tokenLimit * this.LIMIT_MULTIPLIER)) {
+      if (
+        this.isWithinLimit(
+          this.convertToChatMessages(testFull),
+          model.tokenLimit * this.LIMIT_MULTIPLIER
+        )
+      ) {
         return finalMessages;
       }
       chunkSize -= 2;
@@ -243,11 +271,18 @@ class AIService {
 
     // As a fallback, if we cannot get under the limit at all,
     // just return the summary plus the very last message
-    return [{ role: summary.role, content: summary.content }, messages.at(-1)!];
+    return [
+      {
+        role: summary.role,
+        parts: summary.parts as UIMessagePart<UIDataTypes, UITools>[],
+        id: summary.id
+      },
+      messages.at(-1)!
+    ];
   }
 
   private async postProcess(
-    messages: Message[],
+    messages: UIMessage[],
     model: Model,
     userId: string,
     agent?: Agent,
@@ -260,12 +295,23 @@ class AIService {
 
     const messagesWithSystemPrompt = agent?.instructions
       ? [
-          { role: "system", content: (await this.prepareSystemPrompt(agent, userId)) ?? "" },
+          {
+            id: uuidv4(),
+            role: "system" as const,
+            parts: [
+              { type: "text" as const, text: (await this.prepareSystemPrompt(agent, userId)) ?? "" }
+            ]
+          },
           ...messages
         ]
       : messages;
 
-    if (this.isWithinLimit(messagesWithSystemPrompt, model.tokenLimit * this.LIMIT_MULTIPLIER)) {
+    if (
+      this.isWithinLimit(
+        this.convertToChatMessages(messagesWithSystemPrompt),
+        model.tokenLimit * this.LIMIT_MULTIPLIER
+      )
+    ) {
       return messages;
     }
 
@@ -274,13 +320,20 @@ class AIService {
       model.id,
       await this.prepareSystemPrompt(agent, userId)
     );
-    await addConversationMessage(conversationId, summary, "user", userId, messageId, true);
+    await addConversationMessage(
+      conversationId,
+      [{ type: "text", text: summary }],
+      "user",
+      userId,
+      messageId,
+      true
+    );
 
     return messages;
   }
 
   public async generateConversationName(
-    messages: Message[],
+    messages: Omit<UIMessage, "id">[],
     modelId: string,
     userId: string
   ): Promise<string> {
@@ -289,34 +342,39 @@ class AIService {
     }
 
     const prompt = `Generate a concise, engaging title of five words or fewer for this conversation based on the following messages. The title should capture the main theme or topic without revealing specific details or spoilers.\n\n---\n\n${messages
-      .map(({ role, content }) => `${role}: ${content}`)
+      .map(({ role, parts }) => `${role}: ${formatMessageContent(parts)}`)
       .join("\n")}`;
 
     const titleGenerator = await getAgentByName(userId, "Title Generator");
 
     const { text } = await generateText({
-      model: this.client(modelId, this.provider === "google" ? this.GOOGLE_SETTINGS : undefined),
+      model: this.client(modelId),
       messages: [{ role: "user", content: prompt }],
       system: titleGenerator?.instructions ?? undefined,
-      temperature: 1.0
+      temperature: 1.0,
+      providerOptions: {
+        google: this.GOOGLE_SETTINGS as GoogleGenerativeAIProviderOptions
+      }
     });
 
     return text.trim().replaceAll('"', "").replaceAll("*", "").replaceAll("#", "");
   }
 
-  public async generateFollowUps(
-    messages: { role: string; content: string }[],
-    modelId: string
-  ): Promise<string[]> {
+  public async generateFollowUps(messages: DBMessage[], modelId: string): Promise<string[]> {
     const prompt =
       "Based on the following conversation, suggest three possible follow-up questions or next steps the user might say. Respond with a numbered list of exactly three items, no additional commentary. Follow the style and tone of the user's existing messages as closely as possible, especially in longer conversations. Do not enclose the suggestions in quotes.";
 
-    const context = messages.map(({ role, content }) => `${role}: ${content}`).join("\n");
+    const context = messages
+      .map(({ role, parts }) => `${role}: ${formatMessageContent(parts)}`)
+      .join("\n");
 
     const { text } = await generateText({
-      model: this.client(modelId, this.provider === "google" ? this.GOOGLE_SETTINGS : undefined),
+      model: this.client(modelId),
       messages: [{ role: "user", content: prompt + "\n\n---\n\n" + context }],
-      temperature: 1.0
+      temperature: 1.0,
+      providerOptions: {
+        google: this.GOOGLE_SETTINGS as GoogleGenerativeAIProviderOptions
+      }
     });
 
     // Split by lines and strip numbering and quotes
@@ -365,6 +423,13 @@ class AIService {
       .replace("{{verbosity}}", getVerbosityInstruction(agent.verbosity));
 
     return prompt;
+  }
+
+  private convertToChatMessages(messages: UIMessage[]): ChatMessage[] {
+    return messages.map((message) => ({
+      role: message.role,
+      content: formatMessageContent(message.parts)
+    }));
   }
 }
 

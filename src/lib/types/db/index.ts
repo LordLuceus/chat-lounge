@@ -1,3 +1,5 @@
+import type { UIMessage } from "ai";
+
 export enum AIProvider {
   Mistral = "mistral",
   OpenAI = "openai",
@@ -23,4 +25,13 @@ export enum AgentVerbosity {
   Concise = "concise",
   Default = "default",
   Verbose = "verbose"
+}
+
+export interface DBMessage extends UIMessage {
+  parentId: string | null;
+  childIds: string[];
+  createdAt: Date;
+  updatedAt: Date;
+  modelId?: string | null;
+  model?: { id: string; name: string } | null;
 }

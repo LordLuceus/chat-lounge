@@ -33,19 +33,6 @@ import type { ChatMessage } from "gpt-tokenizer/GptEncoding";
 import { isWithinTokenLimit } from "gpt-tokenizer/model/gpt-4";
 import { v4 as uuidv4 } from "uuid";
 
-interface safetySettings {
-  category:
-    | "HARM_CATEGORY_DANGEROUS_CONTENT"
-    | "HARM_CATEGORY_HARASSMENT"
-    | "HARM_CATEGORY_HATE_SPEECH"
-    | "HARM_CATEGORY_SEXUALLY_EXPLICIT";
-  threshold: "BLOCK_NONE";
-}
-
-interface GoogleSettings {
-  safetySettings: safetySettings[];
-}
-
 class AIService {
   private client:
     | MistralProvider
@@ -55,13 +42,14 @@ class AIService {
     | XaiProvider
     | OpenRouterProvider;
   private readonly LIMIT_MULTIPLIER = 0.9; // We use 90% of the token limit to give us some headroom
-  private readonly GOOGLE_SETTINGS: GoogleSettings = {
+  private readonly GOOGLE_SETTINGS: GoogleGenerativeAIProviderOptions = {
     safetySettings: [
       { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
       { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
       { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
       { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" }
-    ]
+    ],
+    thinkingConfig: { includeThoughts: true }
   };
 
   constructor(
@@ -141,10 +129,7 @@ class AIService {
       system,
       temperature: 1.0,
       providerOptions: {
-        google: {
-          ...this.GOOGLE_SETTINGS,
-          thinkingConfig: { includeThoughts: true }
-        } as GoogleGenerativeAIProviderOptions
+        google: this.GOOGLE_SETTINGS
       }
     });
 

@@ -104,7 +104,7 @@
                 <details>
                   <summary id="reasoning-summary">Reasoning</summary>
                   <div class="reasoning-content">
-                    <Markdown md={part.text || ""} {plugins} />
+                    <pre>{part.text}</pre>
                   </div>
                 </details>
               </aside>

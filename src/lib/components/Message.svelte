@@ -99,7 +99,7 @@
           {#each message.parts as part, index (index)}
             {#if part.type === "text"}
               <Markdown md={part.text || ""} {plugins} />
-            {:else if part.type === "reasoning"}
+            {:else if part.type === "reasoning" && part.text}
               <aside class="reasoning-container" aria-labelledby="reasoning-summary">
                 <details>
                   <summary id="reasoning-summary">Reasoning</summary>

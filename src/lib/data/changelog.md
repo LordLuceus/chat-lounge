@@ -1,5 +1,15 @@
 # ChatLounge Changelog
 
+## 20 Aug, 2025
+
+Major infrastructure update migrating to AI SDK v5 with several improvements and fixes:
+
+- **AI SDK v5 Migration**: Upgraded the entire AI system to use AI SDK v5, bringing improved performance and better support for modern AI features including structured message handling with content parts.
+- **Enhanced Reasoning Display**: Improved how reasoning/thinking content is displayed for models that support it, with better formatting and conditional visibility.
+- **OpenRouter Integration**: Switched to using the dedicated OpenRouter provider package instead of the OpenAI SDK for better compatibility and features.
+
+This update includes significant under-the-hood changes that improve the overall stability and future-proofing of the application. Please report any issues you encounter after this update.
+
 ## 12 Aug, 2025
 
 Added a verbosity option to characters to control how much they say in response to user messages. This allows you to create characters that are more concise or more verbose, depending on your needs. The verbosity option can be set when creating or editing a character.

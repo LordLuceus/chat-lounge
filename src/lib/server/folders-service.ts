@@ -102,3 +102,30 @@ export async function deleteFolder(userId: string, folderId: string) {
 
   return deleteFolder;
 }
+
+export async function bulkDeleteFolders(userId: string, folderIds: string[]) {
+  const folders = await prisma.folder.findMany({
+    where: {
+      id: { in: folderIds },
+      userId
+    }
+  });
+
+  if (folders.length !== folderIds.length) {
+    throw new Error("One or more folders not found or access denied");
+  }
+
+  await prisma.conversation.updateMany({
+    where: { folderId: { in: folderIds } },
+    data: { folderId: null }
+  });
+
+  const result = await prisma.folder.deleteMany({
+    where: {
+      id: { in: folderIds },
+      userId
+    }
+  });
+
+  return { deleted: result.count };
+}

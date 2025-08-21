@@ -1,9 +1,11 @@
 <script lang="ts">
   import { browser } from "$app/environment";
   import { page } from "$app/state";
+  import BulkActions from "$lib/components/BulkActions.svelte";
   import CreateFolderDialog from "$lib/components/CreateFolderDialog.svelte";
   import DataList from "$lib/components/DataList.svelte";
   import FolderActions from "$lib/components/FolderActions.svelte";
+  import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import { searchParams, type SearchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
@@ -70,15 +72,52 @@
     { label: "Created", value: "createdAt" },
     { label: "Updated", value: "updatedAt" }
   ];
+
+  let selectionMode = $state(false);
+  let selectedFolders = $state(new Set<string>());
+
+  function toggleSelectionMode() {
+    selectionMode = !selectionMode;
+    selectedFolders = new Set();
+  }
+
+  function handleSelectionChange(newSelection: Set<string>) {
+    selectedFolders = newSelection;
+  }
+
+  function clearSelection() {
+    selectedFolders = new Set();
+    selectionMode = false;
+  }
+
+  const selectedFolderItems = $derived(() => {
+    if (!foldersQuery.data) return [];
+    const allItems = foldersQuery.data.pages.flatMap((page) => page.data);
+    return allItems.filter((item) => selectedFolders.has(item.id));
+  });
 </script>
 
 <svelte:head>
   <title>Folders | ChatLounge</title>
 </svelte:head>
 
-<h1>Folders</h1>
+<div class="mb-4 flex items-center justify-between">
+  <h1>Folders</h1>
+  <div class="flex gap-2">
+    <CreateFolderDialog />
 
-<CreateFolderDialog />
+    <Button variant="outline" onclick={toggleSelectionMode}>
+      {selectionMode ? "Exit Selection" : "Select Multiple"}
+    </Button>
+  </div>
+</div>
+
+<BulkActions
+  selectedIds={selectedFolders}
+  selectedItems={selectedFolderItems()}
+  resourceType="folders"
+  onClearSelection={clearSelection}
+/>
 
 <SignedIn>
   <DataList
@@ -88,6 +127,9 @@
     sortOptions={folderSortOptions}
     defaultSortBy="updatedAt"
     defaultSortOrder="DESC"
+    {selectionMode}
+    selectedIds={selectedFolders}
+    onSelectionChange={handleSelectionChange}
   >
     {#snippet noResults()}
       <p>No folders found.</p>

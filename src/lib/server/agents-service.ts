@@ -265,3 +265,25 @@ export async function getAgentByName(
     }
   });
 }
+
+export async function bulkDeleteAgents(userId: string, agentIds: string[]) {
+  const agents = await prisma.agent.findMany({
+    where: {
+      id: { in: agentIds },
+      userId
+    }
+  });
+
+  if (agents.length !== agentIds.length) {
+    throw new Error("One or more agents not found or access denied");
+  }
+
+  const result = await prisma.agent.deleteMany({
+    where: {
+      id: { in: agentIds },
+      userId
+    }
+  });
+
+  return { deleted: result.count };
+}

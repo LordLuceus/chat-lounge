@@ -737,3 +737,164 @@ export async function removeFromFolder(userId: string, conversationId: string, f
     data: { folderId: null }
   });
 }
+
+export async function bulkDeleteConversations(userId: string, conversationIds: string[]) {
+  const conversations = await prisma.conversation.findMany({
+    where: {
+      id: { in: conversationIds },
+      conversationUsers: { some: { userId } }
+    }
+  });
+
+  if (conversations.length !== conversationIds.length) {
+    throw new Error("One or more conversations not found or access denied");
+  }
+
+  await prisma.message.deleteMany({
+    where: { conversationId: { in: conversationIds } }
+  });
+
+  await prisma.conversation.deleteMany({
+    where: { id: { in: conversationIds } }
+  });
+
+  return { deleted: conversations.length };
+}
+
+export async function bulkTogglePinConversations(
+  userId: string,
+  conversationIds: string[],
+  isPinned: boolean
+) {
+  const conversations = await prisma.conversation.findMany({
+    where: {
+      id: { in: conversationIds },
+      conversationUsers: { some: { userId } }
+    }
+  });
+
+  if (conversations.length !== conversationIds.length) {
+    throw new Error("One or more conversations not found or access denied");
+  }
+
+  const result = await prisma.conversation.updateMany({
+    where: { id: { in: conversationIds } },
+    data: { isPinned }
+  });
+
+  return { updated: result.count };
+}
+
+export async function bulkAddToFolder(userId: string, conversationIds: string[], folderId: string) {
+  const folder = await getFolder(userId, folderId);
+  if (!folder) {
+    throw new Error("Folder not found");
+  }
+
+  const conversations = await prisma.conversation.findMany({
+    where: {
+      id: { in: conversationIds },
+      conversationUsers: { some: { userId } }
+    }
+  });
+
+  if (conversations.length !== conversationIds.length) {
+    throw new Error("One or more conversations not found or access denied");
+  }
+
+  const result = await prisma.conversation.updateMany({
+    where: { id: { in: conversationIds } },
+    data: { folderId }
+  });
+
+  return { updated: result.count };
+}
+
+export async function bulkRemoveFromFolder(userId: string, conversationIds: string[]) {
+  const conversations = await prisma.conversation.findMany({
+    where: {
+      id: { in: conversationIds },
+      conversationUsers: { some: { userId } }
+    }
+  });
+
+  if (conversations.length !== conversationIds.length) {
+    throw new Error("One or more conversations not found or access denied");
+  }
+
+  const result = await prisma.conversation.updateMany({
+    where: { id: { in: conversationIds } },
+    data: { folderId: null }
+  });
+
+  return { updated: result.count };
+}
+
+export async function bulkShareConversations(userId: string, conversationIds: string[]) {
+  const conversations = await prisma.conversation.findMany({
+    where: {
+      id: { in: conversationIds },
+      conversationUsers: { some: { userId } }
+    },
+    include: {
+      messages: { where: { isInternal: false }, orderBy: { createdAt: "asc" } }
+    }
+  });
+
+  if (conversations.length !== conversationIds.length) {
+    throw new Error("One or more conversations not found or access denied");
+  }
+
+  const results = [];
+  for (const conversation of conversations) {
+    const existingShared = await getSharedConversationByConversationId(conversation.id);
+
+    if (existingShared) {
+      results.push(existingShared.id);
+      continue;
+    }
+
+    const sharedConversation = await prisma.sharedConversation.create({
+      data: {
+        conversationId: conversation.id,
+        name: conversation.name,
+        userId,
+        sharedAt: new Date(),
+        agentId: conversation.agentId
+      }
+    });
+
+    await prisma.sharedMessage.createMany({
+      data: conversation.messages.map((message) => ({
+        sharedConversationId: sharedConversation.id,
+        content: formatMessageContent(message.parts as Array<UIMessagePart<UIDataTypes, UITools>>),
+        parts: message.parts as Prisma.InputJsonArray,
+        role: message.role,
+        createdAt: message.createdAt,
+        updatedAt: message.updatedAt
+      }))
+    });
+
+    results.push(sharedConversation.id);
+  }
+
+  return { updated: results.length, sharedConversationIds: results };
+}
+
+export async function bulkUnshareConversations(userId: string, conversationIds: string[]) {
+  const sharedConversations = await prisma.sharedConversation.findMany({
+    where: {
+      conversationId: { in: conversationIds },
+      userId
+    }
+  });
+
+  await prisma.sharedConversation.deleteMany({
+    where: {
+      conversationId: { in: conversationIds },
+      userId
+    }
+  });
+
+  return { updated: sharedConversations.length };
+}

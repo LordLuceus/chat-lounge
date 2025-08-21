@@ -1,6 +1,7 @@
 <script lang="ts">
   import InfiniteScroll from "$lib/components/InfiniteScroll.svelte";
   import { Button } from "$lib/components/ui/button";
+  import { Checkbox } from "$lib/components/ui/checkbox";
   import { Label } from "$lib/components/ui/label";
   import { ToggleGroup, ToggleGroupItem } from "$lib/components/ui/toggle-group";
   import { type SearchParams } from "$lib/stores";
@@ -23,6 +24,9 @@
     noResults?: import("svelte").Snippet;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     children?: import("svelte").Snippet<[any]>;
+    selectionMode?: boolean;
+    selectedIds?: Set<string>;
+    onSelectionChange?: (selectedIds: Set<string>) => void;
   }
 
   const {
@@ -33,7 +37,10 @@
     defaultSortBy = "",
     defaultSortOrder = "",
     noResults,
-    children
+    children,
+    selectionMode = false,
+    selectedIds = new Set(),
+    onSelectionChange
   }: Props = $props();
 
   let value = $state("");
@@ -74,6 +81,45 @@
       setSort(selectedSortBy, selectedSortOrder);
     }
   });
+
+  function toggleItemSelection(itemId: string) {
+    if (!onSelectionChange) return;
+
+    const newSelection = new Set(selectedIds);
+    if (newSelection.has(itemId)) {
+      newSelection.delete(itemId);
+    } else {
+      newSelection.add(itemId);
+    }
+    onSelectionChange(newSelection);
+  }
+
+  function toggleSelectAll() {
+    if (!onSelectionChange || !query.data) return;
+
+    const allItems = query.data.pages.flatMap((page) => page.data);
+    const allIds = allItems.map((item) => item.id);
+
+    if (selectedIds.size === allIds.length && allIds.every((id) => selectedIds.has(id))) {
+      onSelectionChange(new Set());
+    } else {
+      onSelectionChange(new Set(allIds));
+    }
+  }
+
+  const allItemsSelected = $derived(() => {
+    if (!query.data) return false;
+    const allItems = query.data.pages.flatMap((page) => page.data);
+    const allIds = allItems.map((item) => item.id);
+    return allIds.length > 0 && allIds.every((id) => selectedIds.has(id));
+  });
+
+  const someItemsSelected = $derived(() => {
+    if (!query.data) return false;
+    const allItems = query.data.pages.flatMap((page) => page.data);
+    const allIds = allItems.map((item) => item.id);
+    return allIds.some((id) => selectedIds.has(id)) && !allItemsSelected();
+  });
 </script>
 
 <Search
@@ -86,6 +132,25 @@
 
 {#if value}
   <Button onclick={() => (value = "")}>Clear search</Button>
+{/if}
+
+{#if selectionMode}
+  <div class="mb-4 flex items-center gap-2">
+    <Checkbox
+      checked={allItemsSelected()}
+      indeterminate={someItemsSelected()}
+      onCheckedChange={toggleSelectAll}
+      id="select-all"
+    />
+    <Label for="select-all" class="text-sm">
+      {allItemsSelected() ? "Deselect all" : someItemsSelected() ? "Select all" : "Select all"}
+    </Label>
+    {#if selectedIds.size > 0}
+      <span class="ml-2 text-sm text-muted-foreground">
+        {selectedIds.size} item{selectedIds.size > 1 ? "s" : ""} selected
+      </span>
+    {/if}
+  </div>
 {/if}
 
 {#if sortOptions.length}
@@ -134,8 +199,17 @@
     <ul class="list-none">
       {#each query.data.pages as { data }, index (index)}
         {#each data as item (item.id)}
-          <li class="flex items-center">
-            {@render children?.({ item })}
+          <li class="flex items-center {selectionMode ? 'gap-3' : ''}">
+            {#if selectionMode}
+              <Checkbox
+                checked={selectedIds.has(item.id)}
+                onCheckedChange={() => toggleItemSelection(item.id)}
+                id={`item-${item.id}`}
+              />
+            {/if}
+            <div class="flex-1">
+              {@render children?.({ item })}
+            </div>
           </li>
         {/each}
       {/each}

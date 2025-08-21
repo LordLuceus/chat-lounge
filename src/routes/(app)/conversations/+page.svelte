@@ -1,8 +1,10 @@
 <script lang="ts">
   import { browser } from "$app/environment";
   import { page } from "$app/state";
+  import BulkActions from "$lib/components/BulkActions.svelte";
   import ConversationActions from "$lib/components/ConversationActions.svelte";
   import DataList from "$lib/components/DataList.svelte";
+  import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import { searchParams, type SearchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
@@ -58,6 +60,30 @@
     { label: "Created", value: "createdAt" },
     { label: "Updated", value: "lastUpdated" }
   ];
+
+  let selectionMode = $state(false);
+  let selectedConversations = $state(new Set<string>());
+
+  function toggleSelectionMode() {
+    selectionMode = !selectionMode;
+    selectedConversations = new Set();
+  }
+
+  function handleSelectionChange(newSelection: Set<string>) {
+    selectedConversations = newSelection;
+  }
+
+  function clearSelection() {
+    selectedConversations = new Set();
+    selectionMode = false;
+  }
+
+  // Get the actual conversation data for selected items
+  const selectedConversationItems = $derived(() => {
+    if (!conversationsQuery.data) return [];
+    const allItems = conversationsQuery.data.pages.flatMap((page) => page.data);
+    return allItems.filter((item) => selectedConversations.has(item.id));
+  });
 </script>
 
 <svelte:head>
@@ -65,7 +91,19 @@
   <meta name="description" content="Your ChatLounge conversations" />
 </svelte:head>
 
-<h1>Conversations</h1>
+<div class="mb-4 flex items-center justify-between">
+  <h1>Conversations</h1>
+  <Button variant="outline" onclick={toggleSelectionMode}>
+    {selectionMode ? "Exit Selection" : "Select Multiple"}
+  </Button>
+</div>
+
+<BulkActions
+  selectedIds={selectedConversations}
+  selectedItems={selectedConversationItems()}
+  resourceType="conversations"
+  onClearSelection={clearSelection}
+/>
 
 <DataList
   query={conversationsQuery}
@@ -74,6 +112,9 @@
   sortOptions={conversationSortOptions}
   defaultSortBy="lastUpdated"
   defaultSortOrder="DESC"
+  {selectionMode}
+  selectedIds={selectedConversations}
+  onSelectionChange={handleSelectionChange}
 >
   {#snippet noResults()}
     <p>No conversations found.</p>

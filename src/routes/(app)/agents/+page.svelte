@@ -2,7 +2,9 @@
   import { browser } from "$app/environment";
   import { page } from "$app/state";
   import AgentActions from "$lib/components/AgentActions.svelte";
+  import BulkActions from "$lib/components/BulkActions.svelte";
   import DataList from "$lib/components/DataList.svelte";
+  import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import * as Dialog from "$lib/components/ui/dialog";
   import * as Popover from "$lib/components/ui/popover";
@@ -83,23 +85,60 @@
     { label: "Updated", value: "updatedAt" },
     { label: "Last used", value: "lastUsedAt" }
   ];
+
+  let selectionMode = $state(false);
+  let selectedAgents = $state(new Set<string>());
+
+  function toggleSelectionMode() {
+    selectionMode = !selectionMode;
+    selectedAgents = new Set();
+  }
+
+  function handleSelectionChange(newSelection: Set<string>) {
+    selectedAgents = newSelection;
+  }
+
+  function clearSelection() {
+    selectedAgents = new Set();
+    selectionMode = false;
+  }
+
+  const selectedAgentItems = $derived(() => {
+    if (!agentsQuery.data) return [];
+    const allItems = agentsQuery.data.pages.flatMap((page) => page.data);
+    return allItems.filter((item) => selectedAgents.has(item.id));
+  });
 </script>
 
 <svelte:head>
   <title>Agents | ChatLounge</title>
 </svelte:head>
 
-<h1>Agents</h1>
+<div class="mb-4 flex items-center justify-between">
+  <h1>Agents</h1>
+  <div class="flex gap-2">
+    <Dialog.Root>
+      <Dialog.Trigger>Create agent</Dialog.Trigger>
+      <Dialog.Content>
+        <Dialog.Header>
+          <Dialog.Title>Create a new agent</Dialog.Title>
+        </Dialog.Header>
+        <AgentForm data={data.form} />
+      </Dialog.Content>
+    </Dialog.Root>
 
-<Dialog.Root>
-  <Dialog.Trigger>Create agent</Dialog.Trigger>
-  <Dialog.Content>
-    <Dialog.Header>
-      <Dialog.Title>Create a new agent</Dialog.Title>
-    </Dialog.Header>
-    <AgentForm data={data.form} />
-  </Dialog.Content>
-</Dialog.Root>
+    <Button variant="outline" onclick={toggleSelectionMode}>
+      {selectionMode ? "Exit Selection" : "Select Multiple"}
+    </Button>
+  </div>
+</div>
+
+<BulkActions
+  selectedIds={selectedAgents}
+  selectedItems={selectedAgentItems()}
+  resourceType="agents"
+  onClearSelection={clearSelection}
+/>
 
 <ToggleGroup.Root
   type="single"
@@ -129,6 +168,9 @@
     sortOptions={agentSortOptions}
     defaultSortBy="lastUsedAt"
     defaultSortOrder="DESC"
+    {selectionMode}
+    selectedIds={selectedAgents}
+    onSelectionChange={handleSelectionChange}
   >
     {#snippet noResults()}
       <p>No agents found.</p>

@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 21 Aug, 2025
+
+Added bulk actions. You can now select multiple conversations, agents, or folders, and perform actions on them, such as deleting, pinning, or moving to a folder.
+
 ## 20 Aug, 2025
 
 Major infrastructure update migrating to AI SDK v5 with several improvements and fixes:

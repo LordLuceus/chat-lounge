@@ -2,8 +2,10 @@
   import { browser } from "$app/environment";
   import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
+  import BulkActions from "$lib/components/BulkActions.svelte";
   import ConversationActions from "$lib/components/ConversationActions.svelte";
   import DataList from "$lib/components/DataList.svelte";
+  import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import { searchParams, type SearchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
@@ -63,6 +65,35 @@
     if (browser) searchParams.set({ search: "", sortBy: "", sortOrder: "", folderId: undefined });
   });
 
+  const conversationSortOptions = [
+    { label: "Name", value: "name" },
+    { label: "Created", value: "createdAt" },
+    { label: "Updated", value: "lastUpdated" }
+  ];
+
+  let selectionMode = $state(false);
+  let selectedConversations = $state(new Set<string>());
+
+  function toggleSelectionMode() {
+    selectionMode = !selectionMode;
+    selectedConversations = new Set();
+  }
+
+  function handleSelectionChange(newSelection: Set<string>) {
+    selectedConversations = newSelection;
+  }
+
+  function clearSelection() {
+    selectedConversations = new Set();
+    selectionMode = false;
+  }
+
+  const selectedConversationItems = $derived(() => {
+    if (!conversationsQuery.data) return [];
+    const allItems = conversationsQuery.data.pages.flatMap((page) => page.data);
+    return allItems.filter((item) => selectedConversations.has(item.id));
+  });
+
   function setFolderId() {
     if (browser) {
       const folderId = data.folder?.id;
@@ -86,9 +117,31 @@
   <meta name="description" content={data.folder?.name} />
 </svelte:head>
 
-<h1>{data.folder?.name}</h1>
+<div class="mb-4 flex items-center justify-between">
+  <h1>{data.folder?.name}</h1>
+  <Button variant="outline" onclick={toggleSelectionMode}>
+    {selectionMode ? "Exit Selection" : "Select Multiple"}
+  </Button>
+</div>
 
-<DataList query={conversationsQuery} searchLabel="Search conversations in folder" {searchParams}>
+<BulkActions
+  selectedIds={selectedConversations}
+  selectedItems={selectedConversationItems()}
+  resourceType="conversations"
+  onClearSelection={clearSelection}
+/>
+
+<DataList
+  query={conversationsQuery}
+  searchLabel="Search conversations in folder"
+  {searchParams}
+  sortOptions={conversationSortOptions}
+  defaultSortBy="lastUpdated"
+  defaultSortOrder="DESC"
+  {selectionMode}
+  selectedIds={selectedConversations}
+  onSelectionChange={handleSelectionChange}
+>
   {#snippet noResults()}
     <p>No conversations found.</p>
   {/snippet}

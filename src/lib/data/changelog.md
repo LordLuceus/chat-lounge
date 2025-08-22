@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 22 Aug, 2025
+
+Added a feature to fork agents. You can now create a private copy of an existing public agent, allowing you to modify the agent without affecting the original. This is useful for experimenting with different configurations or creating variations of an agent.
+
 ## 21 Aug, 2025
 
 Added bulk actions. You can now select multiple conversations, agents, or folders, and perform actions on them, such as deleting, pinning, or moving to a folder.

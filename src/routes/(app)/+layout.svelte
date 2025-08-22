@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import AgentActions from "$lib/components/AgentActions.svelte";
+  import PublicAgentActions from "$lib/components/PublicAgentActions.svelte";
   import ConversationActions from "$lib/components/ConversationActions.svelte";
   import FolderActions from "$lib/components/FolderActions.svelte";
   import NewVersionPopup from "$lib/components/NewVersionPopup.svelte";
@@ -12,6 +13,7 @@
   import { generateTTS } from "$lib/services/tts-service";
   import { audioFilename, currentAudioUrl, downloadUrl, ttsProps, voices } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
+  import { Visibility } from "$lib/types/db";
   import type { Voice } from "$lib/types/elevenlabs";
   import { SunMoon } from "@lucide/svelte";
   import type { Agent, Conversation, Folder } from "@prisma/client";
@@ -161,6 +163,8 @@
             <div>
               {#if user?.id === item.userId}
                 <AgentActions id={item.id} name={item.name} />
+              {:else if item.visibility === Visibility.Public}
+                <PublicAgentActions agent={item} />
               {/if}
             </div>
           {/snippet}

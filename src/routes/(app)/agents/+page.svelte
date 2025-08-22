@@ -2,6 +2,7 @@
   import { browser } from "$app/environment";
   import { page } from "$app/state";
   import AgentActions from "$lib/components/AgentActions.svelte";
+  import PublicAgentActions from "$lib/components/PublicAgentActions.svelte";
   import BulkActions from "$lib/components/BulkActions.svelte";
   import DataList from "$lib/components/DataList.svelte";
   import { Button } from "$lib/components/ui/button";
@@ -219,11 +220,13 @@
             </p>
           </Card.Content>
         {/if}
-        {#if item.userId === user?.id}
-          <Card.Footer>
+        <Card.Footer>
+          {#if item.userId === user?.id}
             <AgentActions id={item.id} name={item.name} />
-          </Card.Footer>
-        {/if}
+          {:else if item.visibility === Visibility.Public}
+            <PublicAgentActions agent={item} />
+          {/if}
+        </Card.Footer>
       </Card.Root>
     {/snippet}
   </DataList>

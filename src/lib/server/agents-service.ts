@@ -287,3 +287,36 @@ export async function bulkDeleteAgents(userId: string, agentIds: string[]) {
 
   return { deleted: result.count };
 }
+
+export async function forkAgent(userId: string, sourceAgentId: string, newName?: string) {
+  const sourceAgent = await prisma.agent.findFirst({
+    where: {
+      id: sourceAgentId,
+      visibility: Visibility.Public
+    }
+  });
+
+  if (!sourceAgent) {
+    throw new Error("Source agent not found or not public");
+  }
+
+  const forkName = newName || `Copy of ${sourceAgent.name}`;
+
+  const forkedAgent = await prisma.agent.create({
+    data: {
+      userId,
+      name: forkName,
+      description: sourceAgent.description,
+      instructions: sourceAgent.instructions,
+      visibility: Visibility.Private,
+      type: sourceAgent.type,
+      verbosity: sourceAgent.verbosity,
+      greeting: sourceAgent.greeting,
+      preferredModelId: sourceAgent.preferredModelId
+    }
+  });
+
+  await addAgentUser(forkedAgent.id, userId, true);
+
+  return forkedAgent;
+}

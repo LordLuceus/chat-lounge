@@ -19,7 +19,8 @@ export const POST = (async ({ locals, request }) => {
     agentId,
     conversationId,
     regenerate,
-    editedMessageId: messageId
+    editedMessageId: messageId,
+    thinking
   } = await request.json();
 
   const user = await getUser(userId);
@@ -65,5 +66,14 @@ export const POST = (async ({ locals, request }) => {
 
   const aiService = new AIService(model.provider as AIProvider, apiKey.key);
 
-  return aiService.run(messages, model, userId, agent, conversationId, regenerate, messageId);
+  return aiService.run(
+    messages,
+    model,
+    userId,
+    agent,
+    conversationId,
+    regenerate,
+    messageId,
+    thinking
+  );
 }) satisfies RequestHandler;

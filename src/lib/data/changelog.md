@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 24 Aug, 2025
+
+Added a "thinking" toggle to the chat input for supported models. This is available for hybrid reasoning models that support both a thinking mode and a direct response mode, such as Claude Sonnet 4, Opus 4, and DeepSeek V3.1. When enabled, the model will first "think" (i.e., generate reasoning content) before providing a final answer.
+
 ## 22 Aug, 2025
 
 Added a feature to fork agents. You can now create a private copy of an existing public agent, allowing you to modify the agent without affecting the original. This is useful for experimenting with different configurations or creating variations of an agent.

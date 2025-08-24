@@ -9,7 +9,11 @@ import {
 } from "$lib/server/conversations-service";
 import { getUser } from "$lib/server/users-service";
 import { AgentType, AIProvider, type DBMessage } from "$lib/types/db";
-import { createAnthropic, type AnthropicProvider } from "@ai-sdk/anthropic";
+import {
+  createAnthropic,
+  type AnthropicProvider,
+  type AnthropicProviderOptions
+} from "@ai-sdk/anthropic";
 import {
   createGoogleGenerativeAI,
   type GoogleGenerativeAIProvider,
@@ -18,7 +22,11 @@ import {
 import { createMistral, type MistralProvider } from "@ai-sdk/mistral";
 import { createOpenAI, type OpenAIProvider } from "@ai-sdk/openai";
 import { createXai, type XaiProvider } from "@ai-sdk/xai";
-import { createOpenRouter, type OpenRouterProvider } from "@openrouter/ai-sdk-provider";
+import {
+  createOpenRouter,
+  type OpenRouterProvider,
+  type OpenRouterProviderOptions
+} from "@openrouter/ai-sdk-provider";
 import type { Agent, Model } from "@prisma/client";
 import {
   convertToModelMessages,
@@ -80,14 +88,16 @@ class AIService {
     agent?: AgentWithUsage,
     conversationId?: string,
     regenerate?: boolean,
-    messageId?: string
+    messageId?: string,
+    thinking?: boolean
   ) {
     const processedMessages = await this.preProcess(messages, model, userId, agent, conversationId);
 
     const response = this.getResponse(
       processedMessages,
       model.id,
-      await this.prepareSystemPrompt(agent, userId)
+      await this.prepareSystemPrompt(agent, userId),
+      thinking
     );
 
     const stream = response.toUIMessageStreamResponse({
@@ -122,14 +132,26 @@ class AIService {
     return stream;
   }
 
-  private getResponse(messages: UIMessage[], modelId: string, system?: string) {
+  private getResponse(messages: UIMessage[], modelId: string, system?: string, thinking?: boolean) {
     const result = streamText({
       model: this.client(modelId),
       messages: convertToModelMessages(messages),
       system,
       temperature: 1.0,
       providerOptions: {
-        google: this.GOOGLE_SETTINGS
+        google: this.GOOGLE_SETTINGS,
+        openrouter: {
+          reasoning: {
+            effort: "medium",
+            enabled: thinking ?? false
+          }
+        } satisfies OpenRouterProviderOptions,
+        anthropic: {
+          thinking: {
+            type: thinking ? "enabled" : "disabled",
+            budgetTokens: 4096
+          }
+        } satisfies AnthropicProviderOptions
       }
     });
 

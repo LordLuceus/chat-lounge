@@ -3,4 +3,10 @@ export interface SelectItem {
   value: string;
 }
 
-export type TtsModelItem = SelectItem & { characterLimit: number };
+export interface TtsModelItem extends SelectItem {
+  characterLimit: number;
+}
+
+export interface ModelSelectItem extends SelectItem {
+  thinkingAvailable?: boolean;
+}

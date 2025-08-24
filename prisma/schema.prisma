@@ -142,15 +142,16 @@ model Message {
 }
 
 model Model {
-  id            String         @id @db.VarChar(100)
-  name          String         @db.VarChar(255)
-  provider      AIProvider
-  tokenLimit    Int
-  createdAt     DateTime       @default(now()) @db.Timestamp(3)
-  updatedAt     DateTime       @default(now()) @updatedAt @db.Timestamp(3)
-  conversations Conversation[]
-  messages      Message[]
-  agents        Agent[]
+  id                String         @id @db.VarChar(100)
+  name              String         @db.VarChar(255)
+  provider          AIProvider
+  tokenLimit        Int
+  thinkingAvailable Boolean        @default(false)
+  createdAt         DateTime       @default(now()) @db.Timestamp(3)
+  updatedAt         DateTime       @default(now()) @updatedAt @db.Timestamp(3)
+  conversations     Conversation[]
+  messages          Message[]
+  agents            Agent[]
 
   @@map("model")
 }

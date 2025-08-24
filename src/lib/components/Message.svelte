@@ -100,10 +100,10 @@
             {#if part.type === "text"}
               <Markdown md={part.text || ""} {plugins} />
             {:else if part.type === "reasoning" && part.text}
-              <aside class="reasoning-container" aria-labelledby="reasoning-summary">
+              <aside class="reasoning-container">
                 <details>
                   <summary id="reasoning-summary">Reasoning</summary>
-                  <div class="reasoning-content">
+                  <div class="reasoning-content" role="region" aria-labelledby="reasoning-summary">
                     <pre>{part.text}</pre>
                   </div>
                 </details>

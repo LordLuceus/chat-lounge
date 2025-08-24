@@ -7,6 +7,7 @@
   import TtsSettings from "$lib/components/TtsSettings.svelte";
   import { Button } from "$lib/components/ui/button";
   import { Textarea } from "$lib/components/ui/textarea";
+  import { Toggle } from "$lib/components/ui/toggle";
   import { ariaListOpen, formatMessageContent, getMessageSiblings } from "$lib/helpers";
   import type { ApiKeyMap } from "$lib/helpers/api-key-utils";
   import type { ConversationWithMessageMap } from "$lib/server/conversations-service";
@@ -21,7 +22,7 @@
     ttsProps,
     voices
   } from "$lib/stores";
-  import type { SelectItem } from "$lib/types/client";
+  import type { ModelSelectItem } from "$lib/types/client";
   import type { DBMessage } from "$lib/types/db";
   import { ModelID } from "$lib/types/elevenlabs";
   import { Chat } from "@ai-sdk/svelte";
@@ -35,8 +36,8 @@
   interface Props {
     agent?: { id: string; name: string } | undefined;
     apiKeys: ApiKeyMap | undefined;
-    models: SelectItem[] | undefined;
-    selectedModel?: SelectItem | undefined;
+    models: ModelSelectItem[] | undefined;
+    selectedModel?: ModelSelectItem | undefined;
     initialMessages?: DBMessage[] | undefined;
   }
 
@@ -52,6 +53,7 @@
   let startSound: HTMLAudioElement;
   let finishSound: HTMLAudioElement;
   let voiceMessage: string | null = $state(null);
+  let thinking = $state(false);
 
   let controller: AbortController;
   let signal: AbortSignal;
@@ -211,7 +213,7 @@
     if (!selectedModel) {
       const storedModel = localStorage.getItem("selectedModel");
       if (storedModel) {
-        const parsedModel: SelectItem = JSON.parse(storedModel);
+        const parsedModel: ModelSelectItem = JSON.parse(storedModel);
         if (models?.find((model) => model.value === parsedModel.value)) {
           selectedModel = parsedModel;
         } else {
@@ -246,7 +248,8 @@
           body: {
             modelId: selectedModel?.value,
             agentId: agent?.id,
-            conversationId: $conversationStore?.id
+            conversationId: $conversationStore?.id,
+            thinking
           }
         }
       );
@@ -296,15 +299,14 @@
 
     await tick();
 
-    console.log(chat.messages);
-
     if (regenerate) {
       chat.regenerate({
         body: {
           modelId: selectedModel?.value,
           agentId: agent?.id,
           conversationId: $conversationStore?.id,
-          editedMessageId: id
+          editedMessageId: id,
+          thinking
         }
       });
     } else {
@@ -437,7 +439,8 @@
               modelId: selectedModel?.value,
               agentId: agent?.id,
               conversationId: $conversationStore?.id,
-              regenerate: true
+              regenerate: true,
+              thinking
             }
           });
         }}>Regenerate</Button
@@ -462,7 +465,8 @@
             body: {
               modelId: selectedModel?.value,
               agentId: agent?.id,
-              conversationId: $conversationStore?.id
+              conversationId: $conversationStore?.id,
+              thinking
             }
           })}>Try again</Button
       >
@@ -500,7 +504,8 @@
           body: {
             modelId: selectedModel?.value,
             agentId: agent?.id,
-            conversationId: $conversationStore?.id
+            conversationId: $conversationStore?.id,
+            thinking
           }
         }
       );
@@ -517,6 +522,12 @@
       cols={200}
     />
   </form>
+
+  {#if selectedModel?.thinkingAvailable}
+    <div class="text-sm text-gray-500">
+      <Toggle bind:pressed={thinking}>Think</Toggle>
+    </div>
+  {/if}
   {#if apiKeys?.elevenlabs && chat.status !== "streaming" && chat.status !== "submitted"}
     <Recorder {setVoiceMessage} />
   {/if}

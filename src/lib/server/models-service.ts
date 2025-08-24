@@ -29,7 +29,8 @@ export async function getProviderModels(providers: AIProvider[], searchText?: st
 
   return models.map((model) => ({
     label: `${model.name} (${model.provider[0].toUpperCase()}${model.provider.slice(1)})`,
-    value: model.id
+    value: model.id,
+    thinkingAvailable: model.thinkingAvailable
   }));
 }
 

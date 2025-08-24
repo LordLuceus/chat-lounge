@@ -110,6 +110,8 @@
 
 <svelte:window onkeydown={handleRecordToggle} />
 
-<Button onclick={toggleRecording} aria-label={isRecording ? "Stop recording" : "Start recording"}>
-  <Mic />
-</Button>
+<div class="mb-1 text-sm text-gray-500">
+  <Button onclick={toggleRecording} aria-label={isRecording ? "Stop recording" : "Start recording"}>
+    <Mic />
+  </Button>
+</div>

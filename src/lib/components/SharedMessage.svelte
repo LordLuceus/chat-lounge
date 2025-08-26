@@ -1,15 +1,9 @@
 <script lang="ts">
-  import { copyCodeBlocks } from "$lib/actions/copy-code";
+  import MessageContent from "$lib/components/MessageContent.svelte";
   import { Button } from "$lib/components/ui/button";
   import { formatMessageContent } from "$lib/helpers";
-  import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
   import type { UIMessage } from "@ai-sdk/svelte";
-  import { BotMessageSquare } from "@lucide/svelte";
-  import Markdown from "svelte-exmarkdown";
-  import { gfmPlugin } from "svelte-exmarkdown/gfm";
   import { toast } from "svelte-sonner";
-
-  const plugins = [gfmPlugin(), lineBreaksPlugin];
 
   interface Props {
     message: UIMessage;
@@ -24,60 +18,21 @@
 </script>
 
 {#if message.role === "user" || message.role === "assistant"}
-  <section aria-label="{message.role} message">
-    <div
-      class="{message.role}-message"
-      use:copyCodeBlocks={{ content: formatMessageContent(message.parts) }}
-    >
-      {#if message.role === "assistant"}
-        <BotMessageSquare />
-      {/if}
-      {#if "parts" in message && message.parts && message.parts.length > 0}
-        {#each message.parts as part, index (index)}
-          {#if part.type === "text"}
-            <Markdown md={part.text || ""} {plugins} />
-          {:else if part.type === "reasoning"}
-            <details class="reasoning-container">
-              <summary>Reasoning</summary>
-              <div class="reasoning-content">
-                <Markdown md={part.text || ""} {plugins} />
-              </div>
-            </details>
-          {/if}
-        {/each}
-      {/if}
+  <MessageContent {message} showUserAvatar={false} />
 
-      {#if message.role === "assistant"}
-        <Button onclick={copyToClipboard}>Copy</Button>
-      {/if}
+  {#if message.role === "assistant"}
+    <div class="message-actions">
+      <Button onclick={copyToClipboard}>Copy</Button>
     </div>
-  </section>
+  {/if}
 {/if}
 
 <style>
-  section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex: 0.6;
-  }
-
-  div {
+  .message-actions {
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-
-  .user-message {
-    background-color: green;
-    padding: 0.5rem;
-    border-radius: 0.5rem;
-  }
-
-  .assistant-message {
-    background-color: blue;
-    padding: 0.5rem;
-    border-radius: 0.5rem;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
   }
 </style>

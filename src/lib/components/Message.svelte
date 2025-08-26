@@ -1,28 +1,21 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { copyCodeBlocks } from "$lib/actions/copy-code";
   import EditMessage from "$lib/components/EditMessage.svelte";
+  import MessageContent from "$lib/components/MessageContent.svelte";
   import Tts from "$lib/components/TTS.svelte";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
-  import * as Avatar from "$lib/components/ui/avatar";
   import { Button } from "$lib/components/ui/button";
   import { formatMessageContent } from "$lib/helpers";
-  import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
   import { conversationStore } from "$lib/stores";
   import type { DBMessage } from "$lib/types/db";
-  import { BotMessageSquare } from "@lucide/svelte";
   import type { Message } from "@prisma/client";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
   import { SignedIn } from "svelte-clerk";
   import { useClerkContext } from "svelte-clerk/client";
-  import Markdown from "svelte-exmarkdown";
-  import { gfmPlugin } from "svelte-exmarkdown/gfm";
   import { toast } from "svelte-sonner";
 
   const ctx = useClerkContext();
   const user = $derived(ctx.user);
-
-  const plugins = [gfmPlugin(), lineBreaksPlugin];
 
   interface Props {
     message: DBMessage;
@@ -81,74 +74,49 @@
 
 <SignedIn>
   {#if message.role === "user" || message.role === "assistant"}
-    <section aria-label="{message.role} message">
-      <div
-        class="{message.role}-message"
-        use:copyCodeBlocks={{ content: formatMessageContent(message.parts) }}
-      >
-        {#if message.role === "user"}
-          <Avatar.Root>
-            <Avatar.Image src={user?.imageUrl} alt={user?.username} />
-            <Avatar.Fallback>{user?.username}</Avatar.Fallback>
-          </Avatar.Root>
-        {:else}
-          <BotMessageSquare />
-        {/if}
+    <MessageContent
+      {message}
+      {user}
+      modelName={message.role === "assistant" &&
+      "model" in message &&
+      message.model &&
+      $conversationStore?.model &&
+      message.model.id !== $conversationStore.model.id
+        ? message.model.name
+        : undefined}
+    />
 
-        {#if "parts" in message && message.parts && message.parts.length > 0}
-          {#each message.parts as part, index (index)}
-            {#if part.type === "text"}
-              <Markdown md={part.text || ""} {plugins} />
-            {:else if part.type === "reasoning" && part.text}
-              <aside class="reasoning-container">
-                <details>
-                  <summary id="reasoning-summary">Reasoning</summary>
-                  <div class="reasoning-content" role="region" aria-labelledby="reasoning-summary">
-                    <pre>{part.text}</pre>
-                  </div>
-                </details>
-              </aside>
-            {/if}
-          {/each}
-        {/if}
-
-        {#if message.role === "assistant" && "model" in message && message.model && $conversationStore?.model && message.model.id !== $conversationStore.model.id}
-          <div class="model-indicator">
-            <small>{message.model.name}</small>
-          </div>
-        {/if}
-
-        {#if message.role === "user" && !isLoading}
-          <EditMessage
-            id={message.id}
-            content={formatMessageContent(message.parts)}
-            onSubmit={onEdit}
-          />
-        {/if}
-        {#if page.data.keys.elevenlabs && message.role === "assistant"}
-          <Tts text={formatMessageContent(message.parts)} />
-        {/if}
-        <Button onclick={copyToClipboard}>Copy</Button>
-        {#if siblings.length > 1}
-          <div>
-            <Button
-              disabled={currentSiblingIndex < 1 || isLoading}
-              onclick={() => setCurrentNode(siblings.at(currentSiblingIndex - 1)?.id)}
-              >Previous message</Button
-            >
-            <span>{currentSiblingIndex + 1} / {siblings.length}</span>
-            <Button
-              disabled={currentSiblingIndex === siblings.length - 1 || isLoading}
-              onclick={() => setCurrentNode(siblings.at(currentSiblingIndex + 1)?.id)}
-              >Next message</Button
-            >
-          </div>
-        {/if}
-        {#if message.role === "assistant" && !isLastMessage}
-          <Button onclick={() => (rewindDialogOpen = true)}>Rewind</Button>
-        {/if}
-      </div>
-    </section>
+    <div class="message-actions">
+      {#if message.role === "user" && !isLoading}
+        <EditMessage
+          id={message.id}
+          content={formatMessageContent(message.parts)}
+          onSubmit={onEdit}
+        />
+      {/if}
+      {#if page.data.keys.elevenlabs && message.role === "assistant"}
+        <Tts text={formatMessageContent(message.parts)} />
+      {/if}
+      <Button onclick={copyToClipboard}>Copy</Button>
+      {#if siblings.length > 1}
+        <div>
+          <Button
+            disabled={currentSiblingIndex < 1 || isLoading}
+            onclick={() => setCurrentNode(siblings.at(currentSiblingIndex - 1)?.id)}
+            >Previous message</Button
+          >
+          <span>{currentSiblingIndex + 1} / {siblings.length}</span>
+          <Button
+            disabled={currentSiblingIndex === siblings.length - 1 || isLoading}
+            onclick={() => setCurrentNode(siblings.at(currentSiblingIndex + 1)?.id)}
+            >Next message</Button
+          >
+        </div>
+      {/if}
+      {#if message.role === "assistant" && !isLastMessage}
+        <Button onclick={() => (rewindDialogOpen = true)}>Rewind</Button>
+      {/if}
+    </div>
   {/if}
 </SignedIn>
 
@@ -169,35 +137,18 @@
 </AlertDialog.Root>
 
 <style>
-  section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex: 0.6;
-  }
-
-  div {
+  .message-actions {
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
   }
 
-  .user-message {
-    background-color: green;
-    padding: 0.5rem;
-    border-radius: 0.5rem;
-  }
-
-  .assistant-message {
-    background-color: blue;
-    padding: 0.5rem;
-    border-radius: 0.5rem;
-  }
-
-  .model-indicator {
-    margin-top: 0.25rem;
-    opacity: 0.7;
-    font-style: italic;
+  .message-actions > div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
   }
 </style>

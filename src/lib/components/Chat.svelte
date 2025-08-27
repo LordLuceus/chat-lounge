@@ -23,11 +23,12 @@
     voices
   } from "$lib/stores";
   import type { ModelSelectItem } from "$lib/types/client";
-  import type { DBMessage } from "$lib/types/db";
+  import { type DBMessage, ReasoningType } from "$lib/types/db";
   import { ModelID } from "$lib/types/elevenlabs";
   import { Chat } from "@ai-sdk/svelte";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
   import { DefaultChatTransport } from "ai";
+  import { PersistedState } from "runed";
   import { onDestroy, onMount, tick } from "svelte";
   import Select from "svelte-select";
   import { toast } from "svelte-sonner";
@@ -53,7 +54,29 @@
   let startSound: HTMLAudioElement;
   let finishSound: HTMLAudioElement;
   let voiceMessage: string | null = $state(null);
+
+  // The thinking parameter we send to the API
   let thinking = $state(false);
+
+  // Persisted thinking mode setting for hybrid models
+  const thinkingMode = new PersistedState<boolean>("thinkingMode", false);
+
+  $effect(() => {
+    switch (selectedModel?.reasoningType) {
+      case ReasoningType.None:
+        thinking = false;
+        break;
+      case ReasoningType.Full:
+        thinking = true;
+        break;
+      case ReasoningType.Hybrid:
+        thinking = thinkingMode.current;
+        break;
+      default:
+        thinking = false;
+        break;
+    }
+  });
 
   let controller: AbortController;
   let signal: AbortSignal;
@@ -523,9 +546,9 @@
     />
   </form>
 
-  {#if selectedModel?.thinkingAvailable}
+  {#if selectedModel?.reasoningType === ReasoningType.Hybrid}
     <div class="text-sm text-gray-500">
-      <Toggle bind:pressed={thinking}>Think</Toggle>
+      <Toggle bind:pressed={thinkingMode.current}>Think</Toggle>
     </div>
   {/if}
   {#if apiKeys?.elevenlabs && chat.status !== "streaming" && chat.status !== "submitted"}

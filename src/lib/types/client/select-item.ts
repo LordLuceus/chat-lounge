@@ -1,3 +1,5 @@
+import type { ReasoningType } from "@prisma/client";
+
 export interface SelectItem {
   label: string;
   value: string;
@@ -8,5 +10,5 @@ export interface TtsModelItem extends SelectItem {
 }
 
 export interface ModelSelectItem extends SelectItem {
-  thinkingAvailable?: boolean;
+  reasoningType: ReasoningType;
 }

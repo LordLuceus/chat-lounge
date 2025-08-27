@@ -27,6 +27,12 @@ export enum AgentVerbosity {
   Verbose = "verbose"
 }
 
+export enum ReasoningType {
+  None = "none",
+  Hybrid = "hybrid",
+  Full = "full"
+}
+
 export interface DBMessage extends UIMessage {
   parentId: string | null;
   childIds: string[];

@@ -453,7 +453,7 @@
     {#if chat.status === "streaming" || chat.status === "submitted"}
       <Button onclick={chat.stop}>Stop generating</Button>
     {/if}
-    {#if chat.messages.at(-1)?.role === "assistant" && chat.status !== "streaming" && chat.status !== "submitted"}
+    {#if chat.messages.length > 1 && chat.messages.at(-1)?.role === "assistant" && chat.status !== "streaming" && chat.status !== "submitted"}
       <Button
         onclick={() => {
           followups = [];

@@ -35,7 +35,11 @@
     data.models.find((m: SelectItem) => m.value === data.agent.preferredModelId)
   );
 
+  let folderId: string | undefined = $state(undefined);
+
   onMount(async () => {
+    folderId = page.url.searchParams.get("folderId") || undefined;
+
     if (page.url.searchParams.get("shareId")) {
       const response = await fetch(
         `/api/conversations/shared/${page.url.searchParams.get("shareId")}`
@@ -65,6 +69,7 @@
       models={data.models}
       {initialMessages}
       {selectedModel}
+      {folderId}
     />
   {/key}
 </CheckApiKeys>

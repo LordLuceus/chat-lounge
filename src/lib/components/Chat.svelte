@@ -40,6 +40,7 @@
     models: ModelSelectItem[] | undefined;
     selectedModel?: ModelSelectItem | undefined;
     initialMessages?: DBMessage[] | undefined;
+    folderId?: string | undefined;
   }
 
   let {
@@ -47,7 +48,8 @@
     apiKeys,
     models,
     selectedModel = $bindable(undefined),
-    initialMessages = undefined
+    initialMessages = undefined,
+    folderId = undefined
   }: Props = $props();
 
   let chatForm: HTMLFormElement | null = $state(null);
@@ -95,7 +97,8 @@
           body: JSON.stringify({
             agentId: agent?.id,
             modelId: selectedModel?.value,
-            messages: chat.messages
+            messages: chat.messages,
+            folderId: folderId
           })
         })
       ).json(),

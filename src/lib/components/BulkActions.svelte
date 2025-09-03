@@ -1,15 +1,11 @@
 <script lang="ts">
-  import DataList from "$lib/components/DataList.svelte";
+  import FolderSelectModal from "$lib/components/FolderSelectModal.svelte";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { Button } from "$lib/components/ui/button";
-  import * as Dialog from "$lib/components/ui/dialog";
-  import type { SearchParams } from "$lib/stores";
-  import type { PagedResponse } from "$lib/types/api";
   import { Check, Trash2 } from "@lucide/svelte";
   import type { Folder } from "@prisma/client";
-  import { createInfiniteQuery, createMutation, useQueryClient } from "@tanstack/svelte-query";
+  import { createMutation, useQueryClient } from "@tanstack/svelte-query";
   import { toast } from "svelte-sonner";
-  import { writable } from "svelte/store";
 
   interface ConversationItem {
     id: string;
@@ -28,53 +24,6 @@
   const { selectedIds, selectedItems = [], resourceType, onClearSelection }: Props = $props();
 
   const client = useQueryClient();
-
-  const searchParams = writable<SearchParams>({
-    search: "",
-    sortBy: "",
-    sortOrder: ""
-  });
-
-  const fetchFolders = async (
-    { pageParam = 1 },
-    { search, sortBy, sortOrder, folderId }: SearchParams
-  ) => {
-    const url = new URL("/api/folders", window.location.origin);
-
-    url.searchParams.set("page", pageParam.toString());
-    if (search) {
-      url.searchParams.set("search", search);
-    }
-    if (sortBy) {
-      url.searchParams.set("sortBy", sortBy);
-    }
-    if (sortOrder) {
-      url.searchParams.set("sortOrder", sortOrder);
-    }
-    if (folderId) {
-      url.searchParams.set("folderId", folderId);
-    }
-
-    return fetch(url.toString()).then((res) => res.json());
-  };
-
-  const foldersQuery = $derived(
-    createInfiniteQuery<PagedResponse<Folder>>(() => {
-      return {
-        queryKey: ["folders", $searchParams],
-        queryFn: ({ pageParam }: { pageParam: unknown }) =>
-          fetchFolders({ pageParam: pageParam as number }, $searchParams),
-        initialPageParam: 1,
-        getNextPageParam: (lastPage: PagedResponse<Folder>) => {
-          if (lastPage.meta.page < lastPage.meta.totalPages) {
-            return lastPage.meta.page + 1;
-          }
-
-          return undefined;
-        }
-      };
-    })
-  );
 
   const bulkDeleteMutation = createMutation(() => ({
     mutationFn: async (ids: string[]) => {
@@ -221,7 +170,6 @@
 
   let deleteDialogOpen = $state(false);
   let addToFolderDialogOpen = $state(false);
-  let selectedFolderId: string | undefined = $state();
 
   const selectedCount = $derived(selectedIds.size);
 
@@ -230,11 +178,10 @@
     deleteDialogOpen = false;
   }
 
-  function handleAddToFolder() {
-    if (!selectedFolderId) return;
+  function handleAddToFolder(folder: Folder) {
     bulkAddToFolderMutation.mutate({
       ids: Array.from(selectedIds),
-      folderId: selectedFolderId
+      folderId: folder.id
     });
     addToFolderDialogOpen = false;
   }
@@ -389,30 +336,10 @@
   </AlertDialog.Content>
 </AlertDialog.Root>
 
-<Dialog.Root bind:open={addToFolderDialogOpen}>
-  <Dialog.Content>
-    <Dialog.Header>
-      <Dialog.Title>Add {selectedCount} item{selectedCount > 1 ? "s" : ""} to folder</Dialog.Title>
-      <Dialog.Description>Select a folder to add the selected items to.</Dialog.Description>
-      <DataList query={foldersQuery} searchLabel="Search folders" {searchParams}>
-        {#snippet noResults()}
-          <p>No folders found.</p>
-        {/snippet}
-        {#snippet children({ item })}
-          <div>
-            <Button
-              onclick={() => {
-                selectedFolderId = item.id;
-                handleAddToFolder();
-              }}
-              class="w-full justify-start"
-              variant="ghost"
-            >
-              {item.name}
-            </Button>
-          </div>
-        {/snippet}
-      </DataList>
-    </Dialog.Header>
-  </Dialog.Content>
-</Dialog.Root>
+<FolderSelectModal
+  open={addToFolderDialogOpen}
+  title="Add {selectedCount} item{selectedCount > 1 ? 's' : ''} to folder"
+  description="Select a folder to add the selected items to."
+  onFolderSelect={handleAddToFolder}
+  onOpenChange={(open) => (addToFolderDialogOpen = open)}
+/>

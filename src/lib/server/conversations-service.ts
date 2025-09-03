@@ -28,6 +28,7 @@ export interface ConversationCreateOptions {
   currentNode?: string;
   isImporting?: boolean;
   isPinned?: boolean;
+  folderId?: string;
 }
 
 export type ConversationWithMessageMap = Prisma.ConversationGetPayload<{
@@ -189,13 +190,15 @@ export async function createConversation({
   modelId,
   userId,
   messages,
-  isImporting
+  isImporting,
+  folderId
 }: ConversationCreateOptions) {
   const conversation = await prisma.conversation.create({
     data: {
       name: name ? name : "New Chat",
       agentId,
       modelId,
+      folderId,
       isImporting: isImporting ? true : false,
       conversationUsers: {
         create: {

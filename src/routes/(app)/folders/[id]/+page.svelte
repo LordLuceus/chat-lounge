@@ -119,9 +119,12 @@
 
 <div class="mb-4 flex items-center justify-between">
   <h1>{data.folder?.name}</h1>
-  <Button variant="outline" onclick={toggleSelectionMode}>
-    {selectionMode ? "Exit Selection" : "Select Multiple"}
-  </Button>
+  <div class="flex gap-2">
+    <Button href="/?folderId={data.folder?.id}">New Conversation</Button>
+    <Button variant="outline" onclick={toggleSelectionMode}>
+      {selectionMode ? "Exit Selection" : "Select Multiple"}
+    </Button>
+  </div>
 </div>
 
 <BulkActions

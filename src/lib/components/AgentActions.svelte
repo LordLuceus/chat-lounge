@@ -1,10 +1,12 @@
 <script lang="ts">
   import { goto, preloadData } from "$app/navigation";
   import { page } from "$app/state";
+  import FolderSelectModal from "$lib/components/FolderSelectModal.svelte";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { Button } from "$lib/components/ui/button";
   import * as Dialog from "$lib/components/ui/dialog";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+  import type { Folder } from "@prisma/client";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
   import { tick } from "svelte";
   import { toast } from "svelte-sonner";
@@ -35,6 +37,7 @@
 
   let editDialogOpen = $state(false);
   let deleteDialogOpen = $state(false);
+  let folderDialogOpen = $state(false);
   let editData: EditData | null = $state(null);
 
   const editUrl = $derived(`/agents/${id}/edit`);
@@ -46,6 +49,15 @@
       editData = result.data as EditData;
       editDialogOpen = true;
     }
+  }
+
+  function newConversationInFolderClick() {
+    folderDialogOpen = true;
+  }
+
+  function handleFolderSelect(folder: Folder) {
+    folderDialogOpen = false;
+    goto(`/agents/${id}?folderId=${folder.id}`);
   }
 
   async function deleteClick() {
@@ -91,6 +103,14 @@
   </AlertDialog.Content>
 </AlertDialog.Root>
 
+<FolderSelectModal
+  open={folderDialogOpen}
+  title="Select Folder for New Conversation"
+  description="Choose a folder where the new conversation with {name} will be automatically added."
+  onFolderSelect={handleFolderSelect}
+  onOpenChange={(open) => (folderDialogOpen = open)}
+/>
+
 <DropdownMenu.Root>
   <DropdownMenu.Trigger>
     {#snippet child({ props })}
@@ -98,6 +118,10 @@
     {/snippet}
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
+    <DropdownMenu.Item onclick={() => newConversationInFolderClick()}>
+      New Conversation in Folder
+    </DropdownMenu.Item>
+    <DropdownMenu.Separator />
     <DropdownMenu.Item onclick={() => editClick()}>Edit</DropdownMenu.Item>
     <DropdownMenu.Item onclick={() => deleteClick()}>Delete</DropdownMenu.Item>
   </DropdownMenu.Content>

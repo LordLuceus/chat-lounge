@@ -13,8 +13,11 @@
   const { data }: Props = $props();
 
   let initialMessages: DBMessage[] | undefined = $state(undefined);
+  let folderId: string | undefined = $state(undefined);
 
   onMount(async () => {
+    folderId = page.url.searchParams.get("folderId") || undefined;
+
     if (page.url.searchParams.get("shareId")) {
       const response = await fetch(
         `/api/conversations/shared/${page.url.searchParams.get("shareId")}`
@@ -38,5 +41,5 @@
 <h1>ChatLounge</h1>
 
 <CheckApiKeys {data}>
-  <Chat apiKeys={data.keys} models={data.models} {initialMessages} />
+  <Chat apiKeys={data.keys} models={data.models} {initialMessages} {folderId} />
 </CheckApiKeys>

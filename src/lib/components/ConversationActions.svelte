@@ -1,20 +1,16 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
-  import DataList from "$lib/components/DataList.svelte";
+  import FolderSelectModal from "$lib/components/FolderSelectModal.svelte";
   import * as AlertDialog from "$lib/components/ui/alert-dialog";
   import { Button } from "$lib/components/ui/button";
   import * as Dialog from "$lib/components/ui/dialog";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Input } from "$lib/components/ui/input";
-  import type { SearchParams } from "$lib/stores";
-  import type { PagedResponse } from "$lib/types/api";
   import type { Folder } from "@prisma/client";
-  import { createInfiniteQuery, createMutation, useQueryClient } from "@tanstack/svelte-query";
-  import { onDestroy, tick } from "svelte";
+  import { createMutation, useQueryClient } from "@tanstack/svelte-query";
+  import { tick } from "svelte";
   import { toast } from "svelte-sonner";
-  import { writable } from "svelte/store";
 
   interface Props {
     id: string;
@@ -26,66 +22,7 @@
 
   const { id, name, isPinned, sharedConversationId, folderId }: Props = $props();
 
-  const searchParams = writable<SearchParams>({
-    search: "",
-    sortBy: "",
-    sortOrder: ""
-  });
-
   const client = useQueryClient();
-
-  const fetchFolders = async (
-    { pageParam = 1 },
-    { search, sortBy, sortOrder, folderId }: SearchParams
-  ) => {
-    const url = new URL("/api/folders", page.url.origin);
-
-    url.searchParams.set("page", pageParam.toString());
-    if (search) {
-      url.searchParams.set("search", search);
-    }
-    if (sortBy) {
-      url.searchParams.set("sortBy", sortBy);
-    }
-    if (sortOrder) {
-      url.searchParams.set("sortOrder", sortOrder);
-    }
-    if (folderId) {
-      url.searchParams.set("folderId", folderId);
-    }
-
-    return fetch(url.toString()).then((res) => res.json());
-  };
-
-  const foldersQuery = $derived(
-    createInfiniteQuery<PagedResponse<Folder>>(() => {
-      return {
-        queryKey: ["folders", $searchParams],
-        queryFn: ({ pageParam }: { pageParam: unknown }) =>
-          fetchFolders({ pageParam: pageParam as number }, $searchParams),
-        initialPageParam: 1,
-        getNextPageParam: (lastPage: PagedResponse<Folder>) => {
-          if (lastPage.meta.page < lastPage.meta.totalPages) {
-            return lastPage.meta.page + 1;
-          }
-
-          return undefined;
-        }
-      };
-    })
-  );
-
-  onDestroy(() => {
-    if (browser)
-      searchParams.set({
-        search: "",
-        sortBy: "",
-        sortOrder: "",
-        ownerOnly: false,
-        visibility: "",
-        folderId: undefined
-      });
-  });
 
   const renameConversationMutation = createMutation(() => ({
     mutationFn: async (newName: string) =>
@@ -159,14 +96,20 @@
   }));
 
   const addToFolderMutation = createMutation(() => ({
-    mutationFn: async (id: string) =>
+    mutationFn: async ({
+      conversationId,
+      folderId
+    }: {
+      conversationId: string;
+      folderId: string;
+    }) =>
       (
-        await fetch(`/api/folders/${selectedFolderId}/add-conversation`, {
+        await fetch(`/api/folders/${folderId}/add-conversation`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({ conversationId: id })
+          body: JSON.stringify({ conversationId })
         })
       ).json(),
     onSuccess: () => {
@@ -198,7 +141,6 @@
   let unshareDialogOpen = $state(false);
   let addToFolderDialogOpen = $state(false);
   let newName = $state(name);
-  let selectedFolderId: string | undefined = $state();
 
   async function renameClick() {
     await tick();
@@ -263,13 +205,16 @@
     });
   }
 
-  function handleAddToFolder() {
-    addToFolderMutation.mutate(id, {
-      onSuccess: () => {
-        toast.success("Conversation added to folder successfully.");
-        addToFolderDialogOpen = false;
+  function handleAddToFolder(folder: Folder) {
+    addToFolderMutation.mutate(
+      { conversationId: id, folderId: folder.id },
+      {
+        onSuccess: () => {
+          toast.success("Conversation added to folder successfully.");
+          addToFolderDialogOpen = false;
+        }
       }
-    });
+    );
   }
 
   function handleRemoveFromFolder() {
@@ -336,29 +281,13 @@
   </Dialog.Content>
 </Dialog.Root>
 
-<Dialog.Root bind:open={addToFolderDialogOpen}>
-  <Dialog.Content>
-    <Dialog.Header>
-      <Dialog.Title>Add conversation to folder</Dialog.Title>
-      <Dialog.Description>Add this conversation to a folder.</Dialog.Description>
-      <DataList query={foldersQuery} searchLabel="Search folders" {searchParams}>
-        {#snippet noResults()}
-          <p>No folders found.</p>
-        {/snippet}
-        {#snippet children({ item })}
-          <div>
-            <Button
-              onclick={() => {
-                selectedFolderId = item.id;
-                handleAddToFolder();
-              }}>{item.name}</Button
-            >
-          </div>
-        {/snippet}
-      </DataList>
-    </Dialog.Header>
-  </Dialog.Content>
-</Dialog.Root>
+<FolderSelectModal
+  open={addToFolderDialogOpen}
+  title="Add conversation to folder"
+  description="Add this conversation to a folder."
+  onFolderSelect={handleAddToFolder}
+  onOpenChange={(open) => (addToFolderDialogOpen = open)}
+/>
 
 <DropdownMenu.Root>
   <DropdownMenu.Trigger>Actions</DropdownMenu.Trigger>

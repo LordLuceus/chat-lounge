@@ -138,11 +138,7 @@
     transport: new DefaultChatTransport({ api: "/api/chat" })
   });
 
-  const visibleMessages = $derived(
-    chat.messages
-      .filter((message) => formatMessageContent(message.parts))
-      .slice(-visibleMessageCount)
-  );
+  const visibleMessages = $derived(chat.messages.slice(-visibleMessageCount));
 
   let followups: string[] = $state([]);
   const followupsMutation = createMutation<string[]>(() => ({

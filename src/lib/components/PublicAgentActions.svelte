@@ -1,9 +1,11 @@
 <script lang="ts">
-  import { preloadData } from "$app/navigation";
+  import { goto, preloadData } from "$app/navigation";
+  import FolderSelectModal from "$lib/components/FolderSelectModal.svelte";
   import ForkAgentModal from "$lib/components/ForkAgentModal.svelte";
   import { Button } from "$lib/components/ui/button";
   import * as Dialog from "$lib/components/ui/dialog";
-  import type { Agent } from "@prisma/client";
+  import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+  import type { Agent, Folder } from "@prisma/client";
   import type { PageData as EditData } from "../../routes/(app)/agents/[id]/edit/$types";
   import EditPage from "../../routes/(app)/agents/[id]/edit/+page.svelte";
 
@@ -15,6 +17,7 @@
 
   let forkModalOpen = $state(false);
   let editDialogOpen = $state(false);
+  let folderDialogOpen = $state(false);
   let editData: EditData | null = $state(null);
 
   function handleForkSuccess(forkedAgent: Agent) {
@@ -25,6 +28,15 @@
         editDialogOpen = true;
       }
     });
+  }
+
+  function newConversationInFolderClick() {
+    folderDialogOpen = true;
+  }
+
+  function handleFolderSelect(folder: Folder) {
+    folderDialogOpen = false;
+    goto(`/agents/${agent.id}?folderId=${folder.id}`);
   }
 </script>
 
@@ -49,5 +61,24 @@
   onOpenChange={(open) => (forkModalOpen = open)}
   onForkSuccess={handleForkSuccess}
 />
+<FolderSelectModal
+  open={folderDialogOpen}
+  title="Select Folder for New Conversation"
+  description="Choose a folder where the new conversation with {name} will be automatically added."
+  onFolderSelect={handleFolderSelect}
+  onOpenChange={(open) => (folderDialogOpen = open)}
+/>
 
-<Button onclick={() => (forkModalOpen = true)}>Fork Agent</Button>
+<DropdownMenu.Root>
+  <DropdownMenu.Trigger>
+    {#snippet child({ props })}
+      <Button {...props}>Actions</Button>
+    {/snippet}
+  </DropdownMenu.Trigger>
+  <DropdownMenu.Content>
+    <DropdownMenu.Item onclick={() => newConversationInFolderClick()}>
+      New Conversation in Folder
+    </DropdownMenu.Item>
+    <DropdownMenu.Item onclick={() => (forkModalOpen = true)}>Fork Agent</DropdownMenu.Item>
+  </DropdownMenu.Content>
+</DropdownMenu.Root>

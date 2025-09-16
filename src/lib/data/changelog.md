@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 16 Sep, 2025
+
+Introduced a new core system prompt that defines the AI's writing style as direct and avoids the "not X, but Y" rhetorical cliché. This change aims to enhance the sophistication of the AI's communication by eliminating weak, formulaic phrasing. The core instructions are now included in all agent prompts to ensure consistent adherence to this style across conversations.
+
 ## 4 Sep, 2025
 
 Added a "New Conversation" option to the folder page, allowing you to start a new conversation directly within a folder. This will automatically add the new conversation to the current folder, making it easier to organize your chats from the outset. Likewise, added a "New Conversation in Folder" option to the agent actions menu, enabling you to start a new conversation with a specific agent and have it placed in the desired folder right away.

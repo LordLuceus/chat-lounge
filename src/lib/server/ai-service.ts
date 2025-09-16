@@ -1,4 +1,5 @@
 import charPrompt from "$lib/data/character_prompt.txt?raw";
+import corePrompt from "$lib/data/core_system_prompt.md?raw";
 import { formatMessageContent } from "$lib/helpers";
 import { errorHandler } from "$lib/helpers/ai-error-handler";
 import { getAgentByName, type AgentWithUsage } from "$lib/server/agents-service";
@@ -416,13 +417,13 @@ class AIService {
     agent: Agent | undefined,
     userId: string
   ): Promise<string | undefined> {
-    if (!agent) return undefined;
+    if (!agent) return corePrompt;
     const user = await getUser(userId);
 
-    if (!user) return undefined;
+    if (!user) return corePrompt;
 
     if (agent.type === AgentType.Default) {
-      return agent.instructions;
+      return corePrompt + "\n\n" + agent.instructions;
     }
 
     // Get verbosity instruction based on agent's verbosity setting
@@ -444,7 +445,7 @@ class AIService {
       .replaceAll("{{user}}", user.username.charAt(0).toUpperCase() + user.username.slice(1))
       .replace("{{verbosity}}", getVerbosityInstruction(agent.verbosity));
 
-    return prompt;
+    return corePrompt + "\n\n" + prompt;
   }
 
   private convertToChatMessages(messages: UIMessage[]): ChatMessage[] {

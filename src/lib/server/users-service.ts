@@ -51,6 +51,21 @@ export async function updateUser(user: UserJSON) {
   });
 }
 
+export async function updateUserSettings(
+  userId: string,
+  settings: {
+    useBaseInstructions?: boolean;
+    customBaseInstructions?: string | null;
+  }
+) {
+  return prisma.user.update({
+    where: {
+      id: userId
+    },
+    data: settings
+  });
+}
+
 export async function deleteUser(userId: string | undefined) {
   if (!userId) return;
   return prisma.user.delete({

@@ -1,5 +1,5 @@
+import corePrompt from "$lib/data/base_instructions.md?raw";
 import charPrompt from "$lib/data/character_prompt.txt?raw";
-import corePrompt from "$lib/data/core_system_prompt.md?raw";
 import { formatMessageContent } from "$lib/helpers";
 import { errorHandler } from "$lib/helpers/ai-error-handler";
 import { getAgentByName, type AgentWithUsage } from "$lib/server/agents-service";
@@ -417,13 +417,24 @@ class AIService {
     agent: Agent | undefined,
     userId: string
   ): Promise<string | undefined> {
-    if (!agent) return corePrompt;
     const user = await getUser(userId);
 
     if (!user) return corePrompt;
 
+    let baseInstructions = "";
+    if (user.useBaseInstructions) {
+      baseInstructions = user.customBaseInstructions || corePrompt;
+    }
+
+    if (!agent) return baseInstructions || undefined;
+
     if (agent.type === AgentType.Default) {
-      return corePrompt + "\n\n" + agent.instructions;
+      return baseInstructions
+        ? baseInstructions +
+            "\n\n<special_instructions>\n\n" +
+            agent.instructions +
+            "\n\n</special_instructions>"
+        : agent.instructions;
     }
 
     // Get verbosity instruction based on agent's verbosity setting
@@ -445,7 +456,7 @@ class AIService {
       .replaceAll("{{user}}", user.username.charAt(0).toUpperCase() + user.username.slice(1))
       .replace("{{verbosity}}", getVerbosityInstruction(agent.verbosity));
 
-    return corePrompt + "\n\n" + prompt;
+    return baseInstructions ? baseInstructions + "\n\n" + prompt : prompt;
   }
 
   private convertToChatMessages(messages: UIMessage[]): ChatMessage[] {

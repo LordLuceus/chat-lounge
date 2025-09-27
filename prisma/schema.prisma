@@ -196,19 +196,21 @@ model SharedMessage {
 }
 
 model User {
-  id                  String               @id @db.VarChar(100)
-  username            String               @unique(map: "user_username_unique") @db.VarChar(50)
-  email               String?              @db.VarChar(100)
-  image               String?              @db.Text
-  createdAt           DateTime             @default(now()) @db.Timestamp(3)
-  updatedAt           DateTime             @default(now()) @updatedAt @db.Timestamp(3)
-  agents              Agent[]
-  agentUsers          AgentUser[]
-  apiKeys             ApiKey[]
-  conversationUsers   ConversationUser[]
-  folders             Folder[]
-  messages            Message[]
-  sharedConversations SharedConversation[]
+  id                     String               @id @db.VarChar(100)
+  username               String               @unique(map: "user_username_unique") @db.VarChar(50)
+  email                  String?              @db.VarChar(100)
+  image                  String?              @db.Text
+  useBaseInstructions    Boolean              @default(false)
+  customBaseInstructions String?              @db.Text
+  createdAt              DateTime             @default(now()) @db.Timestamp(3)
+  updatedAt              DateTime             @default(now()) @updatedAt @db.Timestamp(3)
+  agents                 Agent[]
+  agentUsers             AgentUser[]
+  apiKeys                ApiKey[]
+  conversationUsers      ConversationUser[]
+  folders                Folder[]
+  messages               Message[]
+  sharedConversations    SharedConversation[]
 
   @@map("user")
 }

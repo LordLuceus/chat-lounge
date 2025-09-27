@@ -1,5 +1,11 @@
 # ChatLounge Changelog
 
+## 27 Sep, 2025
+
+Added a new section to the settings page for managing base instructions (custom system prompt). You can enable or disable the use of base instructions, view a summary of the default ones, and add your own custom instructions if desired. This allows you to set a consistent tone and style for all your AI interactions.
+
+We also took the opportunity to revamp the API keys section, turning the repetitive sections for each provider into a more compact and user-friendly component. This should make it easier to manage your API keys and see which providers are configured.
+
 ## 16 Sep, 2025
 
 Introduced a new core system prompt that defines the AI's writing style as direct and avoids the "not X, but Y" rhetorical cliché. This change aims to enhance the sophistication of the AI's communication by eliminating weak, formulaic phrasing. The core instructions are now included in all agent prompts to ensure consistent adherence to this style across conversations.

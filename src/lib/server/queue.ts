@@ -32,6 +32,12 @@ new Worker(
 // Listen for various job lifecycle events
 queueEvents.on("completed", async ({ jobId }) => {
   const job = await importQueue.getJob(jobId);
+
+  if (!job) {
+    console.error(`Job with ID ${jobId} not found`);
+    return;
+  }
+
   const { conversationId } = job.data;
 
   setProgress(conversationId, 100);
@@ -48,6 +54,12 @@ queueEvents.on("completed", async ({ jobId }) => {
 
 queueEvents.on("failed", async ({ jobId, failedReason }) => {
   const job = await importQueue.getJob(jobId);
+
+  if (!job) {
+    console.error(`Job with ID ${jobId} not found`);
+    return;
+  }
+
   const { conversationId } = job.data;
 
   removeProgress(conversationId);
@@ -63,6 +75,12 @@ queueEvents.on("failed", async ({ jobId, failedReason }) => {
 
 queueEvents.on("progress", async ({ jobId, data }) => {
   const job = await importQueue.getJob(jobId);
+
+  if (!job) {
+    console.error(`Job with ID ${jobId} not found`);
+    return;
+  }
+
   const { conversationId } = job.data;
 
   setProgress(conversationId, data as number);

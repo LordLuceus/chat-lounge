@@ -1,5 +1,6 @@
 <script lang="ts">
   import { copyCodeBlocks } from "$lib/actions/copy-code";
+  import ToolCallDisplay from "$lib/components/ToolCallDisplay.svelte";
   import { formatMessageContent } from "$lib/helpers";
   import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
   import { BotMessageSquare } from "@lucide/svelte";
@@ -53,6 +54,8 @@
               </div>
             </details>
           </aside>
+        {:else if part.type.startsWith("tool-") && part.type !== "tool-call" && part.type !== "tool-result"}
+          <ToolCallDisplay {part} />
         {/if}
       {/each}
     {/if}

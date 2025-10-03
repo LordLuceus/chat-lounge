@@ -8,6 +8,7 @@ import {
   getConversationMessage,
   getLastSummary
 } from "$lib/server/conversations-service";
+import { tools } from "$lib/server/tools";
 import { getUser } from "$lib/server/users-service";
 import { AgentType, AIProvider, type DBMessage } from "$lib/types/db";
 import {
@@ -32,6 +33,7 @@ import type { Agent, Model } from "@prisma/client";
 import {
   convertToModelMessages,
   generateText,
+  stepCountIs,
   streamText,
   type UIDataTypes,
   type UIMessage,
@@ -96,7 +98,7 @@ class AIService {
 
     const response = this.getResponse(
       processedMessages,
-      model.id,
+      model,
       await this.prepareSystemPrompt(agent, userId),
       thinking
     );
@@ -133,12 +135,13 @@ class AIService {
     return stream;
   }
 
-  private getResponse(messages: UIMessage[], modelId: string, system?: string, thinking?: boolean) {
+  private getResponse(messages: UIMessage[], model: Model, system?: string, thinking?: boolean) {
     const result = streamText({
-      model: this.client(modelId),
+      model: this.client(model.id),
       messages: convertToModelMessages(messages),
       system,
       temperature: 1.0,
+      ...(model.supportsTools && { tools, stopWhen: stepCountIs(5) }),
       providerOptions: {
         google: this.GOOGLE_SETTINGS,
         openrouter: {

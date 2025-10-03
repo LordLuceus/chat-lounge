@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 3 Oct, 2025
+
+Added experimental support for tool calling for models that support this functionality. The tools currently available are a web search tool using the [Exa.ai](https://exa.ai/) API and a simple tool for fetching the current time. You don't need to take any special action to use the tools; if the model decides to use a tool, it will do so automatically, and you can of course prompt the model directly, e.g. "use the web search tool". Note that tool usage is still experimental and may not work perfectly in all cases.
+
 ## 27 Sep, 2025
 
 Added a new section to the settings page for managing base instructions (custom system prompt). You can enable or disable the use of base instructions, view a summary of the default ones, and add your own custom instructions if desired. This allows you to set a consistent tone and style for all your AI interactions.

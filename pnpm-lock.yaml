@@ -36,8 +36,8 @@ importers:
         specifier: ^6.16.3
         version: 6.16.3(prisma@6.16.3(typescript@5.9.3))(typescript@5.9.3)
       '@tanstack/svelte-query':
-        specifier: https://pkg.pr.new/@tanstack/svelte-query@746b9c5
-        version: https://pkg.pr.new/@tanstack/svelte-query@746b9c5(svelte@5.39.8)
+        specifier: ^6.0.0
+        version: 6.0.0(svelte@5.39.8)
       ai:
         specifier: ^5.0.59
         version: 5.0.59(zod@3.25.76)
@@ -1006,15 +1006,13 @@ packages:
   '@swc/helpers@0.5.17':
     resolution: {integrity: sha512-5IKx/Y13RsYd+sauPb2x+U/xZikHjolzfuDgTAl/Tdf3Q8rslRvC19NKDLgAJQ6wsqADk10ntlv08nPFw/gO/A==}
 
-  '@tanstack/query-core@https://pkg.pr.new/TanStack/query/@tanstack/query-core@746b9c5':
-    resolution: {tarball: https://pkg.pr.new/TanStack/query/@tanstack/query-core@746b9c5}
-    version: 5.75.7
+  '@tanstack/query-core@5.90.2':
+    resolution: {integrity: sha512-k/TcR3YalnzibscALLwxeiLUub6jN5EDLwKDiO7q5f4ICEoptJ+n9+7vcEFy5/x/i6Q+Lb/tXrsKCggf5uQJXQ==}
 
-  '@tanstack/svelte-query@https://pkg.pr.new/@tanstack/svelte-query@746b9c5':
-    resolution: {tarball: https://pkg.pr.new/@tanstack/svelte-query@746b9c5}
-    version: 5.75.7
+  '@tanstack/svelte-query@6.0.0':
+    resolution: {integrity: sha512-CeG4fidH4O5w3r64qWVZnx8m508BYElZL0D7x3PBhxC6bGrNYstsWQZiquOOI/ie3eAqoefg7+cscDsObu5eGQ==}
     peerDependencies:
-      svelte: ^5.7.0
+      svelte: ^5.25.0
 
   '@types/cookie@0.6.0':
     resolution: {integrity: sha512-4Kh9a6B2bQciAhf7FSuMRRkUWecJgJu9nPnx3yzpsfXX/c50REIqpHY4C82bXP90qrLtXtkDxTZosYO3UpOwlA==}
@@ -3629,11 +3627,11 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@tanstack/query-core@https://pkg.pr.new/TanStack/query/@tanstack/query-core@746b9c5': {}
+  '@tanstack/query-core@5.90.2': {}
 
-  '@tanstack/svelte-query@https://pkg.pr.new/@tanstack/svelte-query@746b9c5(svelte@5.39.8)':
+  '@tanstack/svelte-query@6.0.0(svelte@5.39.8)':
     dependencies:
-      '@tanstack/query-core': https://pkg.pr.new/TanStack/query/@tanstack/query-core@746b9c5
+      '@tanstack/query-core': 5.90.2
       svelte: 5.39.8
 
   '@types/cookie@0.6.0': {}

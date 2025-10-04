@@ -38,22 +38,20 @@
     return fetch(url.toString()).then((res) => res.json());
   };
 
-  const foldersQuery = $derived(
-    createInfiniteQuery<PagedResponse<Folder>>(() => {
-      return {
-        queryKey: ["folders", $searchParams],
-        queryFn: ({ pageParam }: { pageParam: unknown }) =>
-          fetchFolders({ pageParam: pageParam as number }, $searchParams),
-        initialPageParam: 1,
-        getNextPageParam: (lastPage: PagedResponse<Folder>) => {
-          if (lastPage.meta.page < lastPage.meta.totalPages) {
-            return lastPage.meta.page + 1;
-          }
-          return undefined;
+  const foldersQuery = createInfiniteQuery<PagedResponse<Folder>>(() => {
+    return {
+      queryKey: ["folders", $searchParams],
+      queryFn: ({ pageParam }: { pageParam: unknown }) =>
+        fetchFolders({ pageParam: pageParam as number }, $searchParams),
+      initialPageParam: 1,
+      getNextPageParam: (lastPage: PagedResponse<Folder>) => {
+        if (lastPage.meta.page < lastPage.meta.totalPages) {
+          return lastPage.meta.page + 1;
         }
-      };
-    })
-  );
+        return undefined;
+      }
+    };
+  });
 
   onDestroy(() => {
     if (browser)

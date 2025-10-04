@@ -31,23 +31,21 @@
     return await fetch(url.toString()).then((res) => res.json());
   };
 
-  const conversationsQuery = $derived(
-    createInfiniteQuery<PagedResponse<SharedConversation>>(() => {
-      return {
-        queryKey: ["sharedConversations", $searchParams],
-        queryFn: ({ pageParam }: { pageParam: unknown }) =>
-          fetchConversations({ pageParam: pageParam as number }, $searchParams),
-        initialPageParam: 1,
-        getNextPageParam: (lastPage: PagedResponse<SharedConversation>) => {
-          if (lastPage.meta.page < lastPage.meta.totalPages) {
-            return lastPage.meta.page + 1;
-          }
-
-          return undefined;
+  const conversationsQuery = createInfiniteQuery<PagedResponse<SharedConversation>>(() => {
+    return {
+      queryKey: ["sharedConversations", $searchParams],
+      queryFn: ({ pageParam }: { pageParam: unknown }) =>
+        fetchConversations({ pageParam: pageParam as number }, $searchParams),
+      initialPageParam: 1,
+      getNextPageParam: (lastPage: PagedResponse<SharedConversation>) => {
+        if (lastPage.meta.page < lastPage.meta.totalPages) {
+          return lastPage.meta.page + 1;
         }
-      };
-    })
-  );
+
+        return undefined;
+      }
+    };
+  });
 
   onDestroy(() => {
     if (browser) searchParams.set({ search: "", sortBy: "", sortOrder: "" });

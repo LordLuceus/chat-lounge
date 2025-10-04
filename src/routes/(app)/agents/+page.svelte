@@ -2,9 +2,9 @@
   import { browser } from "$app/environment";
   import { page } from "$app/state";
   import AgentActions from "$lib/components/AgentActions.svelte";
-  import PublicAgentActions from "$lib/components/PublicAgentActions.svelte";
   import BulkActions from "$lib/components/BulkActions.svelte";
   import DataList from "$lib/components/DataList.svelte";
+  import PublicAgentActions from "$lib/components/PublicAgentActions.svelte";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import * as Dialog from "$lib/components/ui/dialog";
@@ -57,23 +57,21 @@
     return fetch(url.toString()).then((res) => res.json());
   };
 
-  const agentsQuery = $derived(
-    createInfiniteQuery<PagedResponse<Agent>>(() => {
-      return {
-        queryKey: ["agents", $searchParams],
-        queryFn: ({ pageParam }: { pageParam: unknown }) =>
-          fetchAgents({ pageParam: pageParam as number }, $searchParams),
-        initialPageParam: 1,
-        getNextPageParam: (lastPage: PagedResponse<Agent>) => {
-          if (lastPage.meta.page < lastPage.meta.totalPages) {
-            return lastPage.meta.page + 1;
-          }
-
-          return undefined;
+  const agentsQuery = createInfiniteQuery<PagedResponse<Agent>>(() => {
+    return {
+      queryKey: ["agents", $searchParams],
+      queryFn: ({ pageParam }: { pageParam: unknown }) =>
+        fetchAgents({ pageParam: pageParam as number }, $searchParams),
+      initialPageParam: 1,
+      getNextPageParam: (lastPage: PagedResponse<Agent>) => {
+        if (lastPage.meta.page < lastPage.meta.totalPages) {
+          return lastPage.meta.page + 1;
         }
-      };
-    })
-  );
+
+        return undefined;
+      }
+    };
+  });
 
   onDestroy(() => {
     if (browser)

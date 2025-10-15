@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 15 Oct, 2025
+
+Added a [contact form](https://chatlounge.app/contact) so you can easily get in touch with us. Whether you have questions, feedback, or need support, we're here to help! You can find the link to the contact form in the footer of any page.
+
 ## 3 Oct, 2025
 
 Added experimental support for tool calling for models that support this functionality. The tools currently available are a web search tool using the [Exa.ai](https://exa.ai/) API and a simple tool for fetching the current time. You don't need to take any special action to use the tools; if the model decides to use a tool, it will do so automatically, and you can of course prompt the model directly, e.g. "use the web search tool". Note that tool usage is still experimental and may not work perfectly in all cases.

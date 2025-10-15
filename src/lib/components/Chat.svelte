@@ -122,7 +122,7 @@
         finishSound.play();
       }
 
-      if (!$conversationStore) {
+      if (!$conversationStore && chat.status !== "error") {
         createConversationMutation.mutate(undefined, {
           onSuccess: async (data) => {
             if (data.id) {
@@ -135,7 +135,8 @@
             }
           }
         });
-      } else if ($conversationStore) client.invalidateQueries({ queryKey: ["conversations"] });
+      } else if ($conversationStore && chat.status !== "error")
+        client.invalidateQueries({ queryKey: ["conversations"] });
     },
     messages: initialMessages,
     transport: new DefaultChatTransport({ api: "/api/chat" })
@@ -481,6 +482,7 @@
     {/if}
     {#if chat.status === "error"}
       <p class="error">There was an error while getting a response from the AI.</p>
+      <p>{chat.error?.message}</p>
       <Button
         onclick={() =>
           chat.regenerate({

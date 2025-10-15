@@ -44,7 +44,10 @@
     </main>
 
     <footer>
-      <a href="/changelog">Changelog</a>
+      <div class="flex gap-4">
+        <a href="/changelog">Changelog</a>
+        <a href="/contact">Contact</a>
+      </div>
     </footer>
   </SignedIn>
 
@@ -79,8 +82,11 @@
     </main>
 
     <footer>
-      <a href="/changelog">Changelog</a>
-      <a href="/getting-started">Getting Started</a>
+      <div class="flex gap-4">
+        <a href="/changelog">Changelog</a>
+        <a href="/getting-started">Getting Started</a>
+        <a href="/contact">Contact</a>
+      </div>
     </footer>
   </SignedOut>
 </ClerkLoaded>

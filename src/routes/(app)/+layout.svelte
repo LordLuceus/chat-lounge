@@ -1,10 +1,10 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import AgentActions from "$lib/components/AgentActions.svelte";
-  import PublicAgentActions from "$lib/components/PublicAgentActions.svelte";
   import ConversationActions from "$lib/components/ConversationActions.svelte";
   import FolderActions from "$lib/components/FolderActions.svelte";
   import NewVersionPopup from "$lib/components/NewVersionPopup.svelte";
+  import PublicAgentActions from "$lib/components/PublicAgentActions.svelte";
   import * as Collapsible from "$lib/components/ui";
   import * as Avatar from "$lib/components/ui/avatar";
   import { Button } from "$lib/components/ui/button";
@@ -270,7 +270,10 @@
   </main>
 
   <footer>
-    <a href="/changelog">Changelog</a>
+    <div class="flex gap-4">
+      <a href="/changelog">Changelog</a>
+      <a href="/contact">Contact</a>
+    </div>
   </footer>
 </SignedIn>
 

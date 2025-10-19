@@ -2,7 +2,6 @@
   import { page } from "$app/state";
   import Chat from "$lib/components/Chat.svelte";
   import CheckApiKeys from "$lib/components/CheckApiKeys.svelte";
-  import type { SelectItem } from "$lib/types/client";
   import type { DBMessage } from "$lib/types/db";
   import { onMount } from "svelte";
   import { v4 as uuidv4 } from "uuid";
@@ -31,9 +30,7 @@
     }
   });
 
-  let selectedModel = $derived(
-    data.models.find((m: SelectItem) => m.value === data.agent.preferredModelId)
-  );
+  let selectedModelId = $derived(data.agent.preferredModelId || undefined);
 
   let folderId: string | undefined = $state(undefined);
 
@@ -66,9 +63,9 @@
     <Chat
       agent={data.agent}
       apiKeys={data.keys}
-      models={data.models}
+      modelGroups={data.modelGroups}
       {initialMessages}
-      {selectedModel}
+      {selectedModelId}
       {folderId}
     />
   {/key}

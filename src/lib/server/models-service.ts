@@ -1,5 +1,6 @@
 import { getApiKeys } from "$lib/server/api-keys-service";
 import { prisma } from "$lib/server/db";
+import { ReasoningType } from "$lib/types/db";
 import type { AIProvider } from "@prisma/client";
 
 export async function getModels() {
@@ -22,7 +23,8 @@ export async function getProviderModels(providers: AIProvider[], searchText?: st
         ? {
             contains: searchText
           }
-        : undefined
+        : undefined,
+      deprecated: false
     },
     orderBy: { updatedAt: "desc" }
   });
@@ -56,4 +58,50 @@ export async function getUserModels(userId: string, searchText?: string) {
   const providers = apiKeys.map((key) => key.provider);
 
   return getProviderModels(providers, searchText);
+}
+
+export async function getUserModelsGroupedByProvider(userId: string) {
+  const apiKeys = await getApiKeys(userId);
+
+  if (apiKeys.length === 0) {
+    return [];
+  }
+
+  const providers = apiKeys.map((key) => key.provider).sort();
+
+  const allModels = await prisma.model.findMany({
+    where: {
+      provider: { in: providers }
+    },
+    orderBy: { name: "asc" }
+  });
+
+  // Group models by provider
+  const grouped = providers
+    .map((provider) => {
+      const providerModels = allModels.filter((m) => m.provider === provider);
+
+      return {
+        provider,
+        models: providerModels
+          .filter((m) => !m.deprecated)
+          .map((m) => ({
+            id: m.id,
+            name: m.name,
+            reasoningType: m.reasoningType as ReasoningType,
+            deprecated: m.deprecated
+          })),
+        deprecatedModels: providerModels
+          .filter((m) => m.deprecated)
+          .map((m) => ({
+            id: m.id,
+            name: m.name,
+            reasoningType: m.reasoningType as ReasoningType,
+            deprecated: m.deprecated
+          }))
+      };
+    })
+    .filter((group) => group.models.length > 0 || group.deprecatedModels.length > 0);
+
+  return grouped;
 }

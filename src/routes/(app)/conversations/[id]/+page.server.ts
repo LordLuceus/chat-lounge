@@ -1,5 +1,5 @@
 import { getConversation } from "$lib/server/conversations-service";
-import { getUserModels } from "$lib/server/models-service";
+import { getUserModelsGroupedByProvider } from "$lib/server/models-service";
 import { error, redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 
@@ -21,5 +21,5 @@ export const load = (async (event) => {
     redirect(302, `/agents/${conversation.agentId}/conversations/${id}`);
   }
 
-  return { conversation, models: await getUserModels(userId!) };
+  return { conversation, modelGroups: await getUserModelsGroupedByProvider(userId!) };
 }) satisfies PageServerLoad;

@@ -1,5 +1,19 @@
 # ChatLounge Changelog
 
+## 19 Oct, 2025
+
+We've completely redesigned the model selector to make it easier to find and choose models:
+
+- **Provider-based organization**: Models are now grouped by provider (Anthropic, Google, Mistral, OpenAI, etc.) in alphabetical order, making it much easier to find the model you're looking for.
+- **Searchable dropdown**: Added a search bar at the top of the model selector that filters models in real-time, perfect for quickly finding a specific model.
+- **Deprecated model support**: Introduced a new deprecation system for models. When a model is deprecated:
+  - It appears in a "Deprecated" submenu within its provider group
+  - It's visually indicated with reduced opacity, strikethrough text, and a "(Deprecated)" label
+  - It cannot be selected for new conversations, but existing conversations using deprecated models will continue to work
+  - Agents with deprecated preferred models will automatically have their preference cleared
+
+This update ensures a smoother experience as the model landscape evolves, while preserving access to your existing conversations.
+
 ## 15 Oct, 2025
 
 Added a [contact form](https://chatlounge.app/contact) so you can easily get in touch with us. Whether you have questions, feedback, or need support, we're here to help! You can find the link to the contact form in the footer of any page.

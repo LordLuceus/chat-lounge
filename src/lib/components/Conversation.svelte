@@ -5,7 +5,6 @@
   import { formatMessageContent, getConversationMessages } from "$lib/helpers";
   import type { ConversationWithMessageMap } from "$lib/server/conversations-service";
   import { conversationStore } from "$lib/stores";
-  import type { SelectItem } from "$lib/types/client";
   import type { DBMessage } from "$lib/types/db";
   import { createQuery, useQueryClient } from "@tanstack/svelte-query";
   import { io, type Socket } from "socket.io-client";
@@ -35,9 +34,7 @@
     if ($conversationStore) messages = getConversationMessages($conversationStore);
   });
 
-  let selectedModel = $derived(
-    page.data.models?.find((m: SelectItem) => m.value === page.data.conversation.modelId)
-  );
+  let selectedModelId = $derived(page.data.conversation.modelId);
 
   function exportChatAsText(messages: DBMessage[], userName?: string | null) {
     if (!messages || messages.length === 0) return;
@@ -128,9 +125,9 @@
     {#key page.data.conversation.id}
       <Chat
         apiKeys={page.data.keys}
-        models={page.data.models}
+        modelGroups={page.data.modelGroups}
         initialMessages={messages}
-        {selectedModel}
+        {selectedModelId}
         agent={page.data?.agent}
       />
     {/key}

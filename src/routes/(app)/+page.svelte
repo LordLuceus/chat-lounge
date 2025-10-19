@@ -41,5 +41,5 @@
 <h1>ChatLounge</h1>
 
 <CheckApiKeys {data}>
-  <Chat apiKeys={data.keys} models={data.models} {initialMessages} {folderId} />
+  <Chat apiKeys={data.keys} modelGroups={data.modelGroups} {initialMessages} {folderId} />
 </CheckApiKeys>

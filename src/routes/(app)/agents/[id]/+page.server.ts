@@ -1,5 +1,5 @@
 import { getAgent } from "$lib/server/agents-service.js";
-import { getUserModels } from "$lib/server/models-service";
+import { getUserModelsGroupedByProvider } from "$lib/server/models-service";
 import { error, redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 
@@ -19,6 +19,6 @@ export const load = (async (event) => {
 
   return {
     agent,
-    models: await getUserModels(userId)
+    modelGroups: await getUserModelsGroupedByProvider(userId)
   };
 }) satisfies PageServerLoad;

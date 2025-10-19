@@ -1,6 +1,6 @@
 import { getAgent } from "$lib/server/agents-service";
 import { getConversation } from "$lib/server/conversations-service";
-import { getUserModels } from "$lib/server/models-service";
+import { getUserModelsGroupedByProvider } from "$lib/server/models-service";
 import { error, redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 
@@ -24,5 +24,5 @@ export const load = (async (event) => {
     return error(404, "Conversation not found");
   }
 
-  return { agent, conversation, models: await getUserModels(userId) };
+  return { agent, conversation, modelGroups: await getUserModelsGroupedByProvider(userId) };
 }) satisfies PageServerLoad;

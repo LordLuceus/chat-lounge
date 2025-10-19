@@ -3,12 +3,13 @@
   import { afterNavigate, goto } from "$app/navigation";
   import { page } from "$app/state";
   import Message from "$lib/components/Message.svelte";
+  import ModelSelector from "$lib/components/ModelSelector.svelte";
   import Recorder from "$lib/components/Recorder.svelte";
   import TtsSettings from "$lib/components/TtsSettings.svelte";
   import { Button } from "$lib/components/ui/button";
   import { Textarea } from "$lib/components/ui/textarea";
   import { Toggle } from "$lib/components/ui/toggle";
-  import { ariaListOpen, formatMessageContent, getMessageSiblings } from "$lib/helpers";
+  import { formatMessageContent, getMessageSiblings } from "$lib/helpers";
   import type { ApiKeyMap } from "$lib/helpers/api-key-utils";
   import type { ConversationWithMessageMap } from "$lib/server/conversations-service";
   import {
@@ -22,23 +23,35 @@
     ttsProps,
     voices
   } from "$lib/stores";
-  import type { ModelSelectItem } from "$lib/types/client";
   import { type DBMessage, ReasoningType } from "$lib/types/db";
   import { ModelID } from "$lib/types/elevenlabs";
   import { Chat } from "@ai-sdk/svelte";
+  import type { AIProvider } from "@prisma/client";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
   import { DefaultChatTransport } from "ai";
   import { PersistedState } from "runed";
   import { onDestroy, onMount, tick } from "svelte";
-  import Select from "svelte-select";
   import { toast } from "svelte-sonner";
   import { v4 as uuidv4 } from "uuid";
+
+  interface ModelData {
+    id: string;
+    name: string;
+    reasoningType: ReasoningType;
+    deprecated: boolean;
+  }
+
+  interface ProviderGroup {
+    provider: AIProvider;
+    models: ModelData[];
+    deprecatedModels: ModelData[];
+  }
 
   interface Props {
     agent?: { id: string; name: string } | undefined;
     apiKeys: ApiKeyMap | undefined;
-    models: ModelSelectItem[] | undefined;
-    selectedModel?: ModelSelectItem | undefined;
+    modelGroups: ProviderGroup[] | undefined;
+    selectedModelId?: string | undefined;
     initialMessages?: DBMessage[] | undefined;
     folderId?: string | undefined;
   }
@@ -46,8 +59,8 @@
   let {
     agent = undefined,
     apiKeys,
-    models,
-    selectedModel = $bindable(undefined),
+    modelGroups,
+    selectedModelId = $bindable(undefined),
     initialMessages = undefined,
     folderId = undefined
   }: Props = $props();
@@ -63,8 +76,21 @@
   // Persisted thinking mode setting for hybrid models
   const thinkingMode = new PersistedState<boolean>("thinkingMode", false);
 
+  // Find selected model details
+  const selectedModel = $derived(() => {
+    if (!selectedModelId || !modelGroups) return null;
+    for (const group of modelGroups) {
+      const model = [...group.models, ...group.deprecatedModels].find(
+        (m) => m.id === selectedModelId
+      );
+      if (model) return model;
+    }
+    return null;
+  });
+
   $effect(() => {
-    switch (selectedModel?.reasoningType) {
+    const model = selectedModel();
+    switch (model?.reasoningType) {
       case ReasoningType.None:
         thinking = false;
         break;
@@ -96,7 +122,7 @@
           method: "POST",
           body: JSON.stringify({
             agentId: agent?.id,
-            modelId: selectedModel?.value,
+            modelId: selectedModelId,
             messages: chat.messages,
             folderId: folderId
           })
@@ -233,19 +259,29 @@
   });
 
   function handleModelSelection() {
-    if (!selectedModel) {
-      const storedModel = localStorage.getItem("selectedModel");
-      if (storedModel) {
-        const parsedModel: ModelSelectItem = JSON.parse(storedModel);
-        if (models?.find((model) => model.value === parsedModel.value)) {
-          selectedModel = parsedModel;
+    if (!selectedModelId && modelGroups) {
+      const storedModelId = localStorage.getItem("selectedModelId");
+      if (storedModelId) {
+        // Check if stored model exists in current modelGroups
+        const modelExists = modelGroups.some((group) =>
+          [...group.models, ...group.deprecatedModels].some((m) => m.id === storedModelId)
+        );
+        if (modelExists) {
+          selectedModelId = storedModelId;
         } else {
-          selectedModel = models?.at(0);
+          // Default to first model
+          selectedModelId = modelGroups[0]?.models[0]?.id;
         }
       } else {
-        selectedModel = models?.at(0);
+        // Default to first model
+        selectedModelId = modelGroups[0]?.models[0]?.id;
       }
     }
+  }
+
+  function handleModelSelect(modelId: string) {
+    selectedModelId = modelId;
+    localStorage.setItem("selectedModelId", modelId);
   }
 
   function setVoiceMessage(message: string) {
@@ -269,7 +305,7 @@
         { text: voiceMessage },
         {
           body: {
-            modelId: selectedModel?.value,
+            modelId: selectedModelId,
             agentId: agent?.id,
             conversationId: $conversationStore?.id,
             thinking
@@ -325,7 +361,7 @@
     if (regenerate) {
       chat.regenerate({
         body: {
-          modelId: selectedModel?.value,
+          modelId: selectedModelId,
           agentId: agent?.id,
           conversationId: $conversationStore?.id,
           editedMessageId: id,
@@ -362,7 +398,7 @@
       reader.onload = async (event) => {
         const json = event.target?.result as string;
         const data = JSON.parse(json);
-        const modelId = selectedModel?.value;
+        const modelId = selectedModelId;
 
         if (!modelId || !json) return;
 
@@ -409,14 +445,7 @@
   }}
 />
 
-<Select
-  bind:value={selectedModel}
-  items={models}
-  placeholder="Select model..."
-  on:change={() => localStorage.setItem("selectedModel", JSON.stringify(selectedModel))}
-  {ariaListOpen}
-  clearable={false}
-/>
+<ModelSelector modelGroups={modelGroups || []} bind:selectedModelId onSelect={handleModelSelect} />
 
 {#if apiKeys?.elevenlabs && $voices}
   <TtsSettings />
@@ -459,7 +488,7 @@
           followups = [];
           chat.regenerate({
             body: {
-              modelId: selectedModel?.value,
+              modelId: selectedModelId,
               agentId: agent?.id,
               conversationId: $conversationStore?.id,
               regenerate: true,
@@ -487,7 +516,7 @@
         onclick={() =>
           chat.regenerate({
             body: {
-              modelId: selectedModel?.value,
+              modelId: selectedModelId,
               agentId: agent?.id,
               conversationId: $conversationStore?.id,
               thinking
@@ -526,7 +555,7 @@
         { text: chatInput },
         {
           body: {
-            modelId: selectedModel?.value,
+            modelId: selectedModelId,
             agentId: agent?.id,
             conversationId: $conversationStore?.id,
             thinking
@@ -547,7 +576,7 @@
     />
   </form>
 
-  {#if selectedModel?.reasoningType === ReasoningType.Hybrid}
+  {#if selectedModel()?.reasoningType === ReasoningType.Hybrid}
     <div class="text-sm text-gray-500">
       <Toggle bind:pressed={thinkingMode.current}>Think</Toggle>
     </div>

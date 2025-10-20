@@ -71,7 +71,14 @@ export function findLastNodeInBranch(
 
 export function formatMessageContent(parts: UIMessagePart<UIDataTypes, UITools>[]): string {
   return parts
-    .filter((part) => part.type === "text")
-    .map((part) => part.text)
+    .map((part) => {
+      if (part.type === "text") return part.text;
+      if (part.type === "file") {
+        const filePart = part as { type: "file"; filename?: string; url: string };
+        return `[Image: ${filePart.filename || filePart.url}]`;
+      }
+      return "";
+    })
+    .filter(Boolean)
     .join("\n\n");
 }

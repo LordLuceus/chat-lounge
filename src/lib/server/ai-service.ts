@@ -92,7 +92,8 @@ class AIService {
     conversationId?: string,
     regenerate?: boolean,
     messageId?: string,
-    thinking?: boolean
+    thinking?: boolean,
+    storageParts?: Array<{ type: "file"; key: string; mediaType: string; filename: string }>
   ) {
     const processedMessages = await this.preProcess(messages, model, userId, agent, conversationId);
 
@@ -109,13 +110,33 @@ class AIService {
       onFinish: async ({ responseMessage }) => {
         if (conversationId) {
           if (!regenerate && messages.at(-1)?.role === "user") {
-            await addConversationMessage(
-              conversationId,
-              messages.at(-1)?.parts || [],
-              "user",
-              userId,
-              messageId
-            );
+            // Get the last user message parts
+            let userParts = messages.at(-1)?.parts || [];
+
+            // If storageParts provided, replace file URLs with R2 keys
+            if (storageParts && storageParts.length > 0) {
+              userParts = userParts.map(
+                (
+                  part: UIMessagePart<UIDataTypes, UITools>
+                ): UIMessagePart<UIDataTypes, UITools> => {
+                  if (part.type === "file" && "url" in part) {
+                    // Find matching storage part by filename
+                    const storagePart = storageParts.find((sp) => {
+                      const filename = sp.key.split("/").pop();
+                      return part.filename === filename || part.url?.includes(filename || "");
+                    });
+                    if (storagePart) {
+                      // Replace URL with R2 key for storage
+                      // Cast is safe because the storage part structure matches what's expected in DB
+                      return storagePart as unknown as UIMessagePart<UIDataTypes, UITools>;
+                    }
+                  }
+                  return part;
+                }
+              );
+            }
+
+            await addConversationMessage(conversationId, userParts, "user", userId, messageId);
           }
           await addConversationMessage(
             conversationId,

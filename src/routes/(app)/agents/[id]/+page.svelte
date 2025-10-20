@@ -27,6 +27,8 @@
           updatedAt: new Date()
         }
       ];
+    } else {
+      initialMessages = [];
     }
   });
 

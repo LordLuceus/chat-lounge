@@ -1,14 +1,14 @@
 <script lang="ts">
   import { copyCodeBlocks } from "$lib/actions/copy-code";
   import ToolCallDisplay from "$lib/components/ToolCallDisplay.svelte";
+  import * as Avatar from "$lib/components/ui/avatar";
   import { formatMessageContent } from "$lib/helpers";
   import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
   import { BotMessageSquare } from "@lucide/svelte";
-  import * as Avatar from "$lib/components/ui/avatar";
   import type { FileUIPart, UIDataTypes, UIMessagePart, UITools } from "ai";
+  import { onMount } from "svelte";
   import Markdown from "svelte-exmarkdown";
   import { gfmPlugin } from "svelte-exmarkdown/gfm";
-  import { onMount } from "svelte";
 
   const plugins = [gfmPlugin(), lineBreaksPlugin];
 
@@ -43,7 +43,6 @@
     return typed.type === "file" && typeof typed.key === "string";
   }
 
-  // Generate presigned URL for R2 key
   async function loadImageUrl(key: string, force = false) {
     if (imageUrls[key] && !force) return; // Already loaded (unless forcing refresh)
 
@@ -63,10 +62,8 @@
     }
   }
 
-  // Handle image load error (likely expired presigned URL)
   async function handleImageError(key: string) {
-    console.log("Image failed to load, regenerating presigned URL for:", key);
-    await loadImageUrl(key, true); // Force regenerate
+    await loadImageUrl(key, true);
   }
 
   // Load presigned URLs for any parts with R2 keys
@@ -100,7 +97,6 @@
         {#if part.type === "text"}
           <Markdown md={part.text || ""} {plugins} />
         {:else if hasKey(part)}
-          <!-- Part with R2 key - needs presigned URL -->
           <div class="message-image my-2">
             {#if imageUrls[part.key]}
               <button

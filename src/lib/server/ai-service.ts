@@ -126,8 +126,6 @@ class AIService {
                       return part.filename === filename || part.url?.includes(filename || "");
                     });
                     if (storagePart) {
-                      // Replace URL with R2 key for storage
-                      // Cast is safe because the storage part structure matches what's expected in DB
                       return storagePart as unknown as UIMessagePart<UIDataTypes, UITools>;
                     }
                   }

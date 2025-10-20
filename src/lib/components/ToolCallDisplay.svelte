@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { UIMessagePart, UIDataTypes, UITools } from "ai";
+  import type { UIDataTypes, UIMessagePart, UITools } from "ai";
 
   interface Props {
     part: UIMessagePart<UIDataTypes, UITools>;
@@ -7,7 +7,6 @@
 
   const { part }: Props = $props();
 
-  // Tool parts have type like "tool-calculator", "tool-weather", etc.
   const isTool = $derived(
     part.type.startsWith("tool-") && part.type !== "tool-call" && part.type !== "tool-result"
   );
@@ -24,27 +23,33 @@
 </script>
 
 {#if isTool}
-  <aside class="tool-invocation" role="region" aria-labelledby="tool-header-{toolName}">
-    <div class="tool-header" id="tool-header-{toolName}">
-      <span class="tool-icon">🔧</span>
-      <strong>{toolName}</strong>
-    </div>
+  <aside class="tool-invocation">
+    <details>
+      <summary>
+        <div class="tool-header" id="tool-header-{toolName}">
+          <span class="tool-icon">🔧</span>
+          <strong>{toolName}</strong>
+        </div>
+      </summary>
 
-    {#if toolInput && Object.keys(toolInput).length > 0}
-      <details>
-        <summary>View input</summary>
-        <pre class="tool-content">{JSON.stringify(toolInput, null, 2)}</pre>
-      </details>
-    {/if}
+      <div role="region" aria-labelledby="tool-header-{toolName}">
+        {#if toolInput && Object.keys(toolInput).length > 0}
+          <details>
+            <summary>View input</summary>
+            <pre class="tool-content">{JSON.stringify(toolInput, null, 2)}</pre>
+          </details>
+        {/if}
 
-    {#if hasOutput && toolOutput}
-      <details>
-        <summary>View output</summary>
-        <pre class="tool-content">{typeof toolOutput === "string"
-            ? toolOutput
-            : JSON.stringify(toolOutput, null, 2)}</pre>
-      </details>
-    {/if}
+        {#if hasOutput && toolOutput}
+          <details>
+            <summary>View output</summary>
+            <pre class="tool-content">{typeof toolOutput === "string"
+                ? toolOutput
+                : JSON.stringify(toolOutput, null, 2)}</pre>
+          </details>
+        {/if}
+      </div>
+    </details>
   </aside>
 {/if}
 

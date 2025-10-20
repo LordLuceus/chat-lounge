@@ -1,5 +1,20 @@
 # ChatLounge Changelog
 
+## 20 Oct, 2025
+
+Added image upload support to ChatLounge! 🎉 You can now send images in your conversations with AI models that support vision capabilities.
+
+**Key Features:**
+
+- **Multiple upload methods**: Attach images using the upload button or simply paste them directly into the chat input
+- **Supported formats**: PNG, JPEG, JPG, GIF, and WebP (up to 5MB per image)
+- **Image preview**: See thumbnails of your uploaded images before sending
+- **Secure storage**: Images are stored in Cloudflare R2 with presigned URLs for security
+- **Automatic cleanup**: When you delete a conversation, associated images are automatically removed from storage
+- **Model filtering**: The upload button is only available for models that support image inputs
+
+Simply look for the image upload button next to the chat input when using a vision-capable model like Claude, GPT-4O, or Gemini. Click to select files or paste an image directly into the input field!
+
 ## 19 Oct, 2025
 
 We've completely redesigned the model selector to make it easier to find and choose models:

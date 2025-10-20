@@ -1,11 +1,12 @@
 <script lang="ts">
   import { copyCodeBlocks } from "$lib/actions/copy-code";
   import ToolCallDisplay from "$lib/components/ToolCallDisplay.svelte";
+  import * as Avatar from "$lib/components/ui/avatar";
   import { formatMessageContent } from "$lib/helpers";
   import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
   import { BotMessageSquare } from "@lucide/svelte";
-  import * as Avatar from "$lib/components/ui/avatar";
-  import type { UIDataTypes, UIMessagePart, UITools } from "ai";
+  import type { FileUIPart, UIDataTypes, UIMessagePart, UITools } from "ai";
+  import { onMount } from "svelte";
   import Markdown from "svelte-exmarkdown";
   import { gfmPlugin } from "svelte-exmarkdown/gfm";
 
@@ -25,6 +26,56 @@
   }
 
   const { message, user = null, showUserAvatar = true, modelName }: Props = $props();
+
+  // Store for presigned URLs (for messages loaded from DB with R2 keys)
+  let imageUrls = $state<Record<string, string>>({});
+
+  // Type guard to check if part is FileUIPart
+  function isFilePart(part: UIMessagePart<UIDataTypes, UITools>): part is FileUIPart {
+    return part.type === "file";
+  }
+
+  // Type guard for parts with R2 keys (stored in DB)
+  function hasKey(
+    part: unknown
+  ): part is { type: "file"; key: string; mediaType?: string; filename?: string } {
+    const typed = part as { type?: string; key?: unknown };
+    return typed.type === "file" && typeof typed.key === "string";
+  }
+
+  async function loadImageUrl(key: string, force = false) {
+    if (imageUrls[key] && !force) return; // Already loaded (unless forcing refresh)
+
+    try {
+      const response = await fetch("/api/presigned-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key })
+      });
+
+      if (!response.ok) throw new Error("Failed to load image");
+
+      const { url } = await response.json();
+      imageUrls[key] = url;
+    } catch (err) {
+      console.error("Failed to load image:", err);
+    }
+  }
+
+  async function handleImageError(key: string) {
+    await loadImageUrl(key, true);
+  }
+
+  // Load presigned URLs for any parts with R2 keys
+  onMount(() => {
+    if (message.parts) {
+      message.parts.forEach((part) => {
+        if (hasKey(part)) {
+          loadImageUrl(part.key);
+        }
+      });
+    }
+  });
 </script>
 
 <section aria-label="{message.role} message">
@@ -45,6 +96,41 @@
       {#each message.parts as part, index (index)}
         {#if part.type === "text"}
           <Markdown md={part.text || ""} {plugins} />
+        {:else if hasKey(part)}
+          <div class="message-image my-2">
+            {#if imageUrls[part.key]}
+              <button
+                type="button"
+                onclick={() => window.open(imageUrls[part.key], "_blank")}
+                class="border-0 bg-transparent p-0"
+              >
+                <img
+                  src={imageUrls[part.key]}
+                  alt={part.filename || "Image attachment"}
+                  class="max-w-md cursor-pointer rounded-lg shadow-md transition-opacity hover:opacity-90"
+                  onerror={() => handleImageError(part.key)}
+                />
+              </button>
+            {:else}
+              <!-- Loading presigned URL -->
+              <div class="h-32 w-32 animate-pulse rounded-lg bg-gray-200"></div>
+            {/if}
+          </div>
+        {:else if isFilePart(part) && part.mediaType?.startsWith("image/")}
+          <!-- FileUIPart with direct URL -->
+          <div class="message-image my-2">
+            <button
+              type="button"
+              onclick={() => window.open(part.url, "_blank")}
+              class="border-0 bg-transparent p-0"
+            >
+              <img
+                src={part.url}
+                alt={part.filename || "Image attachment"}
+                class="max-w-md cursor-pointer rounded-lg shadow-md transition-opacity hover:opacity-90"
+              />
+            </button>
+          </div>
         {:else if part.type === "reasoning" && part.text}
           <aside class="reasoning-container">
             <details>
@@ -99,5 +185,21 @@
     margin-top: 0.25rem;
     opacity: 0.7;
     font-style: italic;
+  }
+
+  .message-image {
+    display: block;
+    margin: 0.5rem 0;
+  }
+
+  .message-image img {
+    max-width: 28rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+  }
+
+  .message-image img:hover {
+    opacity: 0.9;
   }
 </style>

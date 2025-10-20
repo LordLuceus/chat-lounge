@@ -28,7 +28,7 @@
   import { Chat } from "@ai-sdk/svelte";
   import type { AIProvider } from "@prisma/client";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
-  import { DefaultChatTransport } from "ai";
+  import { DefaultChatTransport, type FileUIPart } from "ai";
   import { PersistedState } from "runed";
   import { onDestroy, onMount, tick } from "svelte";
   import { toast } from "svelte-sonner";
@@ -39,6 +39,7 @@
     name: string;
     reasoningType: ReasoningType;
     deprecated: boolean;
+    supportsImages: boolean;
   }
 
   interface ProviderGroup {
@@ -113,21 +114,67 @@
   let visibleMessageCount = $state(initialMessageCount);
   let chatInput = $state("");
 
+  // File upload state
+  interface AttachedFile {
+    id: string;
+    mediaType: string;
+    dataUrl: string; // Temporary preview only
+    key: string; // R2 key - what gets stored in DB
+    url: string; // 24h presigned URL for AI
+    filename: string;
+    uploading?: boolean;
+  }
+  let attachedFiles = $state<AttachedFile[]>([]);
+  let fileInputRef: HTMLInputElement | null = $state(null);
+
+  // Track storage parts for each message (for conversation creation)
+  let messageStorageParts = $state<
+    Map<string, Array<{ type: "file"; key: string; mediaType: string; filename: string }>>
+  >(new Map());
+
   const client = useQueryClient();
 
   const createConversationMutation = createMutation<ConversationWithMessageMap>(() => ({
-    mutationFn: async () =>
-      (
-        await fetch("/api/conversations", {
-          method: "POST",
-          body: JSON.stringify({
-            agentId: agent?.id,
-            modelId: selectedModelId,
-            messages: chat.messages,
-            folderId: folderId
-          })
+    mutationFn: async () => {
+      // Process messages to replace file URLs with R2 keys
+      const processedMessages = chat.messages.map((msg, index) => {
+        const storageParts = messageStorageParts.get(index.toString());
+
+        if (!storageParts || !msg.parts) return msg;
+
+        // Replace file URLs with R2 keys in message parts
+        const updatedParts = msg.parts.map((part) => {
+          if (part.type === "file" && "url" in part) {
+            // Find matching storage part by filename
+            const storagePart = storageParts.find((sp) => {
+              const filename = sp.key.split("/").pop();
+              return part.filename === filename || part.url?.includes(filename || "");
+            });
+            if (storagePart) {
+              return storagePart;
+            }
+          }
+          return part;
+        });
+
+        return { ...msg, parts: updatedParts };
+      });
+
+      const response = await fetch("/api/conversations", {
+        method: "POST",
+        body: JSON.stringify({
+          agentId: agent?.id,
+          modelId: selectedModelId,
+          messages: processedMessages,
+          folderId: folderId
         })
-      ).json(),
+      });
+
+      // Clear tracked storage parts after conversation is created
+      messageStorageParts.clear();
+
+      return response.json();
+    },
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ["conversations"] });
       client.invalidateQueries({ queryKey: ["agents"] });
@@ -228,6 +275,101 @@
     if (event.ctrlKey && event.shiftKey && event.key === "C") {
       event.preventDefault();
       copyLastMessage();
+    }
+  }
+
+  // File upload handlers
+  async function handleFileSelect(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files || []);
+
+    for (const file of files) {
+      // Validate size
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`${file.name} exceeds 5MB limit`);
+        continue;
+      }
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const id = crypto.randomUUID();
+        const dataUrl = e.target?.result as string;
+        attachedFiles.push({
+          id,
+          mediaType: file.type,
+          dataUrl, // For preview only
+          key: "", // Will be filled after upload
+          url: "", // Will be filled after upload
+          filename: file.name,
+          uploading: true
+        });
+
+        // Upload to R2 for storage
+        uploadFile(id, dataUrl, file.name);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Reset input
+    if (input) input.value = "";
+  }
+
+  async function uploadFile(fileId: string, dataUrl: string, filename: string) {
+    try {
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dataUrl, filename })
+      });
+
+      if (!response.ok) throw new Error("Upload failed");
+
+      const { key, url } = await response.json();
+
+      // Update file with R2 key and presigned URL
+      attachedFiles = attachedFiles.map((f) =>
+        f.id === fileId ? { ...f, key, url, uploading: false } : f
+      );
+    } catch (err) {
+      toast.error(`Failed to upload ${filename}`);
+      removeFile(fileId);
+    }
+  }
+
+  function removeFile(fileId: string) {
+    attachedFiles = attachedFiles.filter((f) => f.id !== fileId);
+  }
+
+  async function handlePaste(event: ClipboardEvent) {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith("image/")) {
+        event.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          // Reuse file select logic
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const id = crypto.randomUUID();
+            const dataUrl = e.target?.result as string;
+            const filename = `pasted-${Date.now()}.png`;
+            attachedFiles.push({
+              id,
+              mediaType: file.type,
+              dataUrl,
+              key: "",
+              url: "",
+              filename,
+              uploading: true
+            });
+            uploadFile(id, dataUrl, filename);
+          };
+          reader.readAsDataURL(file);
+        }
+      }
     }
   }
 
@@ -550,30 +692,147 @@
   <form
     onsubmit={(e) => {
       e.preventDefault();
+
+      // Check if any files are still uploading
+      if (attachedFiles.some((f) => f.uploading)) {
+        toast.error("Please wait for uploads to complete");
+        return;
+      }
+
       followups = [];
+
+      // Build file parts for AI (using presigned URLs)
+      const fileParts: FileUIPart[] = attachedFiles.map((file) => ({
+        type: "file" as const,
+        url: file.url, // 24h presigned URL for AI
+        mediaType: file.mediaType,
+        filename: file.filename
+      }));
+
+      // Build file parts for storage (R2 keys)
+      const storageParts: Array<{
+        type: "file";
+        key: string;
+        mediaType: string;
+        filename: string;
+      }> = attachedFiles.map((file) => ({
+        type: "file" as const,
+        key: file.key, // Store R2 key in DB
+        mediaType: file.mediaType,
+        filename: file.filename
+      }));
+
+      // Send message with files using new API
       chat.sendMessage(
-        { text: chatInput },
+        {
+          text: chatInput,
+          ...(fileParts.length > 0 && { files: fileParts })
+        },
         {
           body: {
             modelId: selectedModelId,
             agentId: agent?.id,
             conversationId: $conversationStore?.id,
-            thinking
+            thinking,
+            // Pass storage parts so server can save R2 keys to DB
+            storageParts: storageParts.length > 0 ? storageParts : undefined
           }
         }
       );
+
+      // Track storage parts for this message (for new conversation creation)
+      if (!$conversationStore && storageParts.length > 0) {
+        // The message will be added to chat.messages, we need to track its storage parts
+        // We'll use the message index as a temporary key
+        const messageIndex = chat.messages.length - 1;
+        messageStorageParts.set(messageIndex.toString(), storageParts);
+      }
+
       chatInput = "";
+      attachedFiles = [];
     }}
     bind:this={chatForm}
   >
-    <Textarea
-      bind:value={chatInput}
-      onkeydown={handleMessageSubmit}
-      placeholder={agent ? `Message ${agent.name}:` : "Type your message:"}
-      class="chat-input"
-      rows={1}
-      cols={200}
+    <!-- Hidden file input -->
+    <input
+      bind:this={fileInputRef}
+      type="file"
+      accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+      multiple
+      style="display: none;"
+      onchange={handleFileSelect}
     />
+
+    <!-- Image preview section -->
+    {#if attachedFiles.length > 0}
+      <div class="attached-files mb-2 flex flex-wrap gap-2">
+        {#each attachedFiles as file (file.id)}
+          <div class="relative">
+            <img src={file.dataUrl} alt={file.filename} class="h-20 w-20 rounded object-cover" />
+            {#if file.uploading}
+              <div
+                class="absolute inset-0 flex items-center justify-center rounded bg-black bg-opacity-50"
+              >
+                <span class="text-xs text-white">Uploading...</span>
+              </div>
+            {/if}
+            <button
+              type="button"
+              onclick={() => removeFile(file.id)}
+              class="absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+              aria-label="Remove {file.filename}"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </button>
+          </div>
+        {/each}
+      </div>
+    {/if}
+
+    <div class="chat-input-container flex gap-2">
+      {#if selectedModel()?.supportsImages !== false}
+        <Button
+          type="button"
+          variant="outline"
+          onclick={() => fileInputRef?.click()}
+          disabled={chat.status === "streaming" || chat.status === "submitted"}
+          aria-label="Attach images"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </Button>
+      {/if}
+      <Textarea
+        bind:value={chatInput}
+        onkeydown={handleMessageSubmit}
+        onpaste={handlePaste}
+        placeholder={agent ? `Message ${agent.name}:` : "Type your message:"}
+        class="chat-input flex-1"
+        rows={1}
+        cols={200}
+      />
+    </div>
   </form>
 
   {#if selectedModel()?.reasoningType === ReasoningType.Hybrid}

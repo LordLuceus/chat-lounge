@@ -8,6 +8,7 @@ import AIService from "$lib/server/ai-service";
 import { getApiKey } from "$lib/server/api-keys-service";
 import { prisma } from "$lib/server/db";
 import { getModel } from "$lib/server/models-service";
+import { bulkDeleteFilesFromR2 } from "$lib/server/r2-storage";
 import { AIProvider, type DBMessage } from "$lib/types/db";
 import {
   Prisma,
@@ -264,11 +265,54 @@ export async function updateConversation(
   return result;
 }
 
+/**
+ * Extract R2 keys from message parts
+ * @param messages - Array of messages with parts to extract keys from
+ * @returns Array of R2 keys found in message parts
+ */
+function extractR2KeysFromMessages(messages: Array<{ parts: Prisma.JsonValue }>): string[] {
+  const keys: string[] = [];
+
+  for (const message of messages) {
+    if (!message.parts) continue;
+
+    const parts = message.parts as Array<UIMessagePart<UIDataTypes, UITools>>;
+    for (const part of parts) {
+      // Check if part has R2 key (stored format)
+      if (part.type === "file" && "key" in part && typeof part.key === "string") {
+        keys.push(part.key);
+      }
+    }
+  }
+
+  return keys;
+}
+
 export async function deleteConversation(userId: string, conversationId: string) {
   const users = await getConversationUsers(conversationId);
 
   if (!users.find((user) => user.userId === userId)) {
     throw new Error("User is not a member of the conversation");
+  }
+
+  // Get all messages to extract R2 keys for cleanup
+  const messages = await prisma.message.findMany({
+    where: { conversationId },
+    select: { parts: true }
+  });
+
+  // Extract R2 keys from message parts
+  const r2Keys = extractR2KeysFromMessages(messages);
+
+  // Delete images from R2
+  if (r2Keys.length > 0) {
+    try {
+      const deletedCount = await bulkDeleteFilesFromR2(r2Keys);
+      console.log(`Deleted ${deletedCount} files from R2 for conversation ${conversationId}`);
+    } catch (err) {
+      console.error(`Failed to delete R2 files for conversation ${conversationId}:`, err);
+      // Continue with conversation deletion even if R2 cleanup fails
+    }
   }
 
   // Manually remove all messages first to avoid multi-path cascade issues
@@ -751,6 +795,28 @@ export async function bulkDeleteConversations(userId: string, conversationIds: s
 
   if (conversations.length !== conversationIds.length) {
     throw new Error("One or more conversations not found or access denied");
+  }
+
+  // Get all messages to extract R2 keys for cleanup
+  const messages = await prisma.message.findMany({
+    where: { conversationId: { in: conversationIds } },
+    select: { parts: true }
+  });
+
+  // Extract R2 keys from message parts
+  const r2Keys = extractR2KeysFromMessages(messages);
+
+  // Delete images from R2
+  if (r2Keys.length > 0) {
+    try {
+      const deletedCount = await bulkDeleteFilesFromR2(r2Keys);
+      console.log(
+        `Deleted ${deletedCount} files from R2 for ${conversationIds.length} conversations`
+      );
+    } catch (err) {
+      console.error(`Failed to delete R2 files for conversations:`, err);
+      // Continue with conversation deletion even if R2 cleanup fails
+    }
   }
 
   await prisma.message.deleteMany({

@@ -448,37 +448,45 @@ class AIService {
       baseInstructions = user.customBaseInstructions || corePrompt;
     }
 
-    if (!agent) return baseInstructions || undefined;
+    let finalPrompt: string;
 
-    if (agent.type === AgentType.Default) {
-      return baseInstructions
+    if (!agent) {
+      finalPrompt = baseInstructions || "";
+    } else if (agent.type === AgentType.Default) {
+      finalPrompt = baseInstructions
         ? baseInstructions +
-            "\n\n<special_instructions>\n\n" +
-            agent.instructions +
-            "\n\n</special_instructions>"
+          "\n\n<special_instructions>\n\n" +
+          agent.instructions +
+          "\n\n</special_instructions>"
         : agent.instructions;
+    } else {
+      // Get verbosity instruction based on agent's verbosity setting
+      const getVerbosityInstruction = (verbosity: string | null | undefined): string => {
+        switch (verbosity) {
+          case "concise":
+            return "- Keep responses concise (no longer than ~200 words), and allow {{user}} to respond to {{char}}'s actions or statements. I.E., avoid skipping forward or having {{char}} do multiple things in one response.";
+          case "verbose":
+            return "- Provide detailed, comprehensive responses that fully explore {{char}}'s thoughts, emotions, and actions. Take time to describe the scene, {{char}}'s internal state, and the nuances of their interactions. Feel free to write longer responses that capture the depth of the moment.";
+          case "default":
+          default:
+            return ""; // No specific verbosity instruction for default
+        }
+      };
+
+      const prompt = charPrompt
+        .replace("{{character_definition}}", agent.instructions)
+        .replaceAll("{{char}}", agent.name)
+        .replaceAll("{{user}}", user.username.charAt(0).toUpperCase() + user.username.slice(1))
+        .replace("{{verbosity}}", getVerbosityInstruction(agent.verbosity));
+
+      finalPrompt = baseInstructions ? baseInstructions + "\n\n" + prompt : prompt;
     }
 
-    // Get verbosity instruction based on agent's verbosity setting
-    const getVerbosityInstruction = (verbosity: string | null | undefined): string => {
-      switch (verbosity) {
-        case "concise":
-          return "- Keep responses concise (no longer than ~200 words), and allow {{user}} to respond to {{char}}'s actions or statements. I.E., avoid skipping forward or having {{char}} do multiple things in one response.";
-        case "verbose":
-          return "- Provide detailed, comprehensive responses that fully explore {{char}}'s thoughts, emotions, and actions. Take time to describe the scene, {{char}}'s internal state, and the nuances of their interactions. Feel free to write longer responses that capture the depth of the moment.";
-        case "default":
-        default:
-          return ""; // No specific verbosity instruction for default
-      }
-    };
+    const currentDate = new Date().toISOString().split("T")[0];
+    const metadata = `\n\n<metadata>\nCurrent Date: ${currentDate}\nUser: ${user.username}\n</metadata>`;
+    finalPrompt += metadata;
 
-    const prompt = charPrompt
-      .replace("{{character_definition}}", agent.instructions)
-      .replaceAll("{{char}}", agent.name)
-      .replaceAll("{{user}}", user.username.charAt(0).toUpperCase() + user.username.slice(1))
-      .replace("{{verbosity}}", getVerbosityInstruction(agent.verbosity));
-
-    return baseInstructions ? baseInstructions + "\n\n" + prompt : prompt;
+    return finalPrompt;
   }
 
   private convertToChatMessages(messages: UIMessage[]): ChatMessage[] {

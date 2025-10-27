@@ -10,6 +10,7 @@
   import type { DBMessage } from "$lib/types/db";
   import type { Message } from "@prisma/client";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
+  import type { UIDataTypes, UIMessagePart, UITools } from "ai";
   import { SignedIn } from "svelte-clerk";
   import { useClerkContext } from "svelte-clerk/client";
   import { toast } from "svelte-sonner";
@@ -20,7 +21,7 @@
   interface Props {
     message: DBMessage;
     siblings?: Message[];
-    onEdit: (id: string, content: string, regenerate: boolean) => void;
+    onEdit: (id: string, parts: UIMessagePart<UIDataTypes, UITools>[], regenerate: boolean) => void;
     isLoading: boolean | undefined;
     isLastMessage: boolean | undefined;
   }
@@ -88,11 +89,7 @@
 
     <div class="message-actions">
       {#if message.role === "user" && !isLoading}
-        <EditMessage
-          id={message.id}
-          content={formatMessageContent(message.parts)}
-          onSubmit={onEdit}
-        />
+        <EditMessage id={message.id} parts={message.parts} onSubmit={onEdit} />
       {/if}
       {#if page.data.keys.elevenlabs && message.role === "assistant"}
         <Tts text={formatMessageContent(message.parts)} />

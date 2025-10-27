@@ -28,7 +28,13 @@
   import { Chat } from "@ai-sdk/svelte";
   import type { AIProvider } from "@prisma/client";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
-  import { DefaultChatTransport, type FileUIPart } from "ai";
+  import {
+    DefaultChatTransport,
+    type FileUIPart,
+    type UIDataTypes,
+    type UIMessagePart,
+    type UITools
+  } from "ai";
   import { PersistedState } from "runed";
   import { onDestroy, onMount, tick } from "svelte";
   import { toast } from "svelte-sonner";
@@ -480,7 +486,11 @@
     }
   });
 
-  async function handleEdit(id: string, content: string, regenerate: boolean = true) {
+  async function handleEdit(
+    id: string,
+    parts: UIMessagePart<UIDataTypes, UITools>[],
+    regenerate: boolean = true
+  ) {
     const messageIndex = chat.messages.findIndex((message) => message.id === id);
 
     if (messageIndex === -1) return;
@@ -491,7 +501,7 @@
 
     const editedMessage = {
       ...message,
-      parts: [{ type: "text" as const, text: content }],
+      parts,
       id: regenerate ? uuidv4() : id
     };
     updatedMessages.push(editedMessage);
@@ -513,7 +523,7 @@
     } else {
       const res = await fetch(`/api/conversations/${$conversationStore?.id}/messages/${id}`, {
         method: "PUT",
-        body: JSON.stringify({ parts: [{ type: "text", text: content }] })
+        body: JSON.stringify({ parts })
       });
 
       if (!res.ok) {

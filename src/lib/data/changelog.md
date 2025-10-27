@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 27 Oct, 2025
+
+Fixed a bug where editing a message with an image attachment would remove the attachment from the message.
+
 ## 20 Oct, 2025
 
 Added image upload support to ChatLounge! 🎉 You can now send images in your conversations with AI models that support vision capabilities.

@@ -25,11 +25,8 @@
 {#if isTool}
   <aside class="tool-invocation">
     <details>
-      <summary>
-        <div class="tool-header" id="tool-header-{toolName}">
-          <span class="tool-icon">🔧</span>
-          <strong>{toolName}</strong>
-        </div>
+      <summary class="tool-header" id="tool-header-{toolName}">
+        <strong>{toolName}</strong>
       </summary>
 
       <div role="region" aria-labelledby="tool-header-{toolName}">
@@ -67,10 +64,6 @@
     align-items: center;
     gap: 0.5rem;
     margin-bottom: 0.5rem;
-  }
-
-  .tool-icon {
-    font-size: 1.2rem;
   }
 
   .tool-content {

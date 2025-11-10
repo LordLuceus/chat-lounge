@@ -402,7 +402,7 @@ class AIService {
       }
     });
 
-    return text.trim().replaceAll('"', "").replaceAll("*", "").replaceAll("#", "");
+    return text.trim().replaceAll('"', "").replaceAll("*", "");
   }
 
   public async generateFollowUps(messages: DBMessage[], modelId: string): Promise<string[]> {

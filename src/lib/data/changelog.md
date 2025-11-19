@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 19 Nov, 2025
+
+Google's new Gemini 3 Pro Preview model is now available! You can set your Google API key in the settings page and start chatting with Gemini 3 Pro Preview right away. Enjoy the new capabilities and improvements that come with this latest model from Google!
+
 ## 27 Oct, 2025
 
 Fixed a bug where editing a message with an image attachment would remove the attachment from the message.

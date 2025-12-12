@@ -22,7 +22,11 @@ import {
   type GoogleGenerativeAIProviderOptions
 } from "@ai-sdk/google";
 import { createMistral, type MistralProvider } from "@ai-sdk/mistral";
-import { createOpenAI, type OpenAIProvider } from "@ai-sdk/openai";
+import {
+  createOpenAI,
+  type OpenAIProvider,
+  type OpenAIResponsesProviderOptions
+} from "@ai-sdk/openai";
 import { createXai, type XaiProvider } from "@ai-sdk/xai";
 import {
   createOpenRouter,
@@ -174,7 +178,10 @@ class AIService {
             type: thinking ? "enabled" : "disabled",
             budgetTokens: 4096
           }
-        } satisfies AnthropicProviderOptions
+        } satisfies AnthropicProviderOptions,
+        openai: {
+          reasoningEffort: "high"
+        } satisfies OpenAIResponsesProviderOptions
       }
     });
 

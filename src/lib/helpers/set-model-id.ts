@@ -4,13 +4,13 @@ import { type ApiKey } from "@prisma/client";
 export function setModel(apiKey: ApiKey, originalModelId: string): string {
   let modelId = originalModelId;
   if (apiKey.provider === AIProvider.Mistral) {
-    modelId = "mistral-small-latest";
+    modelId = "mistral-small-2506";
   } else if (apiKey.provider === AIProvider.OpenAI) {
     modelId = "gpt-4.1-mini";
   } else if (apiKey.provider === AIProvider.Google) {
     modelId = "models/gemini-2.0-flash";
   } else if (apiKey.provider === AIProvider.Anthropic) {
-    modelId = "claude-3-5-haiku-20241022";
+    modelId = "claude-haiku-4-5-20251001";
   } else if (apiKey.provider === AIProvider.XAI) {
     modelId = "grok-3-mini";
   } else if (apiKey.provider === AIProvider.OpenRouter) {

@@ -101,7 +101,7 @@ class AIService {
   ) {
     const processedMessages = await this.preProcess(messages, model, userId, agent, conversationId);
 
-    const response = this.getResponse(
+    const response = await this.getResponse(
       processedMessages,
       model,
       await this.prepareSystemPrompt(agent, userId),
@@ -158,10 +158,15 @@ class AIService {
     return stream;
   }
 
-  private getResponse(messages: UIMessage[], model: Model, system?: string, thinking?: boolean) {
+  private async getResponse(
+    messages: UIMessage[],
+    model: Model,
+    system?: string,
+    thinking?: boolean
+  ) {
     const result = streamText({
       model: this.client(model.id),
-      messages: convertToModelMessages(messages),
+      messages: await convertToModelMessages(messages),
       system,
       temperature: 1.0,
       ...(model.supportsTools && { tools, stopWhen: stepCountIs(5) }),
@@ -194,7 +199,7 @@ class AIService {
 
     const { text } = await generateText({
       model: this.client(modelId),
-      messages: convertToModelMessages([
+      messages: await convertToModelMessages([
         ...messages.slice(0, -1),
         { role: "user", parts: [{ type: "text", text: prompt }] }
       ]),
@@ -401,7 +406,12 @@ class AIService {
 
     const { text } = await generateText({
       model: this.client(modelId),
-      messages: [{ role: "user", content: prompt }],
+      messages: [
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
       system: titleGenerator?.instructions ?? undefined,
       temperature: 1.0,
       providerOptions: {
@@ -422,7 +432,12 @@ class AIService {
 
     const { text } = await generateText({
       model: this.client(modelId),
-      messages: [{ role: "user", content: prompt + "\n\n---\n\n" + context }],
+      messages: [
+        {
+          role: "user",
+          content: prompt + "\n\n---\n\n" + context
+        }
+      ],
       temperature: 1.0,
       providerOptions: {
         google: this.GOOGLE_SETTINGS as GoogleGenerativeAIProviderOptions

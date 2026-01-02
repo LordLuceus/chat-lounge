@@ -25,51 +25,60 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Architecture
 
 ### Tech Stack
-- **Frontend**: SvelteKit with TypeScript (Svelte 4)
+- **Frontend**: SvelteKit with TypeScript (Svelte 5 with runes)
 - **UI Components**: Shadcn-svelte components in `src/lib/components/ui/`
 - **Styling**: TailwindCSS with PostCSS
 - **Backend**: SvelteKit with adapter-node
 - **Database**: MySQL/MariaDB with Prisma ORM
 - **Queue**: Redis/Valkey with BullMQ for async job processing
-- **Auth**: Clerk for user authentication
+- **Auth**: Clerk for user authentication (svelte-clerk)
 - **Real-time**: Socket.io (port 4001) for import progress updates
+- **AI SDK**: Vercel AI SDK v6 with provider-specific packages (@ai-sdk/*)
 
 ### Key Systems
 
-**AI Integration**
-- Multiple providers: OpenAI, Anthropic, Mistral, Google
-- Streaming chat responses with proper error handling
-- Per-user API key management stored in database
-- Agent system for AI personalities with custom instructions
+**AI Integration** (`src/lib/server/ai-service.ts`)
+- `AIService` class handles all AI provider interactions
+- Providers: OpenAI, Anthropic, Mistral, Google, xAI, OpenRouter
+- Uses Vercel AI SDK's `streamText` for streaming responses with tool support
+- Token management with automatic conversation summarization when limit approached
+- Two agent types: `default` (instruction-based) and `character` (roleplay with verbosity settings)
+- AI tools defined in `src/lib/server/tools/` (currentTime, webSearch)
 
 **Conversation Management**
-- Branching/threading support with parent-child message relationships
-- Message editing and regeneration
-- Conversation pinning and folder organization
-- Public sharing functionality
-- Full-text search on conversations and messages
+- Branching/threading via `parentId` on messages - supports tree-like conversation structures
+- `currentNode` on Conversation tracks the active branch position
+- Message parts stored as JSON (supports text, files, tool calls via AI SDK UIMessage format)
+- Internal messages (`isInternal: true`) used for summaries, not shown in UI
+- Conversation import via BullMQ queue with Socket.io progress updates
 
-**Service Architecture**
-- Service layer pattern in `src/lib/server/`:
-  - `agents-service.ts` - Agent CRUD operations
-  - `conversations-service.ts` - Conversation and message management
-  - `ai-service.ts` - AI provider integration
-  - `api-keys-service.ts` - User API key management
-  - `folders-service.ts` - Folder organization
-- Database access through Prisma client in `src/lib/server/db/`
-- Queue processing in `src/lib/server/queue.ts`
+**Service Architecture** (`src/lib/server/`)
+- `agents-service.ts` - Agent CRUD, visibility (public/private/hidden)
+- `conversations-service.ts` - Conversation/message management, branching logic
+- `ai-service.ts` - AI provider integration, streaming, summarization
+- `api-keys-service.ts` - Per-user encrypted API key storage
+- `folders-service.ts` - Folder organization for conversations
+- `models-service.ts` - AI model registry with capabilities (tools, images, reasoning)
+- `r2-storage.ts` - Cloudflare R2 for file uploads
+- `queue.ts` - BullMQ worker for async conversation imports
 
-**Text-to-Speech**
-- ElevenLabs integration for TTS
-- Voice selection and management
-- TTS history tracking
-- Audio playback controls with stores in `src/lib/stores/audio-stores.ts`
+**State Management** (`src/lib/stores/`)
+- Svelte stores for client-side state
+- `conversation-store.ts` - Active conversation state
+- `audio-stores.ts` - TTS playback controls
+- `voices-store.ts` - Voice selection persistence
+
+### API Routes Pattern
+- REST endpoints in `src/routes/api/`
+- Chat streaming at `POST /api/chat`
+- CRUD follows pattern: `/api/[resource]/` and `/api/[resource]/[id]/`
+- Clerk webhook at `/api/webhooks` for user sync
 
 ### Database Schema Highlights
-- UUID-based IDs for all entities
-- Full-text indexes on searchable fields
-- Enum types for roles, providers, and models
-- Conversation-Message relationship supports threading
+- UUID-based IDs (CHAR(36)) for all entities
+- Full-text indexes on searchable fields (name, content, description)
+- Enums: `AIProvider`, `MessageRole`, `AgentType`, `AgentVisibility`, `ReasoningType`
+- Message-to-Message self-relation enables conversation branching
 
 ### Deployment
 - Docker Compose setup with MariaDB and Valkey services

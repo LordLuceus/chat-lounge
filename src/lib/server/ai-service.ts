@@ -1,5 +1,6 @@
 import corePrompt from "$lib/data/base_instructions.md?raw";
 import charPrompt from "$lib/data/character_prompt.txt?raw";
+import toolGuidelines from "$lib/data/tool_use_guidelines.md?raw";
 import { formatMessageContent } from "$lib/helpers";
 import { errorHandler } from "$lib/helpers/ai-error-handler";
 import { getAgentByName, type AgentWithUsage } from "$lib/server/agents-service";
@@ -473,14 +474,19 @@ class AIService {
     let finalPrompt: string;
 
     if (!agent) {
-      finalPrompt = baseInstructions || "";
+      finalPrompt = baseInstructions ? baseInstructions + "\n\n" + toolGuidelines : toolGuidelines;
     } else if (agent.type === AgentType.Default) {
       finalPrompt = baseInstructions
         ? baseInstructions +
+          "\n\n" +
+          toolGuidelines +
           "\n\n<special_instructions>\n\n" +
           agent.instructions +
           "\n\n</special_instructions>"
-        : agent.instructions;
+        : toolGuidelines +
+          "\n\n<special_instructions>\n\n" +
+          agent.instructions +
+          "\n\n</special_instructions>";
     } else {
       // Get verbosity instruction based on agent's verbosity setting
       const getVerbosityInstruction = (verbosity: string | null | undefined): string => {
@@ -501,7 +507,9 @@ class AIService {
         .replaceAll("{{user}}", user.username.charAt(0).toUpperCase() + user.username.slice(1))
         .replace("{{verbosity}}", getVerbosityInstruction(agent.verbosity));
 
-      finalPrompt = baseInstructions ? baseInstructions + "\n\n" + prompt : prompt;
+      finalPrompt = baseInstructions
+        ? baseInstructions + "\n\n" + toolGuidelines + "\n\n" + prompt
+        : toolGuidelines + "\n\n" + prompt;
     }
 
     const currentDate = new Date().toISOString().split("T")[0];

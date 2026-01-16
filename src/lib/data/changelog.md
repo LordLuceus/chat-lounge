@@ -1,5 +1,13 @@
 # ChatLounge Changelog
 
+## 16 Jan, 2026
+
+Improved the tool calling feature with several enhancements:
+
+- **Optimised web search**: Search results now return AI-generated summaries and query-relevant highlights instead of full page content. This significantly reduces token usage while still providing useful context.
+- **New fetch webpage tool**: Added a dedicated tool for fetching the full content of specific URLs. Use this when you need more detail from a page discovered via search or provided directly.
+- **Tool use guidelines**: Added guidelines to the system prompt to help the AI use tools more effectively, including best practices for crafting search queries.
+
 ## 19 Nov, 2025
 
 Google's new Gemini 3 Pro Preview model is now available! You can set your Google API key in the settings page and start chatting with Gemini 3 Pro Preview right away. Enjoy the new capabilities and improvements that come with this latest model from Google!

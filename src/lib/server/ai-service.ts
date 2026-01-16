@@ -170,7 +170,7 @@ class AIService {
       messages: await convertToModelMessages(messages),
       system,
       temperature: 1.0,
-      ...(model.supportsTools && { tools, stopWhen: stepCountIs(5) }),
+      ...(model.supportsTools && { tools, stopWhen: stepCountIs(20) }),
       providerOptions: {
         google: this.GOOGLE_SETTINGS,
         openrouter: {

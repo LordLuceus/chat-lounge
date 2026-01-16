@@ -21,7 +21,12 @@ export const webSearch = tool({
       const exa = new Exa(env.EXA_API_KEY);
       const { results } = await exa.searchAndContents(query, {
         livecrawl: "always",
-        numResults: 5
+        numResults: 5,
+        highlights: {
+          numSentences: 3,
+          highlightsPerUrl: 3
+        },
+        summary: true
       });
 
       if (!results || results.length === 0) {
@@ -36,7 +41,8 @@ export const webSearch = tool({
         results: results.map((result) => ({
           title: result.title,
           url: result.url,
-          content: result.text,
+          summary: result.summary,
+          highlights: result.highlights,
           publishedDate: result.publishedDate
         }))
       };

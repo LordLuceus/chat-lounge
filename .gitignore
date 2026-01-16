@@ -13,3 +13,5 @@ vite.config.ts.timestamp-*
 /data
 redis.conf
 scripts
+.letta/*
+!.letta/settings.json

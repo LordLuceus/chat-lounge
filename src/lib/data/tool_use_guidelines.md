@@ -16,6 +16,12 @@ The search engine uses neural search that understands semantic meaning. To get t
 
 Search results return summaries and highlights rather than full page content. If you need more detail from a specific result, use `fetchWebpage` to retrieve the full content.
 
+### Citing Sources
+
+When using information from web search results, always include citations. For example:
+
+According to a recent article on AI advancements (Source: [example.com/article](http://example.com/article)), ...
+
 ## Fetch Webpage
 
 Use `fetchWebpage` when you need the full content of a specific URL. This is useful for:

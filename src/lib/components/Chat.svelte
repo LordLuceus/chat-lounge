@@ -36,7 +36,7 @@
     type UITools
   } from "ai";
   import { PersistedState } from "runed";
-  import { onDestroy, onMount, tick } from "svelte";
+  import { onDestroy, onMount, tick, untrack } from "svelte";
   import { toast } from "svelte-sonner";
   import { v4 as uuidv4 } from "uuid";
 
@@ -217,7 +217,7 @@
       } else if ($conversationStore && chat.status !== "error")
         client.invalidateQueries({ queryKey: ["conversations"] });
     },
-    messages: initialMessages,
+    messages: untrack(() => initialMessages),
     transport: new DefaultChatTransport({ api: "/api/chat" })
   });
 

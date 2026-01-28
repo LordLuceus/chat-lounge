@@ -19,7 +19,7 @@
   import X from "@lucide/svelte/icons/x";
   import type { AIProvider } from "@prisma/client";
   import { useQueryClient } from "@tanstack/svelte-query";
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import { superForm, type Infer, type SuperValidated } from "sveltekit-superforms";
   import { zodClient } from "sveltekit-superforms/adapters";
   import { agentSchema, type AgentSchema } from "./schema";
@@ -47,20 +47,23 @@
 
   const client = useQueryClient();
 
-  const form = superForm(data, {
-    validators: zodClient(agentSchema),
-    dataType: "json",
-    onUpdated: ({ form }) => {
-      if (form.valid) {
-        closeDialog();
-        client.invalidateQueries({ queryKey: ["agents"] });
+  const form = superForm(
+    untrack(() => data),
+    {
+      validators: zodClient(agentSchema),
+      dataType: "json",
+      onUpdated: ({ form }) => {
+        if (form.valid) {
+          closeDialog();
+          client.invalidateQueries({ queryKey: ["agents"] });
 
-        if (form.message.created && form.message.agentId) {
-          goto(`/agents/${form.message.agentId}`);
+          if (form.message.created && form.message.agentId) {
+            goto(`/agents/${form.message.agentId}`);
+          }
         }
       }
     }
-  });
+  );
 
   const { form: formData, enhance } = form;
 

@@ -6,6 +6,7 @@
   import { superForm, type Infer, type SuperValidated } from "sveltekit-superforms";
   import { zodClient } from "sveltekit-superforms/adapters";
   import { folderSchema, type FolderSchema } from "../../routes/(app)/folders/schema";
+  import { untrack } from "svelte";
 
   interface Props {
     data: SuperValidated<Infer<FolderSchema>>;
@@ -17,19 +18,22 @@
 
   const client = useQueryClient();
 
-  const form = superForm(data, {
-    validators: zodClient(folderSchema),
-    onUpdated: ({ form }) => {
-      if (form.valid) {
-        closeDialog();
-        client.invalidateQueries({ queryKey: ["folders"] });
+  const form = superForm(
+    untrack(() => data),
+    {
+      validators: zodClient(folderSchema),
+      onUpdated: ({ form }) => {
+        if (form.valid) {
+          closeDialog();
+          client.invalidateQueries({ queryKey: ["folders"] });
 
-        if (form.message.created && form.message.folderId) {
-          goto(`/folders/${form.message.folderId}`);
+          if (form.message.created && form.message.folderId) {
+            goto(`/folders/${form.message.folderId}`);
+          }
         }
       }
     }
-  });
+  );
 
   const { form: formData, enhance } = form;
 </script>

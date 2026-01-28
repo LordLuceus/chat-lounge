@@ -16,7 +16,11 @@
 
   const { agent, open, onOpenChange, onForkSuccess }: Props = $props();
 
-  let customName = $state(`Copy of ${agent.name}`);
+  let customName = $state("");
+
+  $effect(() => {
+    customName = `Copy of ${agent.name}`;
+  });
 
   const client = useQueryClient();
 

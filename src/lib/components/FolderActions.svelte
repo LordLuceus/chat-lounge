@@ -48,10 +48,11 @@
 
   let renameDialogOpen = $state(false);
   let deleteDialogOpen = $state(false);
-  let newName = $state(name);
+  let newName = $state("");
 
   async function renameClick() {
     await tick();
+    newName = name;
     renameDialogOpen = true;
   }
 

@@ -8,6 +8,7 @@
   import { zodClient } from "sveltekit-superforms/adapters";
   import type { PageData } from "./$types";
   import { contactSchema } from "./schema";
+  import { untrack } from "svelte";
 
   interface Props {
     data: PageData;
@@ -15,18 +16,21 @@
 
   const { data }: Props = $props();
 
-  const form = superForm(data.form, {
-    validators: zodClient(contactSchema),
-    onUpdated: ({ form }) => {
-      if (form.message) {
-        if (form.message.type === "success") {
-          toast.success(form.message.text);
-        } else if (form.message.type === "error") {
-          toast.error(form.message.text);
+  const form = superForm(
+    untrack(() => data.form),
+    {
+      validators: zodClient(contactSchema),
+      onUpdated: ({ form }) => {
+        if (form.message) {
+          if (form.message.type === "success") {
+            toast.success(form.message.text);
+          } else if (form.message.type === "error") {
+            toast.error(form.message.text);
+          }
         }
       }
     }
-  });
+  );
 
   const { form: formData, enhance } = form;
 </script>

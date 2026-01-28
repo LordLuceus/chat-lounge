@@ -8,7 +8,6 @@
   import type { PagedResponse } from "$lib/types/api";
   import { Loader } from "@lucide/svelte";
   import type { CreateInfiniteQueryResult, InfiniteData } from "@tanstack/svelte-query";
-  import { onMount } from "svelte";
   import Search from "svelte-search";
   import type { Writable } from "svelte/store";
   import { get } from "svelte/store";
@@ -44,8 +43,8 @@
   }: Props = $props();
 
   let value = $state("");
-  let selectedSortBy: string = $state(defaultSortBy);
-  let selectedSortOrder: string = $state(defaultSortOrder);
+  let selectedSortBy: string = $state("");
+  let selectedSortOrder: string = $state("");
 
   function setSearch(value: string) {
     searchParams.update((params) => ({ ...params, search: value }));
@@ -72,10 +71,14 @@
     if (query.isSuccess && $searchParams.search) setAlertMessage();
   });
 
-  onMount(() => {
+  $effect(() => {
     const initial = get(searchParams);
-    selectedSortBy = initial.sortBy || defaultSortBy;
-    selectedSortOrder = initial.sortOrder || defaultSortOrder;
+    if (!selectedSortBy) {
+      selectedSortBy = initial.sortBy || defaultSortBy;
+    }
+    if (!selectedSortOrder) {
+      selectedSortOrder = initial.sortOrder || defaultSortOrder;
+    }
 
     if ((defaultSortBy && !initial.sortBy) || (defaultSortOrder && !initial.sortOrder)) {
       setSort(selectedSortBy, selectedSortOrder);

@@ -140,10 +140,11 @@
   let shareDialogOpen = $state(false);
   let unshareDialogOpen = $state(false);
   let addToFolderDialogOpen = $state(false);
-  let newName = $state(name);
+  let newName = $state("");
 
   async function renameClick() {
     await tick();
+    newName = name;
     renameDialogOpen = true;
   }
 

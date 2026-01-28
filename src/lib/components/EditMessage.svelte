@@ -3,6 +3,7 @@
   import * as Dialog from "$lib/components/ui/dialog";
   import { Textarea } from "$lib/components/ui/textarea";
   import type { UIDataTypes, UIMessagePart, UITools } from "ai";
+  import { untrack } from "svelte";
 
   interface Props {
     id: string;
@@ -19,7 +20,7 @@
   let open = $state(false);
 
   // Extract text content for editing
-  const textContent = parts
+  const textContent = untrack(() => parts)
     .filter((part) => part.type === "text")
     .map((part) => part.text)
     .join("\n\n");
@@ -27,7 +28,7 @@
   let value = $state(textContent);
 
   // Preserve non-text parts (like images)
-  const nonTextParts = parts.filter((part) => part.type !== "text");
+  const nonTextParts = untrack(() => parts).filter((part) => part.type !== "text");
 
   function handleSubmit(regenerate: boolean) {
     // Combine edited text with preserved non-text parts

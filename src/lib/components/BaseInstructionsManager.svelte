@@ -17,8 +17,17 @@
 
   const { useBaseInstructions = false, customBaseInstructions = null, form }: Props = $props();
 
-  let isEnabled = $state(useBaseInstructions);
-  let customPrompt = $state(customBaseInstructions);
+  let isEnabled = $state(false);
+  let customPrompt = $state<string | null>(null);
+
+  $effect(() => {
+    isEnabled = useBaseInstructions;
+  });
+
+  $effect(() => {
+    customPrompt = customBaseInstructions;
+  });
+
   let isSubmitting = $state(false);
 
   const baseInstructionsSummary = `The default base instructions provide core behavioral guidelines including:

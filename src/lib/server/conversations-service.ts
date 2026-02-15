@@ -9,6 +9,7 @@ import { getApiKey } from "$lib/server/api-keys-service";
 import { prisma } from "$lib/server/db";
 import { getModel } from "$lib/server/models-service";
 import { bulkDeleteFilesFromR2 } from "$lib/server/r2-storage";
+import { createFullTextSearchCondition } from "$lib/server/search-helpers";
 import { AIProvider, type DBMessage } from "$lib/types/db";
 import {
   Prisma,
@@ -87,14 +88,7 @@ export async function getConversations(
   }
 
   // Create search condition
-  const searchCondition = search
-    ? Prisma.sql`(
-        MATCH(c.name) AGAINST(${'"' + search + '"'} IN BOOLEAN MODE) OR 
-        MATCH(m.content) AGAINST(${'"' + search + '"'} IN BOOLEAN MODE) OR
-        MATCH(c.name) AGAINST(${"*" + search.split(" ").join("* *") + "*"} IN BOOLEAN MODE) OR
-        MATCH(m.content) AGAINST(${"*" + search.split(" ").join("* *") + "*"} IN BOOLEAN MODE)
-      )`
-    : Prisma.sql`TRUE`;
+  const searchCondition = createFullTextSearchCondition(search, ["c.name", "m.content"]);
 
   // Create folder condition
   const folderCondition = folderId
@@ -700,6 +694,8 @@ export async function getSharedConversations(
       break;
   }
 
+  const searchCondition = createFullTextSearchCondition(search, ["sc.name"]);
+
   const result = await prisma.$queryRaw<SharedConversation[]>(
     Prisma.sql`
       SELECT 
@@ -711,14 +707,7 @@ export async function getSharedConversations(
         sc.sharedAt
       FROM sharedConversation sc
       WHERE sc.userId = ${userId}
-      AND ${
-        search
-          ? Prisma.sql`(
-        MATCH(sc.name) AGAINST(${'"' + search + '"'} IN BOOLEAN MODE) OR
-        MATCH(sc.name) AGAINST(${"*" + search.split(" ").join("* *") + "*"} IN BOOLEAN MODE)
-      )`
-          : Prisma.sql`true`
-      }
+      AND ${searchCondition}
       ORDER BY ${orderByClause}
       LIMIT ${limit} OFFSET ${offset}
     `
@@ -729,14 +718,7 @@ export async function getSharedConversations(
       SELECT COUNT(DISTINCT sc.id) as count
       FROM sharedConversation sc
       WHERE sc.userId = ${userId}
-      AND ${
-        search
-          ? Prisma.sql`(
-        MATCH(sc.name) AGAINST(${'"' + search + '"'} IN BOOLEAN MODE) OR
-        MATCH(sc.name) AGAINST(${"*" + search.split(" ").join("* *") + "*"} IN BOOLEAN MODE)
-      )`
-          : Prisma.sql`true`
-      }
+      AND ${searchCondition}
     `
   );
 

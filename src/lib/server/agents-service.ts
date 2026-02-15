@@ -1,4 +1,5 @@
 import { prisma } from "$lib/server/db";
+import { createFullTextSearchCondition } from "$lib/server/search-helpers";
 import { AgentType, AgentVerbosity, Visibility } from "$lib/types/db";
 import { Prisma, type Agent } from "@prisma/client";
 
@@ -46,6 +47,9 @@ export async function getAgents(
       break;
   }
 
+  // Note: Using combined column syntax for MATCH to match original behavior
+  const searchCondition = createFullTextSearchCondition(search, ["a.name, a.description"]);
+
   const result = await prisma.$queryRaw<AgentWithUsage[]>(
     Prisma.sql`
       SELECT DISTINCT a.id, a.userId, a.name, a.description, a.instructions, 
@@ -54,14 +58,7 @@ export async function getAgents(
       LEFT JOIN agentUser au on (a.id = au.agentId AND au.userId = ${userId})
       WHERE ${ownerOnly ? Prisma.sql`(au.userId = ${userId} AND au.isOwner = true)` : Prisma.sql`(au.userId = ${userId} OR ${visibility} = ${Visibility.Public})`}
         AND ${visibility ? Prisma.sql`a.visibility = ${visibility}` : Prisma.sql`true`} 
-        AND ${
-          search
-            ? Prisma.sql`(
-          MATCH(a.name, a.description) AGAINST(${'"' + search + '"'} IN BOOLEAN MODE) OR
-          MATCH(a.name, a.description) AGAINST(${"*" + search.split(" ").join("* *") + "*"} IN BOOLEAN MODE)
-        )`
-            : Prisma.sql`true`
-        } 
+        AND ${searchCondition} 
       ORDER BY ${orderByClause}
       LIMIT ${limit} OFFSET ${offset}
     `
@@ -73,14 +70,7 @@ export async function getAgents(
       LEFT JOIN agentUser au on (a.id = au.agentId AND au.userId = ${userId})
       WHERE ${ownerOnly ? Prisma.sql`(au.userId = ${userId} AND au.isOwner = true)` : Prisma.sql`(au.userId = ${userId} OR ${visibility} = ${Visibility.Public})`}
         AND ${visibility ? Prisma.sql`a.visibility = ${visibility}` : Prisma.sql`true`} 
-        AND ${
-          search
-            ? Prisma.sql`(
-          MATCH(a.name, a.description) AGAINST(${'"' + search + '"'} IN BOOLEAN MODE) OR
-          MATCH(a.name, a.description) AGAINST(${"*" + search.split(" ").join("* *") + "*"} IN BOOLEAN MODE)
-        )`
-            : Prisma.sql`true`
-        } 
+        AND ${searchCondition} 
     `
   );
 

@@ -1,4 +1,5 @@
 import { prisma } from "$lib/server/db";
+import { createFullTextSearchCondition } from "$lib/server/search-helpers";
 import { Prisma, type Folder } from "@prisma/client";
 
 export async function getFolders(
@@ -24,19 +25,14 @@ export async function getFolders(
       break;
   }
 
+  const searchCondition = createFullTextSearchCondition(search, ["f.name"]);
+
   const result = await prisma.$queryRaw<Folder[]>(
     Prisma.sql`
       SELECT DISTINCT f.id, f.userId, f.name, f.createdAt, f.updatedAt
       FROM folder f
       WHERE f.userId = ${userId}
-      AND ${
-        search
-          ? Prisma.sql`(
-        MATCH(f.name) AGAINST(${'"' + search + '"'} IN BOOLEAN MODE) OR
-        MATCH(f.name) AGAINST(${"*" + search.split(" ").join("* *") + "*"} IN BOOLEAN MODE)
-      )`
-          : Prisma.sql`true`
-      }
+      AND ${searchCondition}
       ORDER BY ${orderByClause}
       LIMIT ${limit} OFFSET ${offset}
     `
@@ -46,14 +42,7 @@ export async function getFolders(
     Prisma.sql`
       SELECT COUNT(DISTINCT f.id) AS count FROM folder f
       WHERE f.userId = ${userId}
-      AND ${
-        search
-          ? Prisma.sql`(
-        MATCH(f.name) AGAINST(${'"' + search + '"'} IN BOOLEAN MODE) OR
-        MATCH(f.name) AGAINST(${"*" + search.split(" ").join("* *") + "*"} IN BOOLEAN MODE)
-      )`
-          : Prisma.sql`true`
-      }
+      AND ${searchCondition}
     `
   );
 

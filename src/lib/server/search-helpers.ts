@@ -20,6 +20,11 @@ import { Prisma } from "@prisma/client";
  *
  * // Separate column search (searches each column independently with OR)
  * createFullTextSearchCondition(search, ['c.name', 'm.content'])
+ *
+ * // Search behavior:
+ * // - "letta code" (quoted) → exact phrase match
+ * // - letta code (unquoted) → partial match requiring BOTH words (+*letta* +*code*)
+ * // - prof → partial match (professor, profession, etc.)
  */
 export function createFullTextSearchCondition(
   search: string | undefined,
@@ -30,7 +35,8 @@ export function createFullTextSearchCondition(
   }
 
   const exactMatch = '"' + search + '"';
-  const wildcardMatch = "*" + search.split(" ").join("* *") + "*";
+  // Use AND logic (+ prefix) for wildcards to require all words to be present
+  const wildcardMatch = "+" + search.split(" ").join("* +") + "*";
 
   const conditions = fields.flatMap((field) => [
     Prisma.sql`MATCH(${Prisma.raw(field)}) AGAINST(${exactMatch} IN BOOLEAN MODE)`,

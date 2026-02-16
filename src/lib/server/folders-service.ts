@@ -1,6 +1,10 @@
 import { prisma } from "$lib/server/db";
-import { createFullTextSearchCondition } from "$lib/server/search-helpers";
+import { createFullTextSearchCondition, getSearchQuery } from "$lib/server/search-helpers";
 import { Prisma, type Folder } from "@prisma/client";
+
+export type FolderWithScore = Folder & {
+  searchScore?: number;
+};
 
 export async function getFolders(
   userId: string,
@@ -27,13 +31,21 @@ export async function getFolders(
 
   const searchCondition = createFullTextSearchCondition(search, ["f.name"]);
 
-  const result = await prisma.$queryRaw<Folder[]>(
+  // Add score when searching
+  const searchScoreSelect = search
+    ? Prisma.sql`, MATCH(f.name) AGAINST(${getSearchQuery(search)} IN BOOLEAN MODE) AS searchScore`
+    : Prisma.sql``;
+
+  // Order by score first when searching
+  const orderBy = search ? Prisma.sql`searchScore DESC, ${orderByClause}` : orderByClause;
+
+  const result = await prisma.$queryRaw<FolderWithScore[]>(
     Prisma.sql`
-      SELECT DISTINCT f.id, f.userId, f.name, f.createdAt, f.updatedAt
+      SELECT DISTINCT f.id, f.userId, f.name, f.createdAt, f.updatedAt${searchScoreSelect}
       FROM folder f
       WHERE f.userId = ${userId}
       AND ${searchCondition}
-      ORDER BY ${orderByClause}
+      ORDER BY ${orderBy}
       LIMIT ${limit} OFFSET ${offset}
     `
   );

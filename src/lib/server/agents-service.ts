@@ -1,5 +1,5 @@
 import { prisma } from "$lib/server/db";
-import { createFullTextSearchCondition } from "$lib/server/search-helpers";
+import { createFullTextSearchCondition, getSearchQuery } from "$lib/server/search-helpers";
 import { AgentType, AgentVerbosity, Visibility } from "$lib/types/db";
 import { Prisma, type Agent } from "@prisma/client";
 
@@ -17,6 +17,7 @@ export interface AgentCreateOptions {
 
 export type AgentWithUsage = Agent & {
   lastUsedAt: Date | null;
+  searchScore?: number;
 };
 
 export async function getAgents(
@@ -50,16 +51,24 @@ export async function getAgents(
   // Note: Using combined column syntax for MATCH to match original behavior
   const searchCondition = createFullTextSearchCondition(search, ["a.name, a.description"]);
 
+  // Add score when searching
+  const searchScoreSelect = search
+    ? Prisma.sql`, MATCH(a.name, a.description) AGAINST(${getSearchQuery(search)} IN BOOLEAN MODE) AS searchScore`
+    : Prisma.sql``;
+
+  // Order by score first when searching
+  const orderBy = search ? Prisma.sql`searchScore DESC, ${orderByClause}` : orderByClause;
+
   const result = await prisma.$queryRaw<AgentWithUsage[]>(
     Prisma.sql`
       SELECT DISTINCT a.id, a.userId, a.name, a.description, a.instructions, 
-             a.createdAt, a.updatedAt, a.visibility, a.type, a.verbosity, a.greeting, au.lastUsedAt 
+             a.createdAt, a.updatedAt, a.visibility, a.type, a.verbosity, a.greeting, au.lastUsedAt${searchScoreSelect}
       FROM agent a 
       LEFT JOIN agentUser au on (a.id = au.agentId AND au.userId = ${userId})
       WHERE ${ownerOnly ? Prisma.sql`(au.userId = ${userId} AND au.isOwner = true)` : Prisma.sql`(au.userId = ${userId} OR ${visibility} = ${Visibility.Public})`}
         AND ${visibility ? Prisma.sql`a.visibility = ${visibility}` : Prisma.sql`true`} 
         AND ${searchCondition} 
-      ORDER BY ${orderByClause}
+      ORDER BY ${orderBy}
       LIMIT ${limit} OFFSET ${offset}
     `
   );

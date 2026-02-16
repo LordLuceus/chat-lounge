@@ -46,3 +46,16 @@ export function createFullTextSearchCondition(
   // Join all conditions with OR
   return Prisma.sql`(${Prisma.join(conditions, " OR ")})`;
 }
+
+/**
+ * Creates a search query string for use in MATCH AGAINST score calculations.
+ * Combines exact phrase and wildcard matching for relevance scoring.
+ *
+ * @param search - Search term
+ * @returns SQL expression for use in AGAINST clause
+ */
+export function getSearchQuery(search: string): string {
+  const exactMatch = '"' + search + '"';
+  const wildcardMatch = "+" + search.split(" ").join("* +") + "*";
+  return `${exactMatch} ${wildcardMatch}`;
+}

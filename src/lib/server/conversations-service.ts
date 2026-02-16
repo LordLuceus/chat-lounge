@@ -9,7 +9,7 @@ import { getApiKey } from "$lib/server/api-keys-service";
 import { prisma } from "$lib/server/db";
 import { getModel } from "$lib/server/models-service";
 import { bulkDeleteFilesFromR2 } from "$lib/server/r2-storage";
-import { createFullTextSearchCondition } from "$lib/server/search-helpers";
+import { createFullTextSearchCondition, getSearchQuery } from "$lib/server/search-helpers";
 import { AIProvider, type DBMessage } from "$lib/types/db";
 import {
   Prisma,
@@ -59,6 +59,7 @@ export interface MessageImport {
 export type ConversationsResponse = Conversation & {
   lastUpdated: Date | null;
   sharedConversationId: string | null;
+  searchScore?: number;
 };
 
 export async function getConversations(
@@ -95,6 +96,18 @@ export async function getConversations(
     ? Prisma.sql`c.folderId = ${folderId}`
     : Prisma.sql`c.folderId IS NULL`;
 
+  // Add weighted score when searching (name matches weighted 2x higher than content)
+  const searchScoreSelect = search
+    ? Prisma.sql`,
+        (MATCH(c.name) AGAINST(${getSearchQuery(search)} IN BOOLEAN MODE) * 2 +
+         COALESCE(MAX(MATCH(m.content) AGAINST(${getSearchQuery(search)} IN BOOLEAN MODE)), 0)) AS searchScore`
+    : Prisma.sql``;
+
+  // Order by score first when searching, then pinned, then normal ordering
+  const orderBy = search
+    ? Prisma.sql`searchScore DESC, c.isPinned DESC, ${orderBySql}`
+    : Prisma.sql`c.isPinned DESC, ${orderBySql}`;
+
   const result = await prisma.$queryRaw<ConversationsResponse[]>(
     Prisma.sql`
       SELECT DISTINCT
@@ -109,7 +122,7 @@ export async function getConversations(
         c.isImporting,
         sc.id as sharedConversationId,
         c.isPinned,
-        c.folderId
+        c.folderId${searchScoreSelect}
       FROM conversation c
       INNER JOIN conversationUser cu ON c.id = cu.conversationId
       LEFT JOIN sharedConversation sc ON c.id = sc.conversationId
@@ -129,7 +142,7 @@ export async function getConversations(
         sc.id,
         c.isPinned,
         c.folderId
-      ORDER BY c.isPinned DESC, ${orderBySql}
+      ORDER BY ${orderBy}
       LIMIT ${limit} OFFSET ${offset}
     `
   );
@@ -671,6 +684,10 @@ async function getSharedConversationByConversationId(conversationId: string) {
   return conversation;
 }
 
+export type SharedConversationWithScore = SharedConversation & {
+  searchScore?: number;
+};
+
 export async function getSharedConversations(
   userId: string,
   limit: number = 10,
@@ -696,7 +713,15 @@ export async function getSharedConversations(
 
   const searchCondition = createFullTextSearchCondition(search, ["sc.name"]);
 
-  const result = await prisma.$queryRaw<SharedConversation[]>(
+  // Add score when searching
+  const searchScoreSelect = search
+    ? Prisma.sql`, MATCH(sc.name) AGAINST(${getSearchQuery(search)} IN BOOLEAN MODE) AS searchScore`
+    : Prisma.sql``;
+
+  // Order by score first when searching
+  const orderBy = search ? Prisma.sql`searchScore DESC, ${orderByClause}` : orderByClause;
+
+  const result = await prisma.$queryRaw<SharedConversationWithScore[]>(
     Prisma.sql`
       SELECT 
         sc.id,
@@ -704,11 +729,11 @@ export async function getSharedConversations(
         sc.agentId,
         sc.createdAt,
         sc.updatedAt,
-        sc.sharedAt
+        sc.sharedAt${searchScoreSelect}
       FROM sharedConversation sc
       WHERE sc.userId = ${userId}
       AND ${searchCondition}
-      ORDER BY ${orderByClause}
+      ORDER BY ${orderBy}
       LIMIT ${limit} OFFSET ${offset}
     `
   );

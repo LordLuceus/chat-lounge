@@ -36,8 +36,8 @@ export async function getFolders(
     ? Prisma.sql`, MATCH(f.name) AGAINST(${getSearchQuery(search)} IN BOOLEAN MODE) AS searchScore`
     : Prisma.sql``;
 
-  // Order by score first when searching
-  const orderBy = search ? Prisma.sql`searchScore DESC, ${orderByClause}` : orderByClause;
+  // Only order by score when both searching AND sortBy is "relevance"
+  const orderBy = search && sortBy === "relevance" ? Prisma.sql`searchScore DESC` : orderByClause;
 
   const result = await prisma.$queryRaw<FolderWithScore[]>(
     Prisma.sql`

@@ -103,10 +103,11 @@ export async function getConversations(
          COALESCE(MAX(MATCH(m.content) AGAINST(${getSearchQuery(search)} IN BOOLEAN MODE)), 0)) AS searchScore`
     : Prisma.sql``;
 
-  // Order by score first when searching, then pinned, then normal ordering
-  const orderBy = search
-    ? Prisma.sql`searchScore DESC, c.isPinned DESC, ${orderBySql}`
-    : Prisma.sql`c.isPinned DESC, ${orderBySql}`;
+  // Only order by score when both searching AND sortBy is "relevance", always respect pinned
+  const orderBy =
+    search && sortBy === "relevance"
+      ? Prisma.sql`searchScore DESC, c.isPinned DESC`
+      : Prisma.sql`c.isPinned DESC, ${orderBySql}`;
 
   const result = await prisma.$queryRaw<ConversationsResponse[]>(
     Prisma.sql`
@@ -718,8 +719,8 @@ export async function getSharedConversations(
     ? Prisma.sql`, MATCH(sc.name) AGAINST(${getSearchQuery(search)} IN BOOLEAN MODE) AS searchScore`
     : Prisma.sql``;
 
-  // Order by score first when searching
-  const orderBy = search ? Prisma.sql`searchScore DESC, ${orderByClause}` : orderByClause;
+  // Only order by score when both searching AND sortBy is "relevance"
+  const orderBy = search && sortBy === "relevance" ? Prisma.sql`searchScore DESC` : orderByClause;
 
   const result = await prisma.$queryRaw<SharedConversationWithScore[]>(
     Prisma.sql`

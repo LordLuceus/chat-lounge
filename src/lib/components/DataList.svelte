@@ -46,8 +46,45 @@
   let selectedSortBy: string = $state("");
   let selectedSortOrder: string = $state("");
 
-  function setSearch(value: string) {
-    searchParams.update((params) => ({ ...params, search: value }));
+  // Track previous sort to restore when search clears
+  let previousSortBy: string = $state("");
+  let previousSortOrder: string = $state("");
+  // Track if we've auto-switched to relevance (to prevent re-switching on manual change)
+  let autoSwitchedToRelevance = $state(false);
+
+  // Computed sort options - add Relevance when searching
+  const currentSortOptions = $derived(
+    value && sortOptions.length
+      ? [{ label: "Relevance", value: "relevance" }, ...sortOptions]
+      : sortOptions
+  );
+
+  // Auto-switch to/from Relevance when search changes
+  $effect(() => {
+    if (value && !autoSwitchedToRelevance) {
+      // Starting a search - save current sort and switch to relevance
+      if (selectedSortBy !== "relevance") {
+        previousSortBy = selectedSortBy;
+        previousSortOrder = selectedSortOrder;
+        selectedSortBy = "relevance";
+        setSort(selectedSortBy, selectedSortOrder);
+      }
+      autoSwitchedToRelevance = true;
+    } else if (!value && autoSwitchedToRelevance) {
+      // Search cleared - restore previous sort if user didn't manually change it
+      if (previousSortBy && selectedSortBy === "relevance") {
+        selectedSortBy = previousSortBy;
+        selectedSortOrder = previousSortOrder;
+        setSort(selectedSortBy, selectedSortOrder);
+      }
+      previousSortBy = "";
+      previousSortOrder = "";
+      autoSwitchedToRelevance = false;
+    }
+  });
+
+  function setSearch(newValue: string) {
+    searchParams.update((params) => ({ ...params, search: newValue }));
     srAlertMessage = "";
   }
 
@@ -165,28 +202,30 @@
         onchange={() => setSort(selectedSortBy, selectedSortOrder)}
         class="rounded border px-2 py-1"
       >
-        {#each sortOptions as { label, value }}
+        {#each currentSortOptions as { label, value }}
           <option {value}>{label}</option>
         {/each}
       </select>
     </Label>
-    <div class="flex items-center gap-2">
-      <Label class="font-medium">Order:</Label>
-      <ToggleGroup
-        type="single"
-        value={selectedSortOrder}
-        aria-label="Sort order"
-        onValueChange={(value) => {
-          if (value !== undefined) {
-            selectedSortOrder = value;
-            setSort(selectedSortBy, selectedSortOrder);
-          }
-        }}
-      >
-        <ToggleGroupItem value="ASC">Ascending</ToggleGroupItem>
-        <ToggleGroupItem value="DESC">Descending</ToggleGroupItem>
-      </ToggleGroup>
-    </div>
+    {#if selectedSortBy !== "relevance"}
+      <div class="flex items-center gap-2">
+        <Label class="font-medium">Order:</Label>
+        <ToggleGroup
+          type="single"
+          value={selectedSortOrder}
+          aria-label="Sort order"
+          onValueChange={(newValue) => {
+            if (newValue !== undefined) {
+              selectedSortOrder = newValue;
+              setSort(selectedSortBy, selectedSortOrder);
+            }
+          }}
+        >
+          <ToggleGroupItem value="ASC">Ascending</ToggleGroupItem>
+          <ToggleGroupItem value="DESC">Descending</ToggleGroupItem>
+        </ToggleGroup>
+      </div>
+    {/if}
   </div>
 {/if}
 

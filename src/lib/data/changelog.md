@@ -1,5 +1,14 @@
 # ChatLounge Changelog
 
+## 16 Feb, 2026
+
+Major improvements to the full-text search functionality across conversations, agents, and folders:
+
+- **Smarter search matching**: Search terms now require ALL words to be present (AND logic) instead of matching any word (OR logic). For example, searching "letta code" now finds results containing both "letta" AND "code", not just one or the other. Partial word matching still works, so "prof" will find "professor".
+- **Relevance scoring**: Search results are now ranked by relevance. For conversations, matches in the conversation name are weighted higher than matches in message content, so you'll see the most relevant results first.
+- **Relevance sort option**: When searching, a "Relevance" option appears in the sort dropdown and is automatically selected. Results are sorted by relevance score by default, but you can still manually choose to sort by name or date if preferred.
+- **Improved search UX**: The sort dropdown now clearly shows when results are sorted by relevance, and automatically restores your previous sort selection when you clear the search.
+
 ## 16 Jan, 2026
 
 Improved the tool calling feature with several enhancements:

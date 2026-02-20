@@ -63,7 +63,7 @@ importers:
         specifier: ^2.9.0
         version: 2.9.0
       ioredis:
-        specifier: ^5.9.3
+        specifier: ^5.9.2
         version: 5.9.3
       mode-watcher:
         specifier: ^1.1.0

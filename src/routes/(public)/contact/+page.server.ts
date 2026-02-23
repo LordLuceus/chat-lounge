@@ -2,19 +2,19 @@ import { env } from "$env/dynamic/private";
 import { fail } from "@sveltejs/kit";
 import { Resend } from "resend";
 import { superValidate } from "sveltekit-superforms";
-import { zod } from "sveltekit-superforms/adapters";
+import { zod4 } from "sveltekit-superforms/adapters";
 import type { Actions, PageServerLoad } from "./$types";
 import { contactSchema } from "./schema";
 
 export const load: PageServerLoad = async () => {
   return {
-    form: await superValidate(zod(contactSchema))
+    form: await superValidate(zod4(contactSchema))
   };
 };
 
 export const actions: Actions = {
   default: async ({ request }) => {
-    const form = await superValidate(request, zod(contactSchema));
+    const form = await superValidate(request, zod4(contactSchema));
 
     if (!form.valid) {
       return fail(400, { form });

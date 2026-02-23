@@ -2,13 +2,13 @@ import { createAgent } from "$lib/server/agents-service";
 import { AgentType, AgentVerbosity, Visibility } from "$lib/types/db";
 import { fail } from "@sveltejs/kit";
 import { message, superValidate } from "sveltekit-superforms";
-import { zod } from "sveltekit-superforms/adapters";
+import { zod4 } from "sveltekit-superforms/adapters";
 import type { Actions, PageServerLoad } from "./$types";
 import { agentSchema } from "./schema";
 
 export const load = (async () => {
   return {
-    form: await superValidate(zod(agentSchema))
+    form: await superValidate(zod4(agentSchema))
   };
 }) satisfies PageServerLoad;
 
@@ -19,7 +19,7 @@ export const actions: Actions = {
       return fail(401, { message: "Unauthorized" });
     }
 
-    const form = await superValidate(request, zod(agentSchema), { strict: true });
+    const form = await superValidate(request, zod4(agentSchema), { strict: true });
 
     if (!form.valid) {
       return fail(400, { form });

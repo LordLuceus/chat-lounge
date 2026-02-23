@@ -7,7 +7,7 @@ export const fetchWebpage = tool({
   description:
     "Fetch the content of a specific webpage by URL. Use this when you need to read the full content of a page, either from a URL the user provided or one discovered via web search.",
   inputSchema: z.object({
-    url: z.string().url().describe("The URL of the webpage to fetch")
+    url: z.url().describe("The URL of the webpage to fetch")
   }),
   execute: async ({ url }) => {
     try {

@@ -4,7 +4,7 @@
   import { Input } from "$lib/components/ui/input";
   import { useQueryClient } from "@tanstack/svelte-query";
   import { superForm, type Infer, type SuperValidated } from "sveltekit-superforms";
-  import { zodClient } from "sveltekit-superforms/adapters";
+  import { zod4Client } from "sveltekit-superforms/adapters";
   import { folderSchema, type FolderSchema } from "../../routes/(app)/folders/schema";
   import { untrack } from "svelte";
 
@@ -21,7 +21,7 @@
   const form = superForm(
     untrack(() => data),
     {
-      validators: zodClient(folderSchema),
+      validators: zod4Client(folderSchema),
       onUpdated: ({ form }) => {
         if (form.valid) {
           closeDialog();

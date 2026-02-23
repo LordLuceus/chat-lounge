@@ -1,13 +1,13 @@
 import { createFolder } from "$lib/server/folders-service";
 import { fail } from "@sveltejs/kit";
 import { message, superValidate } from "sveltekit-superforms";
-import { zod } from "sveltekit-superforms/adapters";
+import { zod4 } from "sveltekit-superforms/adapters";
 import type { Actions, PageServerLoad } from "./$types";
 import { folderSchema } from "./schema";
 
 export const load = (async () => {
   return {
-    form: await superValidate(zod(folderSchema))
+    form: await superValidate(zod4(folderSchema))
   };
 }) satisfies PageServerLoad;
 
@@ -18,7 +18,7 @@ export const actions: Actions = {
       return fail(401, { message: "Unauthorized" });
     }
 
-    const form = await superValidate(request, zod(folderSchema), { strict: true });
+    const form = await superValidate(request, zod4(folderSchema), { strict: true });
 
     if (!form.valid) {
       return fail(400, { form });

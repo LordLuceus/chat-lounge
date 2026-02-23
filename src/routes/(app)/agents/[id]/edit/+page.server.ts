@@ -1,7 +1,7 @@
 import { getAgent, updateAgent, type AgentCreateOptions } from "$lib/server/agents-service.js";
 import { error, fail, redirect } from "@sveltejs/kit";
 import { message, superValidate } from "sveltekit-superforms";
-import { zod } from "sveltekit-superforms/adapters";
+import { zod4 } from "sveltekit-superforms/adapters";
 import { agentSchema } from "../../schema";
 import type { Actions, PageServerLoad } from "./$types";
 
@@ -34,7 +34,7 @@ export const load = (async (event) => {
 
   return {
     agent,
-    editForm: await superValidate(formData, zod(agentSchema), { id: agent.id })
+    editForm: await superValidate(formData, zod4(agentSchema), { id: agent.id })
   };
 }) satisfies PageServerLoad;
 
@@ -45,7 +45,7 @@ export const actions: Actions = {
       return fail(401, { message: "Unauthorized" });
     }
 
-    const form = await superValidate(event, zod(agentSchema), { strict: true });
+    const form = await superValidate(event, zod4(agentSchema), { strict: true });
 
     if (!form.valid) {
       return fail(400, { form });

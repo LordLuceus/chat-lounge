@@ -5,7 +5,7 @@
   import { Textarea } from "$lib/components/ui/textarea";
   import { toast } from "svelte-sonner";
   import { superForm } from "sveltekit-superforms";
-  import { zodClient } from "sveltekit-superforms/adapters";
+  import { zod4Client } from "sveltekit-superforms/adapters";
   import type { PageData } from "./$types";
   import { contactSchema } from "./schema";
   import { untrack } from "svelte";
@@ -19,7 +19,7 @@
   const form = superForm(
     untrack(() => data.form),
     {
-      validators: zodClient(contactSchema),
+      validators: zod4Client(contactSchema),
       onUpdated: ({ form }) => {
         if (form.message) {
           if (form.message.type === "success") {

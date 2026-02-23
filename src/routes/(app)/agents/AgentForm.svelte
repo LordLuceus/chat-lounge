@@ -21,7 +21,7 @@
   import { useQueryClient } from "@tanstack/svelte-query";
   import { onMount, untrack } from "svelte";
   import { superForm, type Infer, type SuperValidated } from "sveltekit-superforms";
-  import { zodClient } from "sveltekit-superforms/adapters";
+  import { zod4Client } from "sveltekit-superforms/adapters";
   import { agentSchema, type AgentSchema } from "./schema";
 
   interface ModelData {
@@ -50,7 +50,7 @@
   const form = superForm(
     untrack(() => data),
     {
-      validators: zodClient(agentSchema),
+      validators: zod4Client(agentSchema),
       dataType: "json",
       onUpdated: ({ form }) => {
         if (form.valid) {

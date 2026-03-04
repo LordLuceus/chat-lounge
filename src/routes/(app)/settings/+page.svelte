@@ -1,7 +1,7 @@
 <script lang="ts">
   import ApiKeyManager from "$lib/components/ApiKeyManager.svelte";
   import BaseInstructionsManager from "$lib/components/BaseInstructionsManager.svelte";
-  import { SignedIn } from "svelte-clerk";
+  import { Show } from "svelte-clerk";
   import { useClerkContext } from "svelte-clerk/client";
   import type { ActionData, PageData } from "./$types";
 
@@ -22,7 +22,7 @@
 </svelte:head>
 
 <section>
-  <SignedIn>
+  <Show when="signed-in">
     <h1>Settings</h1>
     <p>Welcome, {user?.username}!</p>
     <p>Here you can manage your API keys and custom model instructions.</p>
@@ -52,7 +52,7 @@
       You can manage your account settings, such as your username and email, directly in the
       <a href="/profile">profile page</a>.
     </p>
-  </SignedIn>
+  </Show>
 </section>
 
 <style>

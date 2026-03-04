@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { SignedIn } from "svelte-clerk";
+  import { Show } from "svelte-clerk";
   import { hasAnyApiKey, hasAnyLLMKey } from "$lib/helpers/api-key-utils";
 
   const { data, children } = $props();
 </script>
 
-<SignedIn>
+<Show when="signed-in">
   {#if !hasAnyApiKey(data.keys)}
     <p>You don't have any API keys set.</p>
     <p>
@@ -21,4 +21,4 @@
   {:else}
     {@render children?.()}
   {/if}
-</SignedIn>
+</Show>

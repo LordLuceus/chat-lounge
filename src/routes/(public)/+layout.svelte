@@ -4,7 +4,7 @@
   import { Toaster } from "$lib/components/ui/sonner";
   import { SunMoon } from "@lucide/svelte";
   import { resetMode, setMode } from "mode-watcher";
-  import { ClerkLoaded, SignedIn, SignedOut } from "svelte-clerk";
+  import { ClerkLoaded, Show } from "svelte-clerk";
 
   interface Props {
     children?: import("svelte").Snippet;
@@ -14,7 +14,7 @@
 </script>
 
 <ClerkLoaded>
-  <SignedIn>
+  <Show when="signed-in">
     <header class="flex items-center justify-between p-4">
       <a href="/">
         <img src="/assets/chatlounge_logo.webp" alt="ChatLounge" />
@@ -49,9 +49,9 @@
         <a href="/contact">Contact</a>
       </div>
     </footer>
-  </SignedIn>
+  </Show>
 
-  <SignedOut>
+  <Show when="signed-out">
     <header class="flex items-center justify-between p-4">
       <a href="/">
         <img src="/assets/chatlounge_logo.webp" alt="ChatLounge" />
@@ -88,7 +88,7 @@
         <a href="/contact">Contact</a>
       </div>
     </footer>
-  </SignedOut>
+  </Show>
 </ClerkLoaded>
 
 <Toaster />

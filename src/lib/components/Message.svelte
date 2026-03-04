@@ -11,7 +11,7 @@
   import type { Message } from "@prisma/client";
   import { createMutation, useQueryClient } from "@tanstack/svelte-query";
   import type { UIDataTypes, UIMessagePart, UITools } from "ai";
-  import { SignedIn } from "svelte-clerk";
+  import { Show } from "svelte-clerk";
   import { useClerkContext } from "svelte-clerk/client";
   import { toast } from "svelte-sonner";
 
@@ -73,7 +73,7 @@
   }
 </script>
 
-<SignedIn>
+<Show when="signed-in">
   {#if message.role === "user" || message.role === "assistant"}
     <MessageContent
       {message}
@@ -115,7 +115,7 @@
       {/if}
     </div>
   {/if}
-</SignedIn>
+</Show>
 
 <AlertDialog.Root bind:open={rewindDialogOpen}>
   <AlertDialog.Content>

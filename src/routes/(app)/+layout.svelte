@@ -19,7 +19,7 @@
   import type { Agent, Conversation, Folder } from "@prisma/client";
   import { createInfiniteQuery, createQuery, type CreateQueryResult } from "@tanstack/svelte-query";
   import { resetMode, setMode } from "mode-watcher";
-  import { ClerkLoaded, SignedIn, SignedOut } from "svelte-clerk";
+  import { ClerkLoaded, Show } from "svelte-clerk";
   import { useClerkContext } from "svelte-clerk/client";
   import { toast } from "svelte-sonner";
   import type { LayoutData } from "./$types";
@@ -123,7 +123,7 @@
   let ttsOpen = $state(false);
 </script>
 
-<SignedIn>
+<Show when="signed-in">
   <header class="flex items-center justify-between p-4">
     <a href="/">
       <img src="/assets/chatlounge_logo.webp" alt="ChatLounge" />
@@ -275,9 +275,9 @@
       <a href="/contact">Contact</a>
     </div>
   </footer>
-</SignedIn>
+</Show>
 
-<SignedOut>
+<Show when="signed-out">
   <header class="flex items-center justify-between p-4">
     <a href="/auth/sign-in">Sign in</a>
     <a href="/auth/sign-up">Sign up</a>
@@ -288,7 +288,7 @@
   <footer>
     <a href="/changelog">Changelog</a>
   </footer>
-</SignedOut>
+</Show>
 
 <Toaster />
 <NewVersionPopup />

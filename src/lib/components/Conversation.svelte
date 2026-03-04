@@ -9,7 +9,7 @@
   import { createQuery, useQueryClient } from "@tanstack/svelte-query";
   import { io, type Socket } from "socket.io-client";
   import { onDestroy, onMount } from "svelte";
-  import { SignedIn } from "svelte-clerk";
+  import { Show } from "svelte-clerk";
   import { useClerkContext } from "svelte-clerk/client";
   import { toast } from "svelte-sonner";
 
@@ -120,7 +120,7 @@
   {$conversationStore?.name}
 </h1>
 
-<SignedIn>
+<Show when="signed-in">
   {#if !$conversationStore?.isImporting}
     {#key page.data.conversation.id}
       <Chat
@@ -152,4 +152,4 @@
       </div>
     </div>
   {/if}
-</SignedIn>
+</Show>

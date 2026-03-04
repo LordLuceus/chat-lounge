@@ -16,7 +16,7 @@
   import type { Agent } from "@prisma/client";
   import { createInfiniteQuery } from "@tanstack/svelte-query";
   import { onDestroy } from "svelte";
-  import { SignedIn } from "svelte-clerk";
+  import { Show } from "svelte-clerk";
   import { useClerkContext } from "svelte-clerk/client";
   import Time from "svelte-time";
   import type { PageData } from "./$types";
@@ -159,7 +159,7 @@
   <ToggleGroup.Item value="public">Public agents</ToggleGroup.Item>
 </ToggleGroup.Root>
 
-<SignedIn>
+<Show when="signed-in">
   <DataList
     query={agentsQuery}
     searchLabel="Search agents"
@@ -228,4 +228,4 @@
       </Card.Root>
     {/snippet}
   </DataList>
-</SignedIn>
+</Show>

@@ -12,7 +12,7 @@
   import type { Folder } from "@prisma/client";
   import { createInfiniteQuery } from "@tanstack/svelte-query";
   import { onDestroy } from "svelte";
-  import { SignedIn } from "svelte-clerk";
+  import { Show } from "svelte-clerk";
   import Time from "svelte-time";
 
   const fetchFolders = async (
@@ -117,7 +117,7 @@
   onClearSelection={clearSelection}
 />
 
-<SignedIn>
+<Show when="signed-in">
   <DataList
     query={foldersQuery}
     searchLabel="Search folders"
@@ -151,4 +151,4 @@
       </Card.Root>
     {/snippet}
   </DataList>
-</SignedIn>
+</Show>

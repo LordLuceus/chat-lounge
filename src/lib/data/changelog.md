@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 1 Apr 2026
+
+Added a new "search in all folders" toggle on the conversations page, so you can search through your entire conversation history in one place.
+
 ## 16 Feb, 2026
 
 Major improvements to the full-text search functionality across conversations, agents, and folders:
@@ -171,7 +175,7 @@ Also added a sorting panel to the conversations, agents, and folders pages.
 
 The conversation import eature is now out of beta. Also added a load all messages button alongside the load more button.
 
-## 16 Mar, 2025
+## 16 Mar, 2025pr 2026
 
 Added folders. You can now organize your conversations into folders, making it easier to find and manage them. Start by creating a new folder on the folders page. You can then add conversations to the folder by clicking the "Add to folder" button in the conversation menu. Hope you enjoy the new feature! 🚀
 

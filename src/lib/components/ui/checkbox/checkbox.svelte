@@ -9,6 +9,7 @@
     id?: string;
     disabled?: boolean;
     class?: string;
+    ariaLabel?: string;
   }
 
   let {
@@ -17,7 +18,8 @@
     onCheckedChange,
     id,
     disabled = false,
-    class: className
+    class: className,
+    ariaLabel
   }: Props = $props();
 
   function handleClick() {
@@ -39,6 +41,7 @@
   role="checkbox"
   tabindex="0"
   aria-checked={indeterminate ? "mixed" : checked}
+  aria-label={ariaLabel}
   {id}
   class={cn(
     "peer flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-sm border border-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",

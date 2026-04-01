@@ -111,6 +111,7 @@
 <div class="mb-2 flex items-center gap-2">
   <Checkbox
     id="search-all-folders"
+    ariaLabel="Search all folders"
     checked={$searchParams.allFolders ?? false}
     onCheckedChange={(checked) =>
       searchParams.update((params) => ({ ...params, allFolders: !!checked }))}

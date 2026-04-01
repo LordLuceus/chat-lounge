@@ -62,7 +62,12 @@
 <div class="space-y-6">
   <div class="space-y-4">
     <div class="flex items-center space-x-3">
-      <Checkbox id="base-instructions-toggle" checked={isEnabled} onCheckedChange={handleToggle} />
+      <Checkbox
+        id="base-instructions-toggle"
+        ariaLabel="Enable Base Instructions"
+        checked={isEnabled}
+        onCheckedChange={handleToggle}
+      />
       <Label for="base-instructions-toggle" class="text-sm font-medium">
         Enable Base Instructions
       </Label>

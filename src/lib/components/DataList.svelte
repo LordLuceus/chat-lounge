@@ -181,6 +181,7 @@
       indeterminate={someItemsSelected()}
       onCheckedChange={toggleSelectAll}
       id="select-all"
+      ariaLabel="Select all"
     />
     <Label for="select-all" class="text-sm">
       {allItemsSelected() ? "Deselect all" : someItemsSelected() ? "Select all" : "Select all"}

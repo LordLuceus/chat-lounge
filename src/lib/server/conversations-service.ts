@@ -69,7 +69,8 @@ export async function getConversations(
   sortBy: string = "lastUpdated",
   sortDirection: string = "DESC",
   search?: string,
-  folderId?: string
+  folderId?: string,
+  allFolders: boolean = false
 ) {
   let orderBySql;
   switch (sortBy) {
@@ -92,9 +93,11 @@ export async function getConversations(
   const searchCondition = createFullTextSearchCondition(search, ["c.name", "m.content"]);
 
   // Create folder condition
-  const folderCondition = folderId
-    ? Prisma.sql`c.folderId = ${folderId}`
-    : Prisma.sql`c.folderId IS NULL`;
+  const folderCondition = allFolders
+    ? Prisma.sql`1=1`
+    : folderId
+      ? Prisma.sql`c.folderId = ${folderId}`
+      : Prisma.sql`c.folderId IS NULL`;
 
   // Add weighted score when searching (name matches weighted 2x higher than content)
   const searchScoreSelect = search

@@ -10,6 +10,7 @@ export interface RequestParams {
   visibility?: Visibility;
   ownerOnly?: boolean;
   folderId?: string;
+  allFolders?: boolean;
 }
 
 export class QueryParamsProcessor {
@@ -34,7 +35,8 @@ export class QueryParamsProcessor {
       search: params.search || "",
       visibility: params.visibility,
       ownerOnly: params.ownerOnly === "true",
-      folderId: params.folderId
+      folderId: params.folderId,
+      allFolders: params.allFolders === "true"
     };
   }
 
@@ -82,5 +84,9 @@ export class QueryParamsProcessor {
 
   public getFolderId() {
     return this.params.folderId;
+  }
+
+  public getAllFolders() {
+    return this.params.allFolders ?? false;
   }
 }

@@ -6,6 +6,8 @@
   import DataList from "$lib/components/DataList.svelte";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
+  import { Checkbox } from "$lib/components/ui/checkbox";
+  import { Label } from "$lib/components/ui/label";
   import { searchParams, type SearchParams } from "$lib/stores";
   import type { PagedResponse } from "$lib/types/api";
   import type { Conversation } from "@prisma/client";
@@ -15,7 +17,7 @@
 
   const fetchConversations = async (
     { pageParam = 1 },
-    { search, sortBy, sortOrder }: SearchParams
+    { search, sortBy, sortOrder, allFolders }: SearchParams
   ) => {
     const url = new URL("/api/conversations", page.url.origin);
 
@@ -28,6 +30,9 @@
     }
     if (sortOrder) {
       url.searchParams.set("sortOrder", sortOrder);
+    }
+    if (allFolders) {
+      url.searchParams.set("allFolders", "true");
     }
 
     return await fetch(url.toString()).then((res) => res.json());
@@ -50,7 +55,7 @@
   });
 
   onDestroy(() => {
-    if (browser) searchParams.set({ search: "", sortBy: "", sortOrder: "" });
+    if (browser) searchParams.set({ search: "", sortBy: "", sortOrder: "", allFolders: false });
   });
 
   const conversationSortOptions = [
@@ -102,6 +107,16 @@
   resourceType="conversations"
   onClearSelection={clearSelection}
 />
+
+<div class="mb-2 flex items-center gap-2">
+  <Checkbox
+    id="search-all-folders"
+    checked={$searchParams.allFolders ?? false}
+    onCheckedChange={(checked) =>
+      searchParams.update((params) => ({ ...params, allFolders: !!checked }))}
+  />
+  <Label for="search-all-folders" class="text-sm">Search all folders</Label>
+</div>
 
 <DataList
   query={conversationsQuery}

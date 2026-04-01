@@ -21,6 +21,7 @@ export const GET = (async ({ locals, url }) => {
   const search = paramsProcessor.getSearchQuery();
   const sorting = paramsProcessor.getSorting();
   const folderId = paramsProcessor.getFolderId();
+  const allFolders = paramsProcessor.getAllFolders();
 
   const result = await getConversations(
     userId,
@@ -29,7 +30,8 @@ export const GET = (async ({ locals, url }) => {
     sorting?.sortBy || "lastUpdated",
     sorting?.sortOrder || "DESC",
     search,
-    folderId
+    folderId,
+    allFolders
   );
 
   return json({

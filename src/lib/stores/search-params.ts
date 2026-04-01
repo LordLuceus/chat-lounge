@@ -7,6 +7,7 @@ export interface SearchParams {
   visibility?: string;
   ownerOnly?: boolean;
   folderId?: string;
+  allFolders?: boolean;
 }
 
 export const searchParams = writable<SearchParams>({

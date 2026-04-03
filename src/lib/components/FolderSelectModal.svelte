@@ -17,6 +17,7 @@
     description?: string;
     onFolderSelect: (folder: Folder) => void;
     onOpenChange?: (open: boolean) => void;
+    excludeFolderId?: string;
   }
 
   const {
@@ -24,7 +25,8 @@
     title = "Select Folder",
     description = "Choose a folder",
     onFolderSelect,
-    onOpenChange
+    onOpenChange,
+    excludeFolderId
   }: Props = $props();
 
   const searchParams = writable<SearchParams>({
@@ -98,15 +100,17 @@
           <p>No folders found.</p>
         {/snippet}
         {#snippet children({ item })}
-          <div>
-            <Button
-              variant="outline"
-              class="w-full justify-start"
-              onclick={() => handleFolderClick(item)}
-            >
-              {item.name}
-            </Button>
-          </div>
+          {#if item.id !== excludeFolderId}
+            <div>
+              <Button
+                variant="outline"
+                class="w-full justify-start"
+                onclick={() => handleFolderClick(item)}
+              >
+                {item.name}
+              </Button>
+            </div>
+          {/if}
         {/snippet}
       </DataList>
     </Dialog.Header>

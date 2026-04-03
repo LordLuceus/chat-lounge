@@ -170,6 +170,7 @@
 
   let deleteDialogOpen = $state(false);
   let addToFolderDialogOpen = $state(false);
+  let moveToFolderDialogOpen = $state(false);
 
   const selectedCount = $derived(selectedIds.size);
 
@@ -184,6 +185,14 @@
       folderId: folder.id
     });
     addToFolderDialogOpen = false;
+  }
+
+  function handleMoveToFolder(folder: Folder) {
+    bulkAddToFolderMutation.mutate({
+      ids: Array.from(selectedIds),
+      folderId: folder.id
+    });
+    moveToFolderDialogOpen = false;
   }
 
   const canPin = $derived(resourceType === "conversations");
@@ -214,6 +223,7 @@
     // Folder logic
     const allInFolder = selectedConversations.every((item) => item.folderId);
     const allNotInFolder = selectedConversations.every((item) => !item.folderId);
+    const anyInFolder = selectedConversations.some((item) => item.folderId);
 
     // Share logic
     const allShared = selectedConversations.every((item) => item.sharedConversationId);
@@ -224,9 +234,26 @@
       showUnpin: allPinned,
       showAddToFolder: allNotInFolder,
       showRemoveFromFolder: allInFolder,
+      showMoveToFolder: anyInFolder,
       showShare: allUnshared,
       showUnshare: allShared
     };
+  });
+
+  // Collect unique folder IDs from selected items to exclude from move modal
+  const moveExcludeFolderId = $derived(() => {
+    if (resourceType !== "conversations" || selectedItems.length === 0) return undefined;
+    const selectedConversations = selectedItems.filter((item: unknown) =>
+      selectedIds.has((item as ConversationItem).id)
+    ) as ConversationItem[];
+    const folderIds = [
+      ...new Set(
+        selectedConversations.map((item) => item.folderId).filter((id): id is string => !!id)
+      )
+    ];
+    // If all selected are in the same folder, exclude that one folder
+    if (folderIds.length === 1) return folderIds[0];
+    return undefined;
   });
 </script>
 
@@ -279,6 +306,18 @@
           onclick={() => bulkRemoveFromFolderMutation.mutate(Array.from(selectedIds))}
         >
           Remove from Folder
+        </Button>
+      {/if}
+
+      {#if canAddToFolder && selectionState().showMoveToFolder}
+        <Button
+          size="sm"
+          variant="outline"
+          onclick={() => {
+            moveToFolderDialogOpen = true;
+          }}
+        >
+          Move to Folder
         </Button>
       {/if}
 
@@ -342,4 +381,13 @@
   description="Select a folder to add the selected items to."
   onFolderSelect={handleAddToFolder}
   onOpenChange={(open) => (addToFolderDialogOpen = open)}
+/>
+
+<FolderSelectModal
+  open={moveToFolderDialogOpen}
+  title="Move {selectedCount} item{selectedCount > 1 ? 's' : ''} to folder"
+  description="Select a folder to move the selected items to."
+  onFolderSelect={handleMoveToFolder}
+  onOpenChange={(open) => (moveToFolderDialogOpen = open)}
+  excludeFolderId={moveExcludeFolderId()}
 />

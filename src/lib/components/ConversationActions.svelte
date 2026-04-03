@@ -140,6 +140,7 @@
   let shareDialogOpen = $state(false);
   let unshareDialogOpen = $state(false);
   let addToFolderDialogOpen = $state(false);
+  let moveToFolderDialogOpen = $state(false);
   let newName = $state("");
 
   async function renameClick() {
@@ -166,6 +167,11 @@
   async function addToFolderClick() {
     await tick();
     addToFolderDialogOpen = true;
+  }
+
+  async function moveToFolderClick() {
+    await tick();
+    moveToFolderDialogOpen = true;
   }
 
   function handleRename() {
@@ -213,6 +219,18 @@
         onSuccess: () => {
           toast.success("Conversation added to folder successfully.");
           addToFolderDialogOpen = false;
+        }
+      }
+    );
+  }
+
+  function handleMoveToFolder(folder: Folder) {
+    addToFolderMutation.mutate(
+      { conversationId: id, folderId: folder.id },
+      {
+        onSuccess: () => {
+          toast.success("Conversation moved to folder successfully.");
+          moveToFolderDialogOpen = false;
         }
       }
     );
@@ -290,6 +308,15 @@
   onOpenChange={(open) => (addToFolderDialogOpen = open)}
 />
 
+<FolderSelectModal
+  open={moveToFolderDialogOpen}
+  title="Move conversation to folder"
+  description="Move this conversation to another folder."
+  onFolderSelect={handleMoveToFolder}
+  onOpenChange={(open) => (moveToFolderDialogOpen = open)}
+  excludeFolderId={folderId}
+/>
+
 <DropdownMenu.Root>
   <DropdownMenu.Trigger>Actions</DropdownMenu.Trigger>
   <DropdownMenu.Content>
@@ -298,6 +325,7 @@
       >{isPinned ? "Unpin" : "Pin to top"}</DropdownMenu.Item
     >
     {#if folderId}
+      <DropdownMenu.Item onclick={moveToFolderClick}>Move to folder</DropdownMenu.Item>
       <DropdownMenu.Item onclick={handleRemoveFromFolder}>Remove from folder</DropdownMenu.Item>
     {:else}
       <DropdownMenu.Item onclick={addToFolderClick}>Add to folder</DropdownMenu.Item>

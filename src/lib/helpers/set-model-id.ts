@@ -14,7 +14,7 @@ export function setModel(apiKey: ApiKey, originalModelId: string): string {
   } else if (apiKey.provider === AIProvider.XAI) {
     modelId = "grok-3-mini";
   } else if (apiKey.provider === AIProvider.OpenRouter) {
-    modelId = "deepseek/deepseek-chat-v3-0324";
+    modelId = "z-ai/glm-4.7";
   }
   return modelId;
 }

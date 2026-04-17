@@ -165,6 +165,15 @@ class AIService {
     system?: string,
     thinking?: boolean
   ) {
+    const anthropicConfig = {
+      thinking: thinking
+        ? model.adaptiveThinking
+          ? { type: "adaptive", display: "summarized" }
+          : { type: "enabled", budgetTokens: 4096 }
+        : { type: "disabled" },
+      effort: model.adaptiveThinking ? "high" : undefined
+    } satisfies AnthropicProviderOptions;
+
     const result = streamText({
       model: this.client(model.id),
       messages: await convertToModelMessages(messages),
@@ -179,12 +188,7 @@ class AIService {
             enabled: thinking ?? false
           }
         } satisfies OpenRouterProviderOptions,
-        anthropic: {
-          thinking: {
-            type: thinking ? "enabled" : "disabled",
-            budgetTokens: 4096
-          }
-        } satisfies AnthropicProviderOptions,
+        anthropic: anthropicConfig,
         openai: {
           reasoningEffort: "high"
         } satisfies OpenAIResponsesProviderOptions

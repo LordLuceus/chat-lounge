@@ -2,7 +2,7 @@
 
 ## 30 Sep 2026
 
-New AI models now arrive much faster. ChatLounge checks for newly released models every day, so the latest models from OpenAI, Anthropic, Google, Mistral, xAI, and OpenRouter will appear in the model selector soon after launch, once they've been reviewed.
+New AI models now arrive much faster. ChatLounge checks for newly released models every day, so the latest models from OpenAI, Anthropic, Google, Mistral, xAI, and OpenRouter will appear in the model selector soon after launch, once they've been reviewed. The model selector now lists each provider's models from newest to oldest, so the latest ones are always at the top.
 
 You can also now send videos to models that understand them, such as Gemini:
 

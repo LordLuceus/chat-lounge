@@ -74,8 +74,14 @@ export function formatMessageContent(parts: UIMessagePart<UIDataTypes, UITools>[
     .map((part) => {
       if (part.type === "text") return part.text;
       if (part.type === "file") {
-        const filePart = part as { type: "file"; filename?: string; url: string };
-        return `[Image: ${filePart.filename || filePart.url}]`;
+        const filePart = part as {
+          type: "file";
+          filename?: string;
+          url?: string;
+          mediaType?: string;
+        };
+        const label = filePart.mediaType?.startsWith("video/") ? "Video" : "Image";
+        return `[${label}: ${filePart.filename || filePart.url}]`;
       }
       return "";
     })

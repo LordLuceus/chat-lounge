@@ -2,6 +2,7 @@ import { getAgent, updateLastUsed } from "$lib/server/agents-service";
 import AIService from "$lib/server/ai-service";
 import { getApiKey } from "$lib/server/api-keys-service";
 import { getConversation, updateConversation } from "$lib/server/conversations-service";
+import { isYouTubeUrl } from "$lib/helpers/youtube";
 import { getModel } from "$lib/server/models-service";
 import { getPresignedUrl } from "$lib/server/r2-storage";
 import { getUser } from "$lib/server/users-service";
@@ -80,6 +81,42 @@ export const POST = (async ({ locals, request }) => {
 
   if (!model) {
     return error(404, { message: "Model not found" });
+  }
+
+  // Video parts only go to models that accept them, and YouTube links only to
+  // Google, whose API reads them directly (other SDKs would try to download
+  // the watch page). Earlier messages in a conversation that switched models
+  // get a text placeholder instead; a new message with unsupported video is
+  // rejected.
+  const canTakePart = (part: { type: string; mediaType?: string; url?: string }) => {
+    if (part.type !== "file" || !part.mediaType?.startsWith("video/")) return true;
+    if (!model.supportsVideo) return false;
+    return !(part.url && isYouTubeUrl(part.url)) || model.provider === AIProvider.Google;
+  };
+
+  const lastIndex = processedMessages.length - 1;
+  for (const [index, msg] of processedMessages.entries()) {
+    if (!msg.parts) continue;
+    const parts = msg.parts as Array<{
+      type: string;
+      mediaType?: string;
+      url?: string;
+      filename?: string;
+    }>;
+    if (parts.every(canTakePart)) continue;
+
+    if (index === lastIndex) {
+      return error(400, { message: `${model.name} doesn't accept this video input` });
+    }
+
+    processedMessages[index] = {
+      ...msg,
+      parts: parts.map((part) =>
+        canTakePart(part)
+          ? part
+          : { type: "text", text: `[Video not shown to this model: ${part.filename || part.url}]` }
+      )
+    };
   }
 
   const apiKey = await getApiKey(user.id, model.provider as AIProvider);

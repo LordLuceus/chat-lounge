@@ -145,7 +145,10 @@ function inferAdaptiveThinking(provider: AIProvider, model: ModelsDevModel): boo
 function syncedFields(model: ModelsDevModel) {
   return {
     ...(model.tool_call !== undefined && { supportsTools: model.tool_call }),
-    ...(model.modalities && { supportsImages: model.modalities.input.includes("image") }),
+    ...(model.modalities && {
+      supportsImages: model.modalities.input.includes("image"),
+      supportsVideo: model.modalities.input.includes("video")
+    }),
     ...(model.status === "deprecated" && { deprecated: true }),
     ...(model.release_date && { releaseDate: new Date(model.release_date) })
   };
@@ -182,7 +185,7 @@ async function fetchModelsDev(): Promise<Map<AIProvider, Map<string, ModelsDevMo
 /**
  * Syncs the model table with models.dev.
  *
- * - Existing models get their tool and image support, deprecation, and
+ * - Existing models get their tool, image, and video support, deprecation, and
  *   release date refreshed. Name, token limit, reasoning settings, and review
  *   status are never touched, so manual fixes stick.
  * - New chat models released within the last six months are added as

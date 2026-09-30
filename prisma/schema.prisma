@@ -149,6 +149,7 @@ model Model {
   reasoningType    ReasoningType     @default(none)
   supportsTools    Boolean           @default(true)
   supportsImages   Boolean           @default(true)
+  supportsVideo    Boolean           @default(false)
   deprecated       Boolean           @default(false)
   adaptiveThinking Boolean?
   reviewStatus     ModelReviewStatus @default(approved)

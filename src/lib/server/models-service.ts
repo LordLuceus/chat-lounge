@@ -97,7 +97,8 @@ export async function getUserModelsGroupedByProvider(userId: string) {
             name: m.name,
             reasoningType: m.reasoningType as ReasoningType,
             deprecated: m.deprecated,
-            supportsImages: m.supportsImages
+            supportsImages: m.supportsImages,
+            supportsVideo: m.supportsVideo
           })),
         deprecatedModels: providerModels
           .filter((m) => m.deprecated)
@@ -106,7 +107,8 @@ export async function getUserModelsGroupedByProvider(userId: string) {
             name: m.name,
             reasoningType: m.reasoningType as ReasoningType,
             deprecated: m.deprecated,
-            supportsImages: m.supportsImages
+            supportsImages: m.supportsImages,
+            supportsVideo: m.supportsVideo
           }))
       };
     })

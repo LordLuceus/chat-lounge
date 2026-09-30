@@ -95,6 +95,58 @@ export async function getPresignedUrl(key: string, expiresIn: number = 3600): Pr
   return presignedUrl;
 }
 
+/** Video types Gemini accepts, per its file input docs. */
+export const ALLOWED_VIDEO_TYPES = [
+  "video/mp4",
+  "video/mpeg",
+  "video/quicktime",
+  "video/webm",
+  "video/x-flv",
+  "video/3gpp",
+  "video/avi",
+  "video/wmv"
+];
+
+export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
+
+/**
+ * Create a presigned PUT URL so the browser can upload a video straight to R2,
+ * bypassing the app server's body size limit. Content-Type and Content-Length
+ * are part of the signature, so the browser must send exactly the declared
+ * type and size, which enforces the limit on R2's side.
+ */
+export async function createVideoUploadUrl(
+  userId: string,
+  filename: string,
+  mimeType: string,
+  size: number
+): Promise<{ key: string; uploadUrl: string }> {
+  if (!ALLOWED_VIDEO_TYPES.includes(mimeType)) {
+    throw new Error(`File type ${mimeType} not allowed`);
+  }
+
+  if (!Number.isSafeInteger(size) || size <= 0 || size > MAX_VIDEO_BYTES) {
+    throw new Error(`Video must be between 1 byte and ${MAX_VIDEO_BYTES / (1024 * 1024)}MB`);
+  }
+
+  const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, "_");
+  const key = `${userId}/${Date.now()}_${sanitizedFilename}`;
+
+  const command = new PutObjectCommand({
+    Bucket: env.R2_BUCKET_NAME,
+    Key: key,
+    ContentType: mimeType,
+    ContentLength: size
+  });
+
+  const uploadUrl = await getSignedUrl(r2Client, command, {
+    expiresIn: 600,
+    signableHeaders: new Set(["content-type", "content-length"])
+  });
+
+  return { key, uploadUrl };
+}
+
 /**
  * Delete a file from R2
  * @param key - The R2 object key

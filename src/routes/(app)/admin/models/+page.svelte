@@ -34,6 +34,7 @@
     <li>Context window: {model.tokenLimit.toLocaleString()} tokens</li>
     <li>Tools: {yesNo(model.supportsTools)}</li>
     <li>Images: {yesNo(model.supportsImages)}</li>
+    <li>Video: {yesNo(model.supportsVideo)}</li>
   </ul>
 {/snippet}
 

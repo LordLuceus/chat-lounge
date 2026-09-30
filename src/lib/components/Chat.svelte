@@ -23,6 +23,7 @@
     ttsProps,
     voices
   } from "$lib/stores";
+  import { extractYouTubeUrls } from "$lib/helpers/youtube";
   import { type DBMessage, ReasoningType } from "$lib/types/db";
   import { ModelID } from "$lib/types/elevenlabs";
   import { Chat } from "@ai-sdk/svelte";
@@ -46,6 +47,7 @@
     reasoningType: ReasoningType;
     deprecated: boolean;
     supportsImages: boolean;
+    supportsVideo: boolean;
   }
 
   interface ProviderGroup {
@@ -90,10 +92,16 @@
       const model = [...group.models, ...group.deprecatedModels].find(
         (m) => m.id === selectedModelId
       );
-      if (model) return model;
+      if (model) return { ...model, provider: group.provider };
     }
     return null;
   });
+
+  // Only Google's API takes YouTube links as video input directly; other
+  // providers would try to download the watch page as a file.
+  const acceptsYouTube = $derived(
+    selectedModel()?.provider === "google" && selectedModel()?.supportsVideo === true
+  );
 
   $effect(() => {
     const model = selectedModel();
@@ -284,12 +292,112 @@
     }
   }
 
+  const IMAGE_TYPES = "image/png,image/jpeg,image/jpg,image/gif,image/webp";
+  const VIDEO_TYPES =
+    "video/mp4,video/mpeg,video/quicktime,video/webm,video/x-flv,video/3gpp,video/avi,video/wmv";
+  const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
+
+  let uploadStatus = $state("");
+
+  // YouTube links in the draft that will be sent as video input.
+  const youtubeUrls = $derived(acceptsYouTube ? extractYouTubeUrls(chatInput) : []);
+
+  // Announce when links are first detected (or the count changes), not on every keystroke.
+  let announcedYouTubeCount = 0;
+  $effect(() => {
+    const count = youtubeUrls.length;
+    if (count === announcedYouTubeCount) return;
+    announcedYouTubeCount = count;
+    if (count > 0) {
+      uploadStatus =
+        count === 1
+          ? "YouTube link detected. It will be sent as a video."
+          : `${count} YouTube links detected. They will be sent as videos.`;
+    }
+  });
+
+  const acceptedFileTypes = $derived(
+    selectedModel()?.supportsVideo ? `${IMAGE_TYPES},${VIDEO_TYPES}` : IMAGE_TYPES
+  );
+
+  const attachLabel = $derived(
+    selectedModel()?.supportsVideo && selectedModel()?.supportsImages !== false
+      ? "Attach images or videos"
+      : selectedModel()?.supportsVideo
+        ? "Attach videos"
+        : "Attach images"
+  );
+
+  // Videos upload straight to R2 via a presigned PUT URL, bypassing the app
+  // server's body size limit. Images keep the base64 path through /api/upload.
+  async function uploadVideo(file: File) {
+    if (file.size > MAX_VIDEO_BYTES) {
+      toast.error(`${file.name} exceeds the 100MB video limit`);
+      return;
+    }
+
+    const id = crypto.randomUUID();
+    attachedFiles.push({
+      id,
+      mediaType: file.type,
+      dataUrl: "",
+      key: "",
+      url: "",
+      filename: file.name,
+      uploading: true
+    });
+    uploadStatus = `Uploading ${file.name}`;
+
+    try {
+      const response = await fetch("/api/upload/video", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: file.name, mimeType: file.type, size: file.size })
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.message ?? "Could not start upload");
+      }
+
+      const { key, uploadUrl, url } = await response.json();
+
+      const put = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file
+      });
+
+      if (!put.ok) throw new Error(`Storage rejected the upload (${put.status})`);
+
+      attachedFiles = attachedFiles.map((f) =>
+        f.id === id ? { ...f, key, url, uploading: false } : f
+      );
+      uploadStatus = `${file.name} uploaded`;
+    } catch (err) {
+      uploadStatus = "";
+      toast.error(
+        `Failed to upload ${file.name}: ${err instanceof Error ? err.message : "unknown error"}`
+      );
+      removeFile(id);
+    }
+  }
+
   // File upload handlers
   async function handleFileSelect(event: Event) {
     const input = event.target as HTMLInputElement;
     const files = Array.from(input.files || []);
 
     for (const file of files) {
+      if (file.type.startsWith("video/")) {
+        if (!selectedModel()?.supportsVideo) {
+          toast.error(`${selectedModel()?.name ?? "This model"} doesn't accept video`);
+          continue;
+        }
+        uploadVideo(file);
+        continue;
+      }
+
       // Validate size
       if (file.size > 5 * 1024 * 1024) {
         toast.error(`${file.name} exceeds 5MB limit`);
@@ -352,7 +460,16 @@
     if (!items) return;
 
     for (const item of Array.from(items)) {
-      if (item.type.startsWith("image/")) {
+      if (item.kind === "file" && item.type.startsWith("video/")) {
+        event.preventDefault();
+        const file = item.getAsFile();
+        if (!file) continue;
+        if (!selectedModel()?.supportsVideo) {
+          toast.error(`${selectedModel()?.name ?? "This model"} doesn't accept video`);
+          continue;
+        }
+        uploadVideo(file);
+      } else if (item.type.startsWith("image/")) {
         event.preventDefault();
         const file = item.getAsFile();
         if (file) {
@@ -719,6 +836,13 @@
         filename: file.filename
       }));
 
+      // YouTube links in the message become video inputs. The link stays in
+      // the text too, and the part is a plain URL (no R2 key), so it's stored
+      // and re-sent as-is.
+      for (const url of youtubeUrls) {
+        fileParts.push({ type: "file", url, mediaType: "video/mp4", filename: url });
+      }
+
       // Build file parts for storage (R2 keys)
       const storageParts: Array<{
         type: "file";
@@ -763,22 +887,41 @@
     }}
     bind:this={chatForm}
   >
+    <!-- Announces upload progress; videos can take a while -->
+    <div class="sr-only" role="status" aria-live="polite">{uploadStatus}</div>
+
     <!-- Hidden file input -->
     <input
       bind:this={fileInputRef}
       type="file"
-      accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+      accept={acceptedFileTypes}
       multiple
       style="display: none;"
       onchange={handleFileSelect}
     />
+
+    {#if youtubeUrls.length > 0}
+      <p class="mb-2 text-sm">
+        {youtubeUrls.length === 1
+          ? "The YouTube link in your message will be sent as a video."
+          : `The ${youtubeUrls.length} YouTube links in your message will be sent as videos.`}
+      </p>
+    {/if}
 
     <!-- Image preview section -->
     {#if attachedFiles.length > 0}
       <div class="attached-files mb-2 flex flex-wrap gap-2">
         {#each attachedFiles as file (file.id)}
           <div class="relative">
-            <img src={file.dataUrl} alt={file.filename} class="h-20 w-20 rounded object-cover" />
+            {#if file.mediaType.startsWith("video/")}
+              <div
+                class="flex h-20 w-32 items-center justify-center break-all rounded border p-1 text-center text-xs"
+              >
+                Video: {file.filename}
+              </div>
+            {:else}
+              <img src={file.dataUrl} alt={file.filename} class="h-20 w-20 rounded object-cover" />
+            {/if}
             {#if file.uploading}
               <div
                 class="absolute inset-0 flex items-center justify-center rounded bg-black bg-opacity-50"
@@ -811,13 +954,13 @@
     {/if}
 
     <div class="chat-input-container flex gap-2">
-      {#if selectedModel()?.supportsImages !== false}
+      {#if selectedModel()?.supportsImages !== false || selectedModel()?.supportsVideo}
         <Button
           type="button"
           variant="outline"
           onclick={() => fileInputRef?.click()}
           disabled={chat.status === "streaming" || chat.status === "submitted"}
-          aria-label="Attach images"
+          aria-label={attachLabel}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

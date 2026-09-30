@@ -3,6 +3,7 @@
   import ToolCallDisplay from "$lib/components/ToolCallDisplay.svelte";
   import * as Avatar from "$lib/components/ui/avatar";
   import { formatMessageContent } from "$lib/helpers";
+  import { fetchYouTubeTitle, getYouTubeVideoId, isYouTubeUrl } from "$lib/helpers/youtube";
   import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
   import { BotMessageSquare } from "@lucide/svelte";
   import type { FileUIPart, UIDataTypes, UIMessagePart, UITools } from "ai";
@@ -62,6 +63,15 @@
     }
   }
 
+  // Video titles for YouTube embeds, keyed by video ID. No title when the
+  // lookup fails; the player announces itself as a YouTube player regardless.
+  let youtubeTitles = $state<Record<string, string>>({});
+
+  async function loadYouTubeTitle(videoId: string) {
+    const title = await fetchYouTubeTitle(videoId);
+    if (title) youtubeTitles[videoId] = title;
+  }
+
   async function handleImageError(key: string) {
     await loadImageUrl(key, true);
   }
@@ -74,6 +84,16 @@
           loadImageUrl(part.key);
         }
       });
+    }
+  });
+
+  // Look up titles for YouTube embeds (cached, so re-runs are cheap).
+  $effect(() => {
+    for (const part of message.parts ?? []) {
+      if (isFilePart(part) && isYouTubeUrl(part.url)) {
+        const videoId = getYouTubeVideoId(part.url);
+        if (videoId) loadYouTubeTitle(videoId);
+      }
     }
   });
 </script>
@@ -96,6 +116,44 @@
       {#each message.parts as part, index (index)}
         {#if part.type === "text"}
           <Markdown md={part.text || ""} {plugins} />
+        {:else if hasKey(part) && part.mediaType?.startsWith("video/")}
+          <div class="message-video my-2">
+            {#if imageUrls[part.key]}
+              <video
+                src={imageUrls[part.key]}
+                controls
+                preload="metadata"
+                aria-label={part.filename || "Video attachment"}
+                class="max-w-md rounded-lg"
+                onerror={() => handleImageError(part.key)}
+              >
+                <track kind="captions" />
+              </video>
+            {:else}
+              <p>Loading video: {part.filename || "attachment"}</p>
+            {/if}
+          </div>
+        {:else if isFilePart(part) && isYouTubeUrl(part.url)}
+          {@const videoId = getYouTubeVideoId(part.url)}
+          <div class="message-video my-2">
+            {#if videoId}
+              <iframe
+                src="https://www.youtube-nocookie.com/embed/{videoId}"
+                title={youtubeTitles[videoId] ?? undefined}
+                class="aspect-video w-full max-w-md rounded-lg"
+                allow="encrypted-media; picture-in-picture; fullscreen"
+                referrerpolicy="strict-origin-when-cross-origin"
+                loading="lazy"
+              ></iframe>
+            {/if}
+            <p>
+              Video input: <a href={part.url} target="_blank" rel="noopener noreferrer"
+                >{part.url}</a
+              >
+            </p>
+          </div>
+        {:else if isFilePart(part) && part.mediaType?.startsWith("video/")}
+          <p class="message-video my-2">Video attachment: {part.filename || "video"}</p>
         {:else if hasKey(part)}
           <div class="message-image my-2">
             {#if imageUrls[part.key]}

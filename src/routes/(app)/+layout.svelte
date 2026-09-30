@@ -219,6 +219,11 @@
           >
           <DropdownMenu.Item onclick={() => goto("/settings")}>Settings</DropdownMenu.Item>
           <DropdownMenu.Item onclick={() => goto("/profile")}>Account</DropdownMenu.Item>
+          {#if data.isAdmin}
+            <DropdownMenu.Item onclick={() => goto("/admin/models")}
+              >Manage models</DropdownMenu.Item
+            >
+          {/if}
           <DropdownMenu.Item
             onclick={async () => {
               await ctx.clerk?.signOut();

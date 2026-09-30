@@ -1,5 +1,6 @@
 import { ALL_PROVIDERS } from "$lib/helpers/api-key-utils";
 import { getApiKeys } from "$lib/server/api-keys-service";
+import { getUser } from "$lib/server/users-service";
 import { redirect } from "@sveltejs/kit";
 import type { LayoutServerLoad } from "./$types";
 
@@ -9,7 +10,7 @@ export const load = (async ({ locals }) => {
     return redirect(307, "/auth/sign-in");
   }
 
-  const storedKeys = await getApiKeys(userId);
+  const [storedKeys, user] = await Promise.all([getApiKeys(userId), getUser(userId)]);
   const availableProviders = new Set(storedKeys.map((key) => key.provider));
 
   const keys = ALL_PROVIDERS.reduce(
@@ -21,6 +22,7 @@ export const load = (async ({ locals }) => {
   );
 
   return {
-    keys
+    keys,
+    isAdmin: user?.isAdmin ?? false
   };
 }) satisfies LayoutServerLoad;

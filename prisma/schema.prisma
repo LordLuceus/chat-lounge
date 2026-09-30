@@ -142,17 +142,19 @@ model Message {
 }
 
 model Model {
-  id               String         @id @db.VarChar(100)
-  name             String         @db.VarChar(255)
+  id               String            @id @db.VarChar(100)
+  name             String            @db.VarChar(255)
   provider         AIProvider
   tokenLimit       Int
-  reasoningType    ReasoningType  @default(none)
-  supportsTools    Boolean        @default(true)
-  supportsImages   Boolean        @default(true)
-  deprecated       Boolean        @default(false)
+  reasoningType    ReasoningType     @default(none)
+  supportsTools    Boolean           @default(true)
+  supportsImages   Boolean           @default(true)
+  deprecated       Boolean           @default(false)
   adaptiveThinking Boolean?
-  createdAt        DateTime       @default(now()) @db.Timestamp(3)
-  updatedAt        DateTime       @default(now()) @updatedAt @db.Timestamp(3)
+  reviewStatus     ModelReviewStatus @default(approved)
+  releaseDate      DateTime?         @db.Date
+  createdAt        DateTime          @default(now()) @db.Timestamp(3)
+  updatedAt        DateTime          @default(now()) @updatedAt @db.Timestamp(3)
   conversations    Conversation[]
   messages         Message[]
   agents           Agent[]
@@ -206,6 +208,7 @@ model User {
   image                  String?              @db.Text
   useBaseInstructions    Boolean              @default(false)
   customBaseInstructions String?              @db.Text
+  isAdmin                Boolean              @default(false)
   createdAt              DateTime             @default(now()) @db.Timestamp(3)
   updatedAt              DateTime             @default(now()) @updatedAt @db.Timestamp(3)
   agents                 Agent[]
@@ -256,4 +259,10 @@ enum ReasoningType {
   none
   hybrid
   full
+}
+
+enum ModelReviewStatus {
+  pending
+  approved
+  rejected
 }

@@ -1,10 +1,15 @@
 import { getApiKeys } from "$lib/server/api-keys-service";
 import { prisma } from "$lib/server/db";
 import { ReasoningType } from "$lib/types/db";
-import type { AIProvider } from "@prisma/client";
+import {
+  ModelReviewStatus,
+  type AIProvider,
+  type ReasoningType as PrismaReasoningType
+} from "@prisma/client";
 
 export async function getModels() {
   const models = await prisma.model.findMany({
+    where: { reviewStatus: ModelReviewStatus.approved },
     orderBy: { updatedAt: "desc" }
   });
 
@@ -24,7 +29,8 @@ export async function getProviderModels(providers: AIProvider[], searchText?: st
             contains: searchText
           }
         : undefined,
-      deprecated: false
+      deprecated: false,
+      reviewStatus: ModelReviewStatus.approved
     },
     orderBy: { updatedAt: "desc" }
   });
@@ -71,7 +77,8 @@ export async function getUserModelsGroupedByProvider(userId: string) {
 
   const allModels = await prisma.model.findMany({
     where: {
-      provider: { in: providers }
+      provider: { in: providers },
+      reviewStatus: ModelReviewStatus.approved
     },
     orderBy: { name: "asc" }
   });
@@ -106,4 +113,22 @@ export async function getUserModelsGroupedByProvider(userId: string) {
     .filter((group) => group.models.length > 0 || group.deprecatedModels.length > 0);
 
   return grouped;
+}
+
+export async function getModelsForReview() {
+  return prisma.model.findMany({
+    where: { reviewStatus: { in: [ModelReviewStatus.pending, ModelReviewStatus.rejected] } },
+    orderBy: [{ reviewStatus: "asc" }, { provider: "asc" }, { releaseDate: "desc" }]
+  });
+}
+
+export async function reviewModel(
+  id: string,
+  reviewStatus: ModelReviewStatus,
+  settings?: { reasoningType: PrismaReasoningType; adaptiveThinking: boolean | null }
+) {
+  return prisma.model.update({
+    where: { id },
+    data: { reviewStatus, ...settings }
+  });
 }

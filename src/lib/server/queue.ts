@@ -1,5 +1,6 @@
 import { env } from "$env/dynamic/private";
 import { importChat } from "$lib/server/conversations-service";
+import { syncModels } from "$lib/server/model-sync";
 import { getIo, removeProgress, setProgress } from "$lib/server/socket";
 import { Queue, QueueEvents, Worker } from "bullmq";
 import IORedis from "ioredis";
@@ -93,3 +94,25 @@ queueEvents.on("progress", async ({ jobId, data }) => {
     );
   }
 });
+
+// Daily models.dev sync. A cron pattern rather than `every`, so restarts and
+// deploys don't trigger an extra run.
+const MODEL_SYNC_QUEUE = "model-sync-queue";
+const MODEL_SYNC_SCHEDULER_ID = "daily-model-sync";
+
+const modelSyncQueue = new Queue(MODEL_SYNC_QUEUE, { connection: redis });
+
+new Worker(MODEL_SYNC_QUEUE, () => syncModels(), { connection: redis, concurrency: 1 }).on(
+  "failed",
+  (_job, err) => {
+    console.error("[model-sync] Sync failed:", err.message);
+  }
+);
+
+export async function scheduleModelSync() {
+  await modelSyncQueue.upsertJobScheduler(
+    MODEL_SYNC_SCHEDULER_ID,
+    { pattern: "0 4 * * *", tz: "UTC" },
+    { name: "sync-models" }
+  );
+}

@@ -4,6 +4,11 @@
 
 New AI models now arrive much faster. ChatLounge checks for newly released models every day, so the latest models from OpenAI, Anthropic, Google, Mistral, xAI, and OpenRouter will appear in the model selector soon after launch, once they've been reviewed.
 
+You can also now send videos to models that understand them, such as Gemini:
+
+- **Video uploads**: attach or paste a video of up to 100MB, and the model can watch it and answer questions about it.
+- **YouTube links**: with a Gemini model selected, any YouTube link in your message is sent as a video. A note above the message box tells you before you send, and the conversation shows an embedded player.
+
 ## 1 Apr 2026
 
 Added a new "search in all folders" toggle on the conversations page, so you can search through your entire conversation history in one place.

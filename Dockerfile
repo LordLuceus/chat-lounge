@@ -4,9 +4,10 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y ca-certificates
 
-RUN npm install -g pnpm
+# Keep in sync with "packageManager" in package.json
+RUN npm install -g pnpm@12.3.4
 
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY prisma ./prisma
 
 RUN pnpm install --frozen-lockfile

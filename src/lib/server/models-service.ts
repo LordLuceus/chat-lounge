@@ -80,7 +80,9 @@ export async function getUserModelsGroupedByProvider(userId: string) {
       provider: { in: providers },
       reviewStatus: ModelReviewStatus.approved
     },
-    orderBy: { name: "asc" }
+    // Newest first. Models models.dev doesn't know have no release date; they
+    // are all older ones, so they go last, alphabetically.
+    orderBy: [{ releaseDate: { sort: "desc", nulls: "last" } }, { name: "asc" }]
   });
 
   // Group models by provider

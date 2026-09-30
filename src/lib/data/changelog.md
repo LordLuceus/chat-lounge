@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 30 Sep 2026
+
+New AI models now arrive much faster. ChatLounge checks for newly released models every day, so the latest models from OpenAI, Anthropic, Google, Mistral, xAI, and OpenRouter will appear in the model selector soon after launch, once they've been reviewed.
+
 ## 1 Apr 2026
 
 Added a new "search in all folders" toggle on the conversations page, so you can search through your entire conversation history in one place.

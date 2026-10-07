@@ -68,6 +68,17 @@ class AIService {
     thinkingConfig: { includeThoughts: true }
   };
 
+  /**
+   * Gemini models reject custom sampling parameters (temperature, top_p, top_k)
+   * and use their own optimal defaults, so we only send a temperature to other models.
+   */
+  private temperature(modelId: string, value: number): number | undefined {
+    const isGemini =
+      this.provider === "google" ||
+      (this.provider === "openrouter" && modelId.startsWith("google/"));
+    return isGemini ? undefined : value;
+  }
+
   constructor(
     private provider: AIProvider,
     private apiKey: string
@@ -178,7 +189,7 @@ class AIService {
       model: this.client(model.id),
       messages: await convertToModelMessages(messages),
       system,
-      temperature: 1.0,
+      temperature: this.temperature(model.id, 1.0),
       ...(model.supportsTools && { tools, stopWhen: stepCountIs(20) }),
       providerOptions: {
         google: this.GOOGLE_SETTINGS,
@@ -209,7 +220,7 @@ class AIService {
         { role: "user", parts: [{ type: "text", text: prompt }] }
       ]),
       system,
-      temperature: 0.5
+      temperature: this.temperature(modelId, 0.5)
     });
 
     return text;
@@ -418,7 +429,7 @@ class AIService {
         }
       ],
       system: titleGenerator?.instructions ?? undefined,
-      temperature: 1.0,
+      temperature: this.temperature(modelId, 1.0),
       providerOptions: {
         google: this.GOOGLE_SETTINGS as GoogleGenerativeAIProviderOptions
       }
@@ -443,7 +454,7 @@ class AIService {
           content: prompt + "\n\n---\n\n" + context
         }
       ],
-      temperature: 1.0,
+      temperature: this.temperature(modelId, 1.0),
       providerOptions: {
         google: this.GOOGLE_SETTINGS as GoogleGenerativeAIProviderOptions
       }

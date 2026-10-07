@@ -1,4 +1,5 @@
 import { requireAdmin } from "$lib/server/admin";
+import { getApprovedModelsWithUsage, setModelDeprecated } from "$lib/server/admin-service";
 import { syncModels } from "$lib/server/model-sync";
 import { getModelsForReview, reviewModel } from "$lib/server/models-service";
 import { ModelReviewStatus, ReasoningType } from "@prisma/client";
@@ -10,9 +11,13 @@ const REASONING_TYPES = Object.values(ReasoningType) as string[];
 export const load: PageServerLoad = async ({ locals }) => {
   await requireAdmin(locals);
 
-  const models = await getModelsForReview();
+  const [models, approved] = await Promise.all([
+    getModelsForReview(),
+    getApprovedModelsWithUsage()
+  ]);
 
   return {
+    approved,
     pending: models.filter((m) => m.reviewStatus === ModelReviewStatus.pending),
     rejected: models.filter((m) => m.reviewStatus === ModelReviewStatus.rejected)
   };
@@ -71,6 +76,25 @@ export const actions: Actions = {
     const model = await reviewModel(id, ModelReviewStatus.pending);
 
     return { message: `Moved ${model.name} back to pending.` };
+  },
+
+  setDeprecated: async ({ locals, request }) => {
+    await requireAdmin(locals);
+    const formData = await request.formData();
+    const id = formData.get("id");
+    const deprecated = formData.get("deprecated") === "true";
+
+    if (typeof id !== "string" || !id) {
+      return fail(400, { message: "Missing model ID" });
+    }
+
+    const model = await setModelDeprecated(id, deprecated);
+
+    return {
+      message: deprecated
+        ? `Marked ${model.name} as deprecated. It's hidden from the model picker.`
+        : `${model.name} is no longer deprecated.`
+    };
   },
 
   sync: async ({ locals }) => {

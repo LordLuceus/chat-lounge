@@ -38,7 +38,7 @@
   </ul>
 {/snippet}
 
-<section class="mx-auto flex max-w-3xl flex-col gap-6 p-4">
+<section class="flex flex-col gap-6">
   <h1>Manage models</h1>
 
   <div role="status" aria-live="polite">
@@ -114,6 +114,47 @@
         {/each}
       </ul>
     {/if}
+  </div>
+
+  <div class="overflow-x-auto">
+    <h2>Approved models ({data.approved.length})</h2>
+    <p>Deprecated models are hidden from the model picker for new conversations.</p>
+    <table class="w-full text-left">
+      <caption class="sr-only">Approved models</caption>
+      <thead>
+        <tr>
+          <th scope="col">Model</th>
+          <th scope="col">Provider</th>
+          <th scope="col">Released</th>
+          <th scope="col">Conversations</th>
+          <th scope="col">Agents</th>
+          <th scope="col">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {#each data.approved as model (model.id)}
+          <tr class="border-t">
+            <th scope="row" class="font-normal">
+              <a href={`/admin/conversations?model=${encodeURIComponent(model.id)}`}>{model.name}</a
+              >
+            </th>
+            <td>{model.provider}</td>
+            <td>{formatDate(model.releaseDate)}</td>
+            <td>{model.conversations.toLocaleString()}</td>
+            <td>{model.agents.toLocaleString()}</td>
+            <td>
+              <form method="POST" action="?/setDeprecated" use:enhance>
+                <input type="hidden" name="id" value={model.id} />
+                <input type="hidden" name="deprecated" value={String(!model.deprecated)} />
+                <Button type="submit" variant="outline" size="sm">
+                  {model.deprecated ? `Restore ${model.name}` : `Deprecate ${model.name}`}
+                </Button>
+              </form>
+            </td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
   </div>
 
   {#if data.rejected.length > 0}

@@ -85,7 +85,9 @@ export function formatMessageContent(parts: UIMessagePart<UIDataTypes, UITools>[
         return `[${label}: ${filePart.filename || filePart.url}]`;
       }
       const generated = getGeneratedImage(part);
-      if (generated) return `[Generated image: ${generated.filename || generated.key}]`;
+      if (generated) {
+        return `[Generated image: ${generated.prompt || generated.filename || generated.key}]`;
+      }
       return "";
     })
     .filter(Boolean)

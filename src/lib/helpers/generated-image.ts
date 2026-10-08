@@ -5,6 +5,8 @@ export interface GeneratedImage {
   key: string;
   mediaType?: string;
   filename?: string;
+  /** The prompt the image was made from; doubles as its alt text. */
+  prompt?: string;
 }
 
 export const GENERATE_IMAGE_PART_TYPE = "tool-generateImage";
@@ -19,15 +21,25 @@ export function getGeneratedImage(
 ): GeneratedImage | null {
   if (part.type !== GENERATE_IMAGE_PART_TYPE) return null;
 
-  const { state, output } = part as {
+  const { state, input, output } = part as {
     state?: string;
-    output?: { success?: boolean; key?: unknown; mediaType?: string; filename?: string };
+    input?: { prompt?: string };
+    output?: {
+      success?: boolean;
+      key?: unknown;
+      mediaType?: string;
+      filename?: string;
+      revisedPrompt?: string;
+    };
   };
   if (state !== "output-available" || !output?.success || typeof output.key !== "string") {
     return null;
   }
 
-  return { key: output.key, mediaType: output.mediaType, filename: output.filename };
+  // Prefer the prompt the image model actually used, when it rewrote it.
+  const prompt = output.revisedPrompt || input?.prompt || undefined;
+
+  return { key: output.key, mediaType: output.mediaType, filename: output.filename, prompt };
 }
 
 /** True while the `generateImage` tool is waiting on the image model. */

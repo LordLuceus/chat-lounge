@@ -8,6 +8,7 @@ The AI can now generate images. Just ask for a picture in a normal conversation,
 - **Models used**: GPT Image 2 (OpenAI), Nano Banana 2 (Google, also via OpenRouter), and Grok Imagine Image (xAI).
 - **Refinements**: ask for changes and the AI generates a new image with an updated prompt. You can also ask for a landscape, portrait, or square image.
 - **Download**: each generated image has a "Download image" button that saves it to your device.
+- **Alt text**: generated images carry the prompt they were made from as their alt text, so screen readers describe them, and the prompt is included when you copy a message or search conversations.
 
 ## 30 Sep 2026
 

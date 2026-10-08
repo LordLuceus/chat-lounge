@@ -239,7 +239,9 @@
                 >
                   <img
                     src={imageUrls[generated.key]}
-                    alt={generated.filename || "Generated image"}
+                    alt={generated.prompt
+                      ? `Generated image: ${generated.prompt}`
+                      : generated.filename || "Generated image"}
                     class="max-w-md cursor-pointer rounded-lg shadow-md transition-opacity hover:opacity-90"
                     onerror={() => handleImageError(generated.key)}
                   />

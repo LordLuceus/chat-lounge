@@ -16,7 +16,14 @@ export const POST = (async ({ request }) => {
   const payload = await request.json();
   const body = JSON.stringify(payload);
 
-  const wh = new Webhook(env.WEBHOOK_SECRET);
+  const webhookSecret = env.WEBHOOK_SECRET;
+
+  if (!webhookSecret) {
+    console.error("WEBHOOK_SECRET is not configured");
+    return error(500, { message: "Webhook is not configured" });
+  }
+
+  const wh = new Webhook(webhookSecret);
 
   let evt: WebhookEvent;
 

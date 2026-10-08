@@ -2,7 +2,7 @@ import { env } from "$env/dynamic/public";
 import { currentVersion, newVersionAvailable } from "$lib/stores";
 
 export const setVersion = () => {
-  currentVersion.set(env.PUBLIC_APP_VERSION);
+  currentVersion.set(env.PUBLIC_APP_VERSION ?? "");
 };
 
 export const checkForUpdates = () => {

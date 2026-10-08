@@ -20,12 +20,26 @@ export const actions: Actions = {
       return fail(400, { form });
     }
 
-    const resend = new Resend(env.RESEND_API_KEY);
+    const resendApiKey = env.RESEND_API_KEY;
+    const contactEmail = env.CONTACT_EMAIL;
+
+    if (!resendApiKey || !contactEmail) {
+      console.error("Contact form is not configured: RESEND_API_KEY or CONTACT_EMAIL is missing");
+      return fail(500, {
+        form,
+        message: {
+          type: "error" as const,
+          text: "Failed to send message. Please try again later."
+        }
+      });
+    }
+
+    const resend = new Resend(resendApiKey);
 
     try {
       const { error } = await resend.emails.send({
         from: "Contact Form <contact@mail.chatlounge.app>",
-        to: [env.CONTACT_EMAIL],
+        to: [contactEmail],
         subject: `Contact Form: ${form.data.subject}`,
         replyTo: form.data.email,
         html: `

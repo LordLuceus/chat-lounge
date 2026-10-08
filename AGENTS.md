@@ -64,7 +64,8 @@ Prettier config: double quotes, no trailing commas, 100-char print width, Tailwi
 - Also generates conversation titles and follow-up suggestions
 - Two agent types: `default` (instruction-based) and `character` (roleplay with verbosity settings)
 - System prompt built from `src/lib/data/` (base instructions, character prompt, tool use guidelines); users can override base instructions
-- AI tools defined in `src/lib/server/tools/` (currentTime, webSearch, fetchWebpage); web tools use the Exa API (`EXA_API_KEY`)
+- AI tools defined in `src/lib/server/tools/` (currentTime, webSearch, fetchWebpage, generateImage); web tools use the Exa API (`EXA_API_KEY`). Tools are built per request with `createTools()`
+- Image generation: the chat model hands off to an image model via the `generateImage` tool. `src/lib/server/image-models.ts` holds the per-provider image model (OpenAI, Google, xAI, OpenRouter) and `selectImageModel` picks one from the user's API keys (chat model's provider first). The tool is only offered when a suitable key exists; its guidelines (`src/lib/data/image_generation_guidelines.md`) are spliced into the tool-use guidelines in that case. Generated images are uploaded to R2 and the tool output carries the R2 `key`, which the UI, R2 cleanup, and `formatMessageContent` read via `getGeneratedImage` in `src/lib/helpers/generated-image.ts`
 
 **Model Registry and Sync** (`src/lib/server/models-service.ts`, `src/lib/server/model-sync.ts`)
 
@@ -102,6 +103,7 @@ Prettier config: double quotes, no trailing commas, 100-char print width, Tailwi
 - `conversations-service.ts` - Conversation/message management, branching logic
 - `ai-service.ts` - AI provider integration, streaming, summarization
 - `models-service.ts` - Model registry queries, per-user model lists, review actions
+- `image-models.ts` - Per-provider image generation models and selection from the user's API keys
 - `model-sync.ts` - models.dev sync logic
 - `admin-service.ts` / `admin.ts` - Admin data queries and the `requireAdmin` guard
 - `users-service.ts` - User CRUD, synced from Clerk webhooks

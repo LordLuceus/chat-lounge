@@ -1,5 +1,13 @@
 # ChatLounge Changelog
 
+## 8 Oct 2026
+
+The AI can now generate images. Just ask for a picture in a normal conversation, such as "draw me a lighthouse at dusk in watercolour", and the chat model hands the request to an image model, then shows the result right in the chat. Generated images are saved with the conversation and can be opened full size.
+
+- **Works with your existing keys**: image generation uses whichever of your API keys can produce images. If the chat model's own provider has an image model (OpenAI, Google, xAI, or OpenRouter), that one is used; otherwise the first of those you have a key for. Anthropic and Mistral chat models can generate images this way too, as long as you also have one of those keys.
+- **Models used**: GPT Image 2 (OpenAI), Nano Banana 2 (Google, also via OpenRouter), and Grok Imagine Image (xAI).
+- **Refinements**: ask for changes and the AI generates a new image with an updated prompt. You can also ask for a landscape, portrait, or square image.
+
 ## 30 Sep 2026
 
 New AI models now arrive much faster. ChatLounge checks for newly released models every day, so the latest models from OpenAI, Anthropic, Google, Mistral, xAI, and OpenRouter will appear in the model selector soon after launch, once they've been reviewed. The model selector now lists each provider's models from newest to oldest, so the latest ones are always at the top.

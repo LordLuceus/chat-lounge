@@ -1,8 +1,9 @@
 import { getAgent, updateLastUsed } from "$lib/server/agents-service";
 import AIService from "$lib/server/ai-service";
-import { getApiKey } from "$lib/server/api-keys-service";
+import { getApiKeys } from "$lib/server/api-keys-service";
 import { getConversation, updateConversation } from "$lib/server/conversations-service";
 import { isYouTubeUrl } from "$lib/helpers/youtube";
+import { selectImageModel } from "$lib/server/image-models";
 import { getModel } from "$lib/server/models-service";
 import { getPresignedUrl } from "$lib/server/r2-storage";
 import { getUser } from "$lib/server/users-service";
@@ -119,11 +120,22 @@ export const POST = (async ({ locals, request }) => {
     };
   }
 
-  const apiKey = await getApiKey(user.id, model.provider as AIProvider);
+  const apiKeys = await getApiKeys(user.id);
+  const apiKey = apiKeys.find((key) => key.provider === model.provider);
 
   if (!apiKey) {
     return error(404, { message: "API key not found" });
   }
+
+  // The chat model hands off to an image model through the generateImage
+  // tool, using whichever of the user's keys can generate images.
+  const imageModel = selectImageModel(
+    apiKeys.map((key) => key.provider as AIProvider),
+    model.provider as AIProvider
+  );
+  const imageApiKey = imageModel && apiKeys.find((key) => key.provider === imageModel.provider);
+  const imageGeneration =
+    imageModel && imageApiKey ? { userId, model: imageModel, apiKey: imageApiKey.key } : undefined;
 
   let agent;
 
@@ -159,6 +171,7 @@ export const POST = (async ({ locals, request }) => {
     regenerate,
     messageId,
     thinking,
-    storageParts
+    storageParts,
+    imageGeneration
   );
 }) satisfies RequestHandler;

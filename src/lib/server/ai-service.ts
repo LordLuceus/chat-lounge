@@ -1,6 +1,7 @@
 import corePrompt from "$lib/data/base_instructions.md?raw";
 import charPrompt from "$lib/data/character_prompt.txt?raw";
-import toolGuidelines from "$lib/data/tool_use_guidelines.md?raw";
+import imageGuidelines from "$lib/data/image_generation_guidelines.md?raw";
+import baseToolGuidelines from "$lib/data/tool_use_guidelines.md?raw";
 import { formatMessageContent } from "$lib/helpers";
 import { errorHandler } from "$lib/helpers/ai-error-handler";
 import { getAgentByName, type AgentWithUsage } from "$lib/server/agents-service";
@@ -9,7 +10,7 @@ import {
   getConversationMessage,
   getLastSummary
 } from "$lib/server/conversations-service";
-import { tools } from "$lib/server/tools";
+import { createTools, type GenerateImageToolOptions } from "$lib/server/tools";
 import { getUser } from "$lib/server/users-service";
 import { AgentType, AIProvider, type DBMessage } from "$lib/types/db";
 import {
@@ -98,15 +99,22 @@ class AIService {
     regenerate?: boolean,
     messageId?: string,
     thinking?: boolean,
-    storageParts?: Array<{ type: "file"; key: string; mediaType: string; filename: string }>
+    storageParts?: Array<{ type: "file"; key: string; mediaType: string; filename: string }>,
+    imageGeneration?: GenerateImageToolOptions
   ) {
     const processedMessages = await this.preProcess(messages, model, userId, agent, conversationId);
+
+    // Tools only matter when the model can call them; the image tool is also
+    // only offered when the user has a key for a provider that generates images.
+    const tools = model.supportsTools ? createTools({ imageGeneration }) : undefined;
+    const hasImageTool = !!tools && "generateImage" in tools;
 
     const response = await this.getResponse(
       processedMessages,
       model,
-      await this.prepareSystemPrompt(agent, userId),
-      thinking
+      await this.prepareSystemPrompt(agent, userId, hasImageTool),
+      thinking,
+      tools
     );
 
     const stream = response.toUIMessageStreamResponse({
@@ -163,7 +171,8 @@ class AIService {
     messages: UIMessage[],
     model: Model,
     system?: string,
-    thinking?: boolean
+    thinking?: boolean,
+    tools?: ReturnType<typeof createTools>
   ) {
     const anthropicConfig = {
       thinking: thinking
@@ -178,7 +187,7 @@ class AIService {
       model: this.client(model.id),
       messages: await convertToModelMessages(messages),
       system,
-      ...(model.supportsTools && { tools, stopWhen: stepCountIs(20) }),
+      ...(tools && { tools, stopWhen: stepCountIs(20) }),
       providerOptions: {
         google: this.GOOGLE_SETTINGS,
         openrouter: {
@@ -460,11 +469,20 @@ class AIService {
 
   private async prepareSystemPrompt(
     agent: Agent | undefined,
-    userId: string
+    userId: string,
+    imageGeneration = false
   ): Promise<string | undefined> {
     const user = await getUser(userId);
 
     if (!user) return corePrompt;
+
+    // The image guidelines only make sense when the tool is actually offered.
+    const toolGuidelines = imageGeneration
+      ? baseToolGuidelines.replace(
+          "</tool_use_guidelines>",
+          `${imageGuidelines.trim()}\n\n</tool_use_guidelines>`
+        )
+      : baseToolGuidelines;
 
     let baseInstructions = "";
     if (user.useBaseInstructions) {

@@ -43,15 +43,43 @@ export async function uploadFileToR2(
   const base64Data = matches[2];
   const buffer = Buffer.from(base64Data, "base64");
 
-  // Validate file size (5MB limit)
-  const sizeInMB = buffer.length / (1024 * 1024);
-  if (sizeInMB > 5) {
-    throw new Error(`File size ${sizeInMB.toFixed(2)}MB exceeds 5MB limit`);
+  return uploadImageBuffer(buffer, mimeType, userId, filename, MAX_UPLOAD_BYTES);
+}
+
+/**
+ * Upload an image the server generated (via the `generateImage` tool) to R2.
+ * Same key layout as user uploads, so ownership checks and cleanup treat
+ * them alike. The limit is higher than for uploads because image models can
+ * return large PNGs.
+ */
+export async function uploadGeneratedImageToR2(
+  buffer: Buffer,
+  mimeType: string,
+  userId: string,
+  filename: string
+): Promise<UploadedFile> {
+  return uploadImageBuffer(buffer, mimeType, userId, filename, MAX_GENERATED_IMAGE_BYTES);
+}
+
+const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"];
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+const MAX_GENERATED_IMAGE_BYTES = 25 * 1024 * 1024;
+
+async function uploadImageBuffer(
+  buffer: Buffer,
+  mimeType: string,
+  userId: string,
+  filename: string,
+  maxBytes: number
+): Promise<UploadedFile> {
+  if (buffer.length > maxBytes) {
+    const sizeInMB = buffer.length / (1024 * 1024);
+    throw new Error(
+      `File size ${sizeInMB.toFixed(2)}MB exceeds ${maxBytes / (1024 * 1024)}MB limit`
+    );
   }
 
-  // Validate file type
-  const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"];
-  if (!allowedTypes.includes(mimeType)) {
+  if (!ALLOWED_IMAGE_TYPES.includes(mimeType)) {
     throw new Error(`File type ${mimeType} not allowed`);
   }
 

@@ -1,6 +1,7 @@
 import {
   findLastNodeInBranch,
   formatMessageContent,
+  getGeneratedImage,
   getConversationMessages as getMessages,
   setModel
 } from "$lib/helpers";
@@ -293,6 +294,9 @@ function extractR2KeysFromMessages(messages: Array<{ parts: Prisma.JsonValue }>)
       if (part.type === "file" && "key" in part && typeof part.key === "string") {
         keys.push(part.key);
       }
+      // Images the generateImage tool produced live in its output
+      const generated = getGeneratedImage(part);
+      if (generated) keys.push(generated.key);
     }
   }
 

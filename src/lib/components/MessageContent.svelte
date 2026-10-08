@@ -2,12 +2,11 @@
   import { copyCodeBlocks } from "$lib/actions/copy-code";
   import ToolCallDisplay from "$lib/components/ToolCallDisplay.svelte";
   import * as Avatar from "$lib/components/ui/avatar";
-  import { formatMessageContent } from "$lib/helpers";
+  import { formatMessageContent, getGeneratedImage, isGeneratingImage } from "$lib/helpers";
   import { fetchYouTubeTitle, getYouTubeVideoId, isYouTubeUrl } from "$lib/helpers/youtube";
   import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
   import { BotMessageSquare } from "@lucide/svelte";
   import type { FileUIPart, UIDataTypes, UIMessagePart, UITools } from "ai";
-  import { onMount } from "svelte";
   import Markdown from "svelte-exmarkdown";
   import { gfmPlugin } from "svelte-exmarkdown/gfm";
 
@@ -30,6 +29,9 @@
 
   // Store for presigned URLs (for messages loaded from DB with R2 keys)
   let imageUrls = $state<Record<string, string>>({});
+  // Keys a URL has been requested for; plain Set so the effect below doesn't
+  // re-run on its own writes.
+  const requestedKeys = new Set<string>();
 
   // Type guard to check if part is FileUIPart
   function isFilePart(part: UIMessagePart<UIDataTypes, UITools>): part is FileUIPart {
@@ -45,7 +47,8 @@
   }
 
   async function loadImageUrl(key: string, force = false) {
-    if (imageUrls[key] && !force) return; // Already loaded (unless forcing refresh)
+    if (requestedKeys.has(key) && !force) return; // Already loaded (unless forcing refresh)
+    requestedKeys.add(key);
 
     try {
       const response = await fetch("/api/presigned-url", {
@@ -76,14 +79,17 @@
     await loadImageUrl(key, true);
   }
 
-  // Load presigned URLs for any parts with R2 keys
-  onMount(() => {
-    if (message.parts) {
-      message.parts.forEach((part) => {
-        if (hasKey(part)) {
-          loadImageUrl(part.key);
-        }
-      });
+  // Load presigned URLs for any parts with R2 keys: uploaded files loaded
+  // from the DB, and images the generateImage tool produced, which can arrive
+  // mid-stream, so this watches the parts rather than running once on mount.
+  $effect(() => {
+    for (const part of message.parts ?? []) {
+      if (hasKey(part)) {
+        loadImageUrl(part.key);
+        continue;
+      }
+      const generated = getGeneratedImage(part);
+      if (generated) loadImageUrl(generated.key);
     }
   });
 
@@ -198,6 +204,32 @@
               </div>
             </details>
           </aside>
+        {:else if part.type === "tool-generateImage"}
+          {@const generated = getGeneratedImage(part)}
+          <ToolCallDisplay {part} />
+          {#if generated}
+            <div class="message-image my-2">
+              {#if imageUrls[generated.key]}
+                <button
+                  type="button"
+                  onclick={() => window.open(imageUrls[generated.key], "_blank")}
+                  class="border-0 bg-transparent p-0"
+                >
+                  <img
+                    src={imageUrls[generated.key]}
+                    alt={generated.filename || "Generated image"}
+                    class="max-w-md cursor-pointer rounded-lg shadow-md transition-opacity hover:opacity-90"
+                    onerror={() => handleImageError(generated.key)}
+                  />
+                </button>
+              {:else}
+                <!-- Loading presigned URL -->
+                <div class="h-32 w-32 animate-pulse rounded-lg bg-gray-200"></div>
+              {/if}
+            </div>
+          {:else if isGeneratingImage(part)}
+            <p class="my-2 animate-pulse" role="status">Generating image…</p>
+          {/if}
         {:else if part.type.startsWith("tool-") && part.type !== "tool-call" && part.type !== "tool-result"}
           <ToolCallDisplay {part} />
         {/if}

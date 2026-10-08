@@ -1,4 +1,5 @@
 import type { ConversationWithMessageMap } from "$lib/server/conversations-service";
+import { getGeneratedImage } from "./generated-image";
 import type { DBMessage } from "$lib/types/db";
 import type { Message } from "@prisma/client";
 import type { UIDataTypes, UIMessagePart, UITools } from "ai";
@@ -83,6 +84,8 @@ export function formatMessageContent(parts: UIMessagePart<UIDataTypes, UITools>[
         const label = filePart.mediaType?.startsWith("video/") ? "Video" : "Image";
         return `[${label}: ${filePart.filename || filePart.url}]`;
       }
+      const generated = getGeneratedImage(part);
+      if (generated) return `[Generated image: ${generated.filename || generated.key}]`;
       return "";
     })
     .filter(Boolean)

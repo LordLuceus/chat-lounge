@@ -111,12 +111,22 @@ async function uploadImageBuffer(
  * Generate a presigned URL for accessing a file in R2
  * @param key - The R2 object key
  * @param expiresIn - URL expiration time in seconds (default: 1 hour)
+ * @param downloadAs - When set, the browser saves the file under this name
+ *   instead of displaying it (signed into the URL as a Content-Disposition
+ *   override, so the object itself is unchanged)
  * @returns Presigned URL that expires after specified time
  */
-export async function getPresignedUrl(key: string, expiresIn: number = 3600): Promise<string> {
+export async function getPresignedUrl(
+  key: string,
+  expiresIn: number = 3600,
+  downloadAs?: string
+): Promise<string> {
   const command = new GetObjectCommand({
     Bucket: env.R2_BUCKET_NAME,
-    Key: key
+    Key: key,
+    ...(downloadAs && {
+      ResponseContentDisposition: `attachment; filename="${downloadAs.replace(/[^a-zA-Z0-9._-]/g, "_")}"`
+    })
   });
 
   const presignedUrl = await getSignedUrl(r2Client, command, { expiresIn });

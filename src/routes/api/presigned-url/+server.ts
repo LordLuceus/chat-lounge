@@ -9,7 +9,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   }
 
   try {
-    const { key } = await request.json();
+    const { key, download } = await request.json();
 
     if (!key) {
       throw error(400, "Missing key");
@@ -20,8 +20,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       throw error(403, "Forbidden");
     }
 
-    // Generate presigned URL (expires in 1 hour)
-    const presignedUrl = await getPresignedUrl(key, 3600);
+    // Generate presigned URL (expires in 1 hour). With `download`, the URL
+    // makes the browser save the file under that name instead of showing it.
+    const presignedUrl = await getPresignedUrl(
+      key,
+      3600,
+      typeof download === "string" && download ? download : undefined
+    );
 
     return json({ url: presignedUrl });
   } catch (err) {

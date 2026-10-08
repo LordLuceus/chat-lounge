@@ -7,6 +7,7 @@ The AI can now generate images. Just ask for a picture in a normal conversation,
 - **Works with your existing keys**: image generation uses whichever of your API keys can produce images. If the chat model's own provider has an image model (OpenAI, Google, xAI, or OpenRouter), that one is used; otherwise the first of those you have a key for. Anthropic and Mistral chat models can generate images this way too, as long as you also have one of those keys.
 - **Models used**: GPT Image 2 (OpenAI), Nano Banana 2 (Google, also via OpenRouter), and Grok Imagine Image (xAI).
 - **Refinements**: ask for changes and the AI generates a new image with an updated prompt. You can also ask for a landscape, portrait, or square image.
+- **Download**: each generated image has a "Download image" button that saves it to your device.
 
 ## 30 Sep 2026
 

@@ -5,7 +5,9 @@
   import { formatMessageContent, getGeneratedImage, isGeneratingImage } from "$lib/helpers";
   import { fetchYouTubeTitle, getYouTubeVideoId, isYouTubeUrl } from "$lib/helpers/youtube";
   import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
-  import { BotMessageSquare } from "@lucide/svelte";
+  import { Button } from "$lib/components/ui/button";
+  import { BotMessageSquare, Download } from "@lucide/svelte";
+  import { toast } from "svelte-sonner";
   import type { FileUIPart, UIDataTypes, UIMessagePart, UITools } from "ai";
   import Markdown from "svelte-exmarkdown";
   import { gfmPlugin } from "svelte-exmarkdown/gfm";
@@ -77,6 +79,26 @@
 
   async function handleImageError(key: string) {
     await loadImageUrl(key, true);
+  }
+
+  // Downloads use a fresh URL signed with an attachment disposition, so the
+  // browser saves the file rather than opening it in a tab.
+  async function downloadImage(key: string, filename: string) {
+    try {
+      const response = await fetch("/api/presigned-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, download: filename })
+      });
+
+      if (!response.ok) throw new Error("Failed to get download link");
+
+      const { url } = await response.json();
+      window.location.assign(url);
+    } catch (err) {
+      console.error("Failed to download image:", err);
+      toast.error("Couldn't download the image");
+    }
   }
 
   // Load presigned URLs for any parts with R2 keys: uploaded files loaded
@@ -222,6 +244,17 @@
                     onerror={() => handleImageError(generated.key)}
                   />
                 </button>
+                <div class="mt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onclick={() =>
+                      downloadImage(generated.key, generated.filename || "generated-image.png")}
+                  >
+                    <Download aria-hidden="true" />
+                    Download image
+                  </Button>
+                </div>
               {:else}
                 <!-- Loading presigned URL -->
                 <div class="h-32 w-32 animate-pulse rounded-lg bg-gray-200"></div>

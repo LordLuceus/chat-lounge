@@ -19,6 +19,13 @@ Guidance for AI coding agents working in this repository.
 
 Prettier config: double quotes, no trailing commas, 100-char print width, Tailwind class sorting.
 
+### Tests
+
+- `pnpm test` - Run the Vitest suite once (`pnpm test:watch` for watch mode, `pnpm test:coverage` for coverage)
+- Two Vitest projects (`vitest.config.ts`): `server` runs `*.test.ts` under Node; `client` runs `*.svelte.test.ts` under jsdom with Testing Library
+- Shared test helpers live in `src/tests/`: an in-memory Prisma stand-in (`fake-prisma.ts`), a minimal SvelteKit request event (`request-event.ts`), a hand-driven UI message stream for chat tests (`ui-message-stream.ts`), component harnesses, and mocks for svelte-clerk and the edit dialog
+- Services are tested against the fake Prisma client; API handlers are called directly with mocked services; the chat components are rendered for real with a fake `/api/chat` stream
+
 ### Database
 
 - `pnpm migrate-dev` - Run Prisma migrations in development

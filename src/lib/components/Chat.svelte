@@ -597,10 +597,18 @@
     focusChatInput();
   });
 
+  // Keep the chat in step with the conversation as loaded from the server,
+  // except while a reply is in flight. The server only persists a new branch
+  // (an edited message and its reply) when the stream finishes, so a refetch
+  // in the meantime (TanStack Query refetches on window focus, and other
+  // actions invalidate the conversation) still describes the previous branch;
+  // applying it would show that branch with the streaming reply appended.
+  // onFinish refetches the conversation, which brings in the final state.
   $effect(() => {
-    if (initialMessages) {
-      chat.messages = initialMessages;
-    }
+    if (!initialMessages) return;
+    const status = untrack(() => chat.status);
+    if (status === "streaming" || status === "submitted") return;
+    chat.messages = initialMessages;
   });
 
   async function handleEdit(

@@ -646,7 +646,7 @@ export async function shareConversation(conversationId: string, userId: string) 
   const existingConversation = await getSharedConversationByConversationId(conversationId);
 
   if (existingConversation) {
-    return existingConversation;
+    return existingConversation.id;
   }
 
   const result = await prisma.sharedConversation.create({

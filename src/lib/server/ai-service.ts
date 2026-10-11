@@ -519,11 +519,13 @@ class AIService {
         }
       };
 
+      // The verbosity instruction uses {{char}} and {{user}} too, so it goes
+      // in before those are substituted.
       const prompt = charPrompt
         .replace("{{character_definition}}", agent.instructions)
+        .replace("{{verbosity}}", getVerbosityInstruction(agent.verbosity))
         .replaceAll("{{char}}", agent.name)
-        .replaceAll("{{user}}", user.username.charAt(0).toUpperCase() + user.username.slice(1))
-        .replace("{{verbosity}}", getVerbosityInstruction(agent.verbosity));
+        .replaceAll("{{user}}", user.username.charAt(0).toUpperCase() + user.username.slice(1));
 
       finalPrompt = baseInstructions
         ? baseInstructions + "\n\n" + toolGuidelines + "\n\n" + prompt

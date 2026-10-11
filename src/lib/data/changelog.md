@@ -1,5 +1,10 @@
 # ChatLounge Changelog
 
+## 11 Oct 2026
+
+- **Fixed**: editing a message and sending it while switching away from the tab no longer shows the previous branch of the conversation with the new reply tacked on the end. The chat now keeps the branch you are on until the reply has finished.
+- **Fixed**: character agents set to concise or verbose replies were told to address "{{user}}" and "{{char}}" literally instead of by name.
+
 ## 8 Oct 2026
 
 The AI can now generate images. Just ask for a picture in a normal conversation, such as "draw me a lighthouse at dusk in watercolour", and the chat model hands the request to an image model, then shows the result right in the chat. Generated images are saved with the conversation and can be opened full size.

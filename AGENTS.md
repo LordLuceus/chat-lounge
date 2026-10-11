@@ -162,6 +162,7 @@ Prettier config: double quotes, no trailing commas, 100-char print width, Tailwi
 
 ### Deployment
 
+- GitHub Actions (`.github/workflows/deploy.yml`) on push to `master`: the test job runs `pnpm test` first, and the Docker build and deploy only run if it passes
 - Docker Compose setup with MariaDB 11.4 and Valkey services
 - Production startup script `run.sh` runs migrations then starts the Node server
 - Multi-stage Docker build (Node 24, pinned pnpm) for optimized images

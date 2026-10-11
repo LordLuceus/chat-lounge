@@ -1,5 +1,9 @@
 import { requireAdmin } from "$lib/server/admin";
-import { getApprovedModelsWithUsage, setModelDeprecated } from "$lib/server/admin-service";
+import {
+  deleteUnusedModel,
+  getApprovedModelsWithUsage,
+  setModelDeprecated
+} from "$lib/server/admin-service";
 import { syncModels } from "$lib/server/model-sync";
 import { getModelsForReview, reviewModel } from "$lib/server/models-service";
 import { ModelReviewStatus, ReasoningType } from "@prisma/client";
@@ -95,6 +99,24 @@ export const actions: Actions = {
         ? `Marked ${model.name} as deprecated. It's hidden from the model picker.`
         : `${model.name} is no longer deprecated.`
     };
+  },
+
+  delete: async ({ locals, request }) => {
+    await requireAdmin(locals);
+    const id = (await request.formData()).get("id");
+
+    if (typeof id !== "string" || !id) {
+      return fail(400, { message: "Missing model ID" });
+    }
+
+    try {
+      const model = await deleteUnusedModel(id);
+      return { message: `Deleted ${model.name}. The sync won't add it again.` };
+    } catch (err) {
+      return fail(409, {
+        message: err instanceof Error ? err.message : "Could not delete the model"
+      });
+    }
   },
 
   sync: async ({ locals }) => {

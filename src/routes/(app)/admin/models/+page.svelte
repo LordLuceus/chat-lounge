@@ -118,7 +118,11 @@
 
   <div class="overflow-x-auto">
     <h2>Approved models ({data.approved.length})</h2>
-    <p>Deprecated models are hidden from the model picker for new conversations.</p>
+    <p>
+      Deprecated models are hidden from the model picker for new conversations. Only models no
+      conversation, message, or agent has used can be deleted; the sync won't add a deleted model
+      back.
+    </p>
     <table class="w-full text-left">
       <caption class="sr-only">Approved models</caption>
       <thead>
@@ -128,7 +132,7 @@
           <th scope="col">Released</th>
           <th scope="col">Conversations</th>
           <th scope="col">Agents</th>
-          <th scope="col">Status</th>
+          <th scope="col">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -142,7 +146,7 @@
             <td>{formatDate(model.releaseDate)}</td>
             <td>{model.conversations.toLocaleString()}</td>
             <td>{model.agents.toLocaleString()}</td>
-            <td>
+            <td class="flex flex-wrap gap-2">
               <form method="POST" action="?/setDeprecated" use:enhance>
                 <input type="hidden" name="id" value={model.id} />
                 <input type="hidden" name="deprecated" value={String(!model.deprecated)} />
@@ -150,6 +154,20 @@
                   {model.deprecated ? `Restore ${model.name}` : `Deprecate ${model.name}`}
                 </Button>
               </form>
+              {#if !model.inUse}
+                <form
+                  method="POST"
+                  action="?/delete"
+                  use:enhance={({ cancel }) => {
+                    if (!confirm(`Delete ${model.name}? The sync won't add it back.`)) cancel();
+                  }}
+                >
+                  <input type="hidden" name="id" value={model.id} />
+                  <Button type="submit" variant="destructive" size="sm">
+                    Delete {model.name}
+                  </Button>
+                </form>
+              {/if}
             </td>
           </tr>
         {/each}

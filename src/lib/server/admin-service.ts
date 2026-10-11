@@ -144,13 +144,14 @@ export async function getApprovedModelsWithUsage() {
       { releaseDate: { sort: "desc", nulls: "last" } },
       { name: "asc" }
     ],
-    include: { _count: { select: { conversations: true, agents: true } } }
+    include: { _count: { select: { conversations: true, agents: true, messages: true } } }
   });
 
   return models.map(({ _count, ...model }) => ({
     ...model,
     conversations: _count.conversations,
-    agents: _count.agents
+    agents: _count.agents,
+    inUse: _count.conversations + _count.agents + _count.messages > 0
   }));
 }
 
@@ -226,4 +227,36 @@ export async function getAdminFilterOptions() {
   ]);
 
   return { users, models };
+}
+
+/**
+ * Deletes a model that nothing uses, and records its ID so the models.dev
+ * sync never re-adds it. Models in use can only be deprecated, because
+ * deleting them would strip the model from conversations, messages, and agents.
+ */
+export async function deleteUnusedModel(id: string) {
+  return prisma.$transaction(async (tx) => {
+    const model = await tx.model.findUnique({
+      where: { id },
+      include: { _count: { select: { conversations: true, messages: true, agents: true } } }
+    });
+
+    if (!model) {
+      throw new Error("Model not found");
+    }
+
+    const { conversations, messages, agents } = model._count;
+    if (conversations + messages + agents > 0) {
+      throw new Error(`${model.name} is in use, so it can only be deprecated`);
+    }
+
+    await tx.deletedModel.upsert({
+      where: { id },
+      create: { id, provider: model.provider },
+      update: { provider: model.provider, deletedAt: new Date() }
+    });
+    await tx.model.delete({ where: { id } });
+
+    return model;
+  });
 }

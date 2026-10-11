@@ -262,6 +262,15 @@ enum ReasoningType {
   full
 }
 
+/// Models an admin deleted. The models.dev sync skips these so it never re-adds them.
+model DeletedModel {
+  id        String     @id @db.VarChar(100)
+  provider  AIProvider
+  deletedAt DateTime   @default(now()) @db.Timestamp(3)
+
+  @@map("deletedModel")
+}
+
 enum ModelReviewStatus {
   pending
   approved

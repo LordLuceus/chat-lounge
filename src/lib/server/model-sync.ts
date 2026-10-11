@@ -195,12 +195,18 @@ async function fetchModelsDev(): Promise<Map<AIProvider, Map<string, ModelsDevMo
  */
 export async function syncModels(): Promise<ModelSyncResult> {
   const catalogue = await fetchModelsDev();
-  const existing = await prisma.model.findMany({
-    where: { provider: { in: SYNCED_PROVIDERS } }
-  });
+  const [existing, deleted] = await Promise.all([
+    prisma.model.findMany({ where: { provider: { in: SYNCED_PROVIDERS } } }),
+    prisma.deletedModel.findMany({ select: { id: true, provider: true } })
+  ]);
 
   const result: ModelSyncResult = { updated: 0, added: [], unmatched: [] };
   const known = new Set<string>();
+
+  // Models an admin deleted count as known, so they're never re-added.
+  for (const model of deleted) {
+    known.add(`${model.provider}:${normalizeId(model.provider, model.id)}`);
+  }
 
   for (const model of existing) {
     const provider = model.provider;

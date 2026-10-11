@@ -20,6 +20,39 @@ vi.mock("$app/state", () => ({
 
 vi.mock("$env/dynamic/public", () => ({ env: {} }));
 
+// Web storage: jsdom only provides it for a non-opaque origin, and newer Node
+// versions define their own `localStorage` global that is undefined unless a
+// storage file is configured, which Vitest's jsdom environment then keeps.
+// Make sure both storages exist as plain in-memory stores when they are
+// missing, so components using PersistedState and persisted stores mount.
+function memoryStorage(): Storage {
+  const data = new Map<string, string>();
+  return {
+    get length() {
+      return data.size;
+    },
+    clear: () => data.clear(),
+    getItem: (key) => data.get(String(key)) ?? null,
+    key: (index) => Array.from(data.keys())[index] ?? null,
+    removeItem: (key) => void data.delete(String(key)),
+    setItem: (key, value) => void data.set(String(key), String(value))
+  };
+}
+
+for (const name of ["localStorage", "sessionStorage"] as const) {
+  let existing: Storage | undefined;
+  try {
+    existing = window[name];
+  } catch {
+    existing = undefined;
+  }
+  if (existing && typeof existing.getItem === "function") continue;
+  const storage = memoryStorage();
+  for (const target of new Set<object>([window, globalThis])) {
+    Object.defineProperty(target, name, { configurable: true, writable: true, value: storage });
+  }
+}
+
 // jsdom has no media playback; the chat plays short sounds on start/finish.
 Object.defineProperty(HTMLMediaElement.prototype, "play", {
   configurable: true,

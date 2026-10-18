@@ -20,6 +20,39 @@ describe("MessageContent", () => {
     expect(screen.getByLabelText("assistant message")).toBeInTheDocument();
   });
 
+  it("renders LaTeX with KaTeX", () => {
+    render(MessageContent, {
+      message: {
+        role: "assistant",
+        parts: [
+          {
+            type: "text",
+            text: "Euler: \\(e^{i\\pi} + 1 = 0\\)\n\n\\[\n\\int_0^1 x\\,dx\n\\]\n\nCosts $5 and $10."
+          }
+        ]
+      }
+    });
+    const math = document.querySelectorAll(".katex");
+    expect(math).toHaveLength(2);
+    expect(math[0].querySelector("annotation")).toHaveTextContent("e^{i\\pi} + 1 = 0");
+    expect(document.querySelectorAll(".katex-display")).toHaveLength(1);
+    expect(screen.getByText("Costs $5 and $10.")).toBeInTheDocument();
+    expect(document.querySelector("pre")).toBeNull();
+  });
+
+  it("renders inline $$ as display maths and leaves code alone", () => {
+    render(MessageContent, {
+      message: {
+        role: "assistant",
+        parts: [{ type: "text", text: "So $$a = b$$ here, and `$x$` in code:\n\n```\n$y$\n```" }]
+      }
+    });
+    expect(document.querySelectorAll(".katex-display")).toHaveLength(1);
+    expect(document.querySelectorAll(".katex")).toHaveLength(1);
+    expect(screen.getByText("$x$").tagName).toBe("CODE");
+    expect(document.querySelector("pre code")).toHaveTextContent("$y$");
+  });
+
   it("shows images with direct URLs and video attachments", () => {
     render(MessageContent, {
       message: {

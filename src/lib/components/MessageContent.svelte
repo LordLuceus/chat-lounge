@@ -4,7 +4,9 @@
   import * as Avatar from "$lib/components/ui/avatar";
   import { formatMessageContent, getGeneratedImage, isGeneratingImage } from "$lib/helpers";
   import { fetchYouTubeTitle, getYouTubeVideoId, isYouTubeUrl } from "$lib/helpers/youtube";
+  import { normalizeMathDelimiters } from "$lib/helpers/math-delimiters";
   import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
+  import { mathPlugin } from "$lib/math-plugin";
   import { Button } from "$lib/components/ui/button";
   import { BotMessageSquare, Download } from "@lucide/svelte";
   import { toast } from "svelte-sonner";
@@ -12,7 +14,7 @@
   import Markdown from "svelte-exmarkdown";
   import { gfmPlugin } from "svelte-exmarkdown/gfm";
 
-  const plugins = [gfmPlugin(), lineBreaksPlugin];
+  const plugins = [gfmPlugin(), lineBreaksPlugin, mathPlugin];
 
   interface Props {
     message: {
@@ -143,7 +145,7 @@
     {#if "parts" in message && message.parts && message.parts.length > 0}
       {#each message.parts as part, index (index)}
         {#if part.type === "text"}
-          <Markdown md={part.text || ""} {plugins} />
+          <Markdown md={normalizeMathDelimiters(part.text || "")} {plugins} />
         {:else if hasKey(part) && part.mediaType?.startsWith("video/")}
           <div class="message-video my-2">
             {#if imageUrls[part.key]}

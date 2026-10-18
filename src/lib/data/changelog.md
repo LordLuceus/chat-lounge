@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 18 Oct 2026
+
+- **New**: maths in chat replies is now typeset properly. When a model writes LaTeX, whether as `$...$`, `$$...$$`, `\(...\)` or `\[...\]`, it is rendered with KaTeX instead of appearing as raw markup. This applies to shared conversations too. Rendered maths includes MathML, so screen readers announce the expression rather than the TeX source. Dollar amounts such as "$5 and $10" are left alone.
+
 ## 11 Oct 2026
 
 - **Fixed**: editing a message and sending it while switching away from the tab no longer shows the previous branch of the conversation with the new reply tacked on the end. The chat now keeps the branch you are on until the reply has finished.

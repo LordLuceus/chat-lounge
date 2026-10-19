@@ -25,11 +25,3 @@
 
 <!-- eslint-disable-next-line svelte/no-at-html-tags -- KaTeX output, source is escaped -->
 {@html html}
-
-<style>
-  :global(.katex-display) {
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 0.25rem 0;
-  }
-</style>

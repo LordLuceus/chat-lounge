@@ -87,3 +87,10 @@
     @apply h-1 w-1 border-border;
   }
 }
+
+/* Display maths rendered by KaTeX (see TexMath.svelte) can be wider than the message. */
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.25rem 0;
+}

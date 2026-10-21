@@ -152,14 +152,14 @@ Keep it to three tools so the model's tool list stays small.
 
 Input (all optional except one of `fen` / `pgn` / `moves`):
 
-| Field     | Meaning                                                             |
-| --------- | ------------------------------------------------------------------- |
-| `fen`     | Position to analyse                                                 |
-| `pgn`     | Alternatively a game; analyses the final position unless `ply` set  |
-| `moves`   | Alternatively SAN or UCI moves from the start position              |
-| `ply`     | With `pgn`/`moves`: analyse the position after this half-move       |
-| `depth`   | Search depth, clamped (e.g. 8 to 22, default 18)                    |
-| `multiPv` | Number of candidate lines, clamped 1 to 5, default 3                |
+| Field     | Meaning                                                            |
+| --------- | ------------------------------------------------------------------ |
+| `fen`     | Position to analyse                                                |
+| `pgn`     | Alternatively a game; analyses the final position unless `ply` set |
+| `moves`   | Alternatively SAN or UCI moves from the start position             |
+| `ply`     | With `pgn`/`moves`: analyse the position after this half-move      |
+| `depth`   | Search depth, clamped (e.g. 8 to 22, default 18)                   |
+| `multiPv` | Number of candidate lines, clamped 1 to 5, default 3               |
 
 Output:
 
@@ -320,13 +320,17 @@ quality lever:
 4. **Fast paths**: Lichess cloud eval for openings, tablebase for endgames,
    optional ECO opening names from the public-domain Lichess openings dataset.
 
-## Open questions
+## Decisions and status
 
-- Should the engine be always on, or a per-user setting like TTS voices and
-  API keys? Always on is simpler; it has no per-user cost since it uses no
-  third-party key.
-- How much CPU can the production host spare? That decides engine count,
-  `Threads`, and whether option C (sidecar) is needed from the start.
-- Do we want chess variants (Chess960 is supported by Stockfish via
-  `UCI_Chess960`; others need Fairy-Stockfish)? Standard chess only is a fine
-  v1.
+- **Always on**: no per-user setting. The engine costs nothing until a
+  conversation turns to chess, and the tools need no third-party key.
+- **Hardware**: production is a 4-core VPS running only this app. The pool
+  defaults to two engine processes with one thread each (overridable with
+  `CHESS_ENGINE_INSTANCES` and `CHESS_ENGINE_THREADS`), leaving two cores for
+  the web server.
+- **Variants**: standard chess only.
+- **Phase 1 and 2 are implemented**: `analyzePosition`, `makeMoves` and
+  `analyzeGame` in `src/lib/server/tools/chess.ts`, on top of
+  `src/lib/server/chess/`. Game review is bounded to a 30-second engine budget
+  per call and reports when it had to stop early. The board renderer, Lichess
+  fast paths and opening names remain to do.

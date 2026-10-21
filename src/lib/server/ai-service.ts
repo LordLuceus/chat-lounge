@@ -1,5 +1,6 @@
 import corePrompt from "$lib/data/base_instructions.md?raw";
 import charPrompt from "$lib/data/character_prompt.txt?raw";
+import chessGuidelines from "$lib/data/chess_guidelines.md?raw";
 import imageGuidelines from "$lib/data/image_generation_guidelines.md?raw";
 import baseToolGuidelines from "$lib/data/tool_use_guidelines.md?raw";
 import { formatMessageContent } from "$lib/helpers";
@@ -10,6 +11,7 @@ import {
   getConversationMessage,
   getLastSummary
 } from "$lib/server/conversations-service";
+import { isChessEngineAvailable } from "$lib/server/chess/engine-pool";
 import { createTools, type GenerateImageToolOptions } from "$lib/server/tools";
 import { getUser } from "$lib/server/users-service";
 import { AgentType, AIProvider, type DBMessage } from "$lib/types/db";
@@ -105,14 +107,19 @@ class AIService {
     const processedMessages = await this.preProcess(messages, model, userId, agent, conversationId);
 
     // Tools only matter when the model can call them; the image tool is also
-    // only offered when the user has a key for a provider that generates images.
-    const tools = model.supportsTools ? createTools({ imageGeneration }) : undefined;
-    const hasImageTool = !!tools && "generateImage" in tools;
+    // only offered when the user has a key for a provider that generates images,
+    // and the chess tools when the server has a chess engine.
+    const tools = model.supportsTools
+      ? createTools({ imageGeneration, chess: isChessEngineAvailable() })
+      : undefined;
 
     const response = await this.getResponse(
       processedMessages,
       model,
-      await this.prepareSystemPrompt(agent, userId, hasImageTool),
+      await this.prepareSystemPrompt(agent, userId, {
+        imageGeneration: !!tools && "generateImage" in tools,
+        chess: !!tools && "analyzePosition" in tools
+      }),
       thinking,
       tools
     );
@@ -470,19 +477,23 @@ class AIService {
   private async prepareSystemPrompt(
     agent: Agent | undefined,
     userId: string,
-    imageGeneration = false
+    { imageGeneration = false, chess = false }: { imageGeneration?: boolean; chess?: boolean } = {}
   ): Promise<string | undefined> {
     const user = await getUser(userId);
 
     if (!user) return corePrompt;
 
-    // The image guidelines only make sense when the tool is actually offered.
-    const toolGuidelines = imageGeneration
-      ? baseToolGuidelines.replace(
-          "</tool_use_guidelines>",
-          `${imageGuidelines.trim()}\n\n</tool_use_guidelines>`
-        )
-      : baseToolGuidelines;
+    // Guidelines for optional tools only make sense when the tool is offered.
+    const extraGuidelines = [imageGeneration && imageGuidelines, chess && chessGuidelines]
+      .filter((guidelines): guidelines is string => !!guidelines)
+      .map((guidelines) => guidelines.trim());
+    const toolGuidelines =
+      extraGuidelines.length > 0
+        ? baseToolGuidelines.replace(
+            "</tool_use_guidelines>",
+            `${extraGuidelines.join("\n\n")}\n\n</tool_use_guidelines>`
+          )
+        : baseToolGuidelines;
 
     let baseInstructions = "";
     if (user.useBaseInstructions) {

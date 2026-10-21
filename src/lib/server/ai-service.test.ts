@@ -12,7 +12,8 @@ const mocks = vi.hoisted(() => ({
   getAgentByName: vi.fn(async () => null),
   addConversationMessage: vi.fn<(...args: unknown[]) => Promise<void>>(async () => {}),
   getConversationMessage: vi.fn(),
-  getLastSummary: vi.fn(async (): Promise<unknown> => null)
+  getLastSummary: vi.fn(async (): Promise<unknown> => null),
+  isChessEngineAvailable: vi.fn(() => false)
 }));
 
 vi.mock("ai", async (importOriginal) => {
@@ -33,6 +34,10 @@ vi.mock("$lib/server/conversations-service", () => ({
   getLastSummary: mocks.getLastSummary
 }));
 vi.mock("$lib/server/r2-storage", () => ({ uploadGeneratedImageToR2: vi.fn() }));
+vi.mock("$lib/server/chess/engine-pool", () => ({
+  isChessEngineAvailable: mocks.isChessEngineAvailable,
+  getEnginePool: vi.fn(() => null)
+}));
 
 const { default: AIService } = await import("./ai-service");
 
@@ -71,6 +76,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.isWithinTokenLimit.mockReturnValue(true);
   mocks.getLastSummary.mockResolvedValue(null);
+  mocks.isChessEngineAvailable.mockReturnValue(false);
   mocks.getUser.mockResolvedValue({
     id: "user_1",
     username: "alice",
@@ -183,6 +189,20 @@ describe("AIService.run", () => {
     expect(Object.keys(options.tools)).toContain("generateImage");
     expect(options.system).toContain("generateImage");
     expect(options.system.indexOf("generateImage")).toBeLessThan(
+      options.system.indexOf("</tool_use_guidelines>")
+    );
+  });
+
+  it("offers the chess tools and their guidelines when an engine is configured", async () => {
+    mocks.isChessEngineAvailable.mockReturnValue(true);
+    await new AIService("openai" as never, "key").run([user("u1", "user", "Hi")], MODEL, "user_1");
+    const { options } = lastCall();
+    expect(Object.keys(options.tools)).toEqual(
+      expect.arrayContaining(["analyzePosition", "analyzeGame", "makeMoves"])
+    );
+    expect(options.system).toContain("## Chess Analysis");
+    expect(options.system).not.toContain("## Image Generation");
+    expect(options.system.indexOf("## Chess Analysis")).toBeLessThan(
       options.system.indexOf("</tool_use_guidelines>")
     );
   });

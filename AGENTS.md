@@ -72,6 +72,7 @@ Prettier config: double quotes, no trailing commas, 100-char print width, Tailwi
 - Two agent types: `default` (instruction-based) and `character` (roleplay with verbosity settings)
 - System prompt built from `src/lib/data/` (base instructions, character prompt, tool use guidelines); users can override base instructions
 - AI tools defined in `src/lib/server/tools/` (currentTime, webSearch, fetchWebpage, generateImage); web tools use the Exa API (`EXA_API_KEY`). Tools are built per request with `createTools()`
+- Chess analysis: `analyzePosition`, `analyzeGame` and `makeMoves` (`src/lib/server/tools/chess.ts`) sit on `src/lib/server/chess/`: a UCI client (`uci-engine.ts`), a small pool of engine processes (`engine-pool.ts`) and the analysis logic on top of `chess.js` (`analysis.ts`). The tools are offered only when a Stockfish binary resolves (`CHESS_ENGINE_PATH`, else `stockfish` on the PATH); the Docker image installs Debian's `stockfish`. Guidelines in `src/lib/data/chess_guidelines.md` are spliced into the tool-use guidelines in that case. Evaluations are normalised to White's point of view and lines are returned in SAN
 - Image generation: the chat model hands off to an image model via the `generateImage` tool. `src/lib/server/image-models.ts` holds the per-provider image model (OpenAI, Google, xAI, OpenRouter) and `selectImageModel` picks one from the user's API keys (chat model's provider first). The tool is only offered when a suitable key exists; its guidelines (`src/lib/data/image_generation_guidelines.md`) are spliced into the tool-use guidelines in that case. Generated images are uploaded to R2 and the tool output carries the R2 `key`, which the UI, R2 cleanup, and `formatMessageContent` read via `getGeneratedImage` in `src/lib/helpers/generated-image.ts`
 
 **Model Registry and Sync** (`src/lib/server/models-service.ts`, `src/lib/server/model-sync.ts`)
@@ -118,6 +119,7 @@ Prettier config: double quotes, no trailing commas, 100-char print width, Tailwi
 - `folders-service.ts` - Folder organization for conversations
 - `search-helpers.ts` - Full-text search SQL helpers
 - `r2-storage.ts` - Cloudflare R2 uploads and presigned URLs
+- `chess/` - Stockfish UCI client, engine pool and chess analysis (position evaluation, game review, move validation)
 - `queue.ts` - BullMQ queues and workers (conversation import, model sync)
 - `socket.ts` - Standalone Socket.io server for import progress
 - `db/` - Prisma client singleton
@@ -157,7 +159,7 @@ Prettier config: double quotes, no trailing commas, 100-char print width, Tailwi
 ### Environment
 
 - Configuration via `.env`, read with `$env/dynamic/private` and `$env/dynamic/public`
-- Key variables: `DATABASE_URL`, `REDIS_PASSWORD`, `SOCKET_PORT`, `WEBHOOK_SECRET`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `EXA_API_KEY`, `RESEND_API_KEY`, `CONTACT_EMAIL`, `PUBLIC_APP_VERSION`, `PUBLIC_ELEVENLABS_BASE_URL`, plus Clerk keys
+- Key variables: `DATABASE_URL`, `REDIS_PASSWORD`, `SOCKET_PORT`, `WEBHOOK_SECRET`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `EXA_API_KEY`, `CHESS_ENGINE_PATH` (optional; `CHESS_ENGINE_INSTANCES` and `CHESS_ENGINE_THREADS` tune the engine pool, default 2 and 1), `RESEND_API_KEY`, `CONTACT_EMAIL`, `PUBLIC_APP_VERSION`, `PUBLIC_ELEVENLABS_BASE_URL`, plus Clerk keys
 - AI provider API keys are per-user (stored encrypted), not environment variables
 
 ### Deployment

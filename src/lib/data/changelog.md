@@ -1,5 +1,14 @@
 # ChatLounge Changelog
 
+## 21 Oct 2026
+
+The AI can now analyse chess with a real engine. Paste a game or describe a position in a normal conversation, and the chat model consults Stockfish rather than guessing.
+
+- **Position analysis**: ask "what's the best move here?" or "who's better?" and the AI reports the engine's evaluation and top lines, from White's point of view, in standard notation.
+- **Game review**: paste a PGN and ask for a review. The AI gets every move's evaluation, the mistakes and blunders, each side's accuracy, and the critical moments to talk you through.
+- **Reliable moves**: the AI checks that the moves it discusses are legal before suggesting them, and can play out a line to show you the resulting position.
+- **Works with any model**: the engine runs on the ChatLounge server, so no extra API key is needed. Every model that supports tools can use it.
+
 ## 18 Oct 2026
 
 - **New**: maths in chat replies is now typeset properly. When a model writes LaTeX, whether as `$...$`, `$$...$$`, `\(...\)` or `\[...\]`, it is rendered with KaTeX instead of appearing as raw markup. This applies to shared conversations too. Rendered maths includes MathML, so screen readers announce the expression rather than the TeX source. Dollar amounts such as "$5 and $10" are left alone.

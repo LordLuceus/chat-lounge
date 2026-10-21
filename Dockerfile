@@ -21,7 +21,10 @@ FROM node:24-slim
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y ca-certificates
+# Stockfish gives the chat models a chess engine (see src/lib/server/chess/)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates stockfish \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/node_modules ./node_modules
@@ -31,6 +34,7 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/run.sh ./run.sh
 
 ENV NODE_ENV=production
+ENV CHESS_ENGINE_PATH=/usr/games/stockfish
 
 EXPOSE 3000
 EXPOSE 4001

@@ -154,6 +154,7 @@ Required environment variables (see `.env.example`):
 - `REDIS_URL`: Redis/Valkey connection string
 - `CLERK_SECRET_KEY`: Clerk authentication key
 - API keys for AI providers (stored per-user in database)
+- `CHESS_ENGINE_PATH` (optional): path to a Stockfish binary for the chess analysis tools; when unset, `stockfish` on the PATH is used if present, otherwise the tools are not offered. The Docker image installs it
 
 ## Contributing
 

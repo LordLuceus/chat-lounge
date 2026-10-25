@@ -126,6 +126,20 @@ describe("formatMessageContent", () => {
     ).toBe("[Generated image: a fox]");
   });
 
+  it("describes chess analysis", () => {
+    expect(
+      formatMessageContent([
+        {
+          type: "tool-analyzePosition",
+          toolCallId: "c1",
+          state: "output-available",
+          input: {},
+          output: { success: true, display: "#2", bestMove: "Qh7+" }
+        } as never
+      ])
+    ).toBe("[Chess analysis: #2, best move Qh7+]");
+  });
+
   it("returns an empty string with no printable parts", () => {
     expect(formatMessageContent([])).toBe("");
   });

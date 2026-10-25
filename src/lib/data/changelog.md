@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 25 Oct 2026
+
+- **New**: chess analysis now comes with a board. When the AI analyses a position, the reply shows a diagram with the engine's suggested move drawn on it, an evaluation bar, the top lines, and a link to open the position in Lichess. Playing out a line shows the resulting position with the last move highlighted, and a game review shows the position before the worst mistake with a table of the critical moments. Boards describe the pieces and who is to move for screen readers, and copying a message includes a one-line summary of each analysis.
+
 ## 21 Oct 2026
 
 The AI can now analyse chess with a real engine. Paste a game or describe a position in a normal conversation, and the chat model consults Stockfish rather than guessing.

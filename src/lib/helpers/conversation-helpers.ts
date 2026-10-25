@@ -1,4 +1,5 @@
 import type { ConversationWithMessageMap } from "$lib/server/conversations-service";
+import { describeChessPart, getChessPart } from "./chess";
 import { getGeneratedImage } from "./generated-image";
 import type { DBMessage } from "$lib/types/db";
 import type { Message } from "@prisma/client";
@@ -88,6 +89,8 @@ export function formatMessageContent(parts: UIMessagePart<UIDataTypes, UITools>[
       if (generated) {
         return `[Generated image: ${generated.prompt || generated.filename || generated.key}]`;
       }
+      const chess = getChessPart(part);
+      if (chess) return describeChessPart(chess);
       return "";
     })
     .filter(Boolean)

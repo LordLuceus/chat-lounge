@@ -1,5 +1,6 @@
 export * from "./aria-list-open";
 export * from "./check-for-updates";
+export * from "./chess";
 export * from "./conversation-helpers";
 export * from "./filename";
 export * from "./generated-image";

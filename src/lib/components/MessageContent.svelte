@@ -1,8 +1,16 @@
 <script lang="ts">
   import { copyCodeBlocks } from "$lib/actions/copy-code";
+  import ChessAnalysis from "$lib/components/ChessAnalysis.svelte";
   import ToolCallDisplay from "$lib/components/ToolCallDisplay.svelte";
   import * as Avatar from "$lib/components/ui/avatar";
-  import { formatMessageContent, getGeneratedImage, isGeneratingImage } from "$lib/helpers";
+  import {
+    formatMessageContent,
+    getChessPart,
+    getGeneratedImage,
+    getPendingChessPart,
+    isChessPartType,
+    isGeneratingImage
+  } from "$lib/helpers";
   import { fetchYouTubeTitle, getYouTubeVideoId, isYouTubeUrl } from "$lib/helpers/youtube";
   import { normalizeMathDelimiters } from "$lib/helpers/math-delimiters";
   import { lineBreaksPlugin } from "$lib/line-breaks-plugin";
@@ -266,6 +274,21 @@
             </div>
           {:else if isGeneratingImage(part)}
             <p class="my-2 animate-pulse" role="status">Generating image…</p>
+          {/if}
+        {:else if isChessPartType(part.type)}
+          {@const chess = getChessPart(part)}
+          {@const pending = getPendingChessPart(part)}
+          <ToolCallDisplay {part} />
+          {#if chess}
+            <ChessAnalysis {chess} />
+          {:else if pending}
+            <p class="my-2 animate-pulse" role="status">
+              {pending === "game"
+                ? "Reviewing game…"
+                : pending === "moves"
+                  ? "Playing moves…"
+                  : "Analysing position…"}
+            </p>
           {/if}
         {:else if part.type.startsWith("tool-") && part.type !== "tool-call" && part.type !== "tool-result"}
           <ToolCallDisplay {part} />

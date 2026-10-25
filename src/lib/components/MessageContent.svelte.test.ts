@@ -141,6 +141,51 @@ describe("MessageContent", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders chess tool output as a board and shows progress while it runs", () => {
+    render(MessageContent, {
+      message: {
+        role: "assistant",
+        parts: [
+          {
+            type: "tool-makeMoves",
+            toolCallId: "c1",
+            state: "output-available",
+            input: { moves: ["e4"] },
+            output: {
+              success: true,
+              startFen: "",
+              fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
+              sideToMove: "black",
+              moves: [{ ply: 1, moveNumber: 1, side: "white", san: "e4", uci: "e2e4", fen: "" }],
+              board: [],
+              legalMoves: [],
+              status: {
+                check: false,
+                checkmate: false,
+                stalemate: false,
+                draw: false,
+                gameOver: false
+              },
+              pgn: "1. e4",
+              analysisUrl: "https://lichess.org/analysis/z"
+            }
+          } as never,
+          {
+            type: "tool-analyzePosition",
+            toolCallId: "c2",
+            state: "input-available",
+            input: {}
+          } as never
+        ]
+      }
+    });
+    expect(screen.getByRole("img", { name: /^Black to move/ })).toBeInTheDocument();
+    expect(screen.getByText("1. e4")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Analysing position…");
+    // The raw tool call stays available for anyone who wants the details.
+    expect(screen.getAllByText("makeMoves")).not.toHaveLength(0);
+  });
+
   it("shows reasoning in a collapsible section", () => {
     render(MessageContent, {
       message: { role: "assistant", parts: [{ type: "reasoning", text: "Let me think" }] }

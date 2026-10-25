@@ -332,5 +332,11 @@ quality lever:
 - **Phase 1 and 2 are implemented**: `analyzePosition`, `makeMoves` and
   `analyzeGame` in `src/lib/server/tools/chess.ts`, on top of
   `src/lib/server/chess/`. Game review is bounded to a 30-second engine budget
-  per call and reports when it had to stop early. The board renderer, Lichess
-  fast paths and opening names remain to do.
+  per call and reports when it had to stop early.
+- **Phase 3 is implemented**: `ChessBoard.svelte` draws a FEN as an inline SVG
+  (Unicode piece glyphs with a text-presentation selector, filled so they look
+  the same in every font), with last-move tinting, a suggested-move arrow and
+  a spoken description of the pieces. `ChessAnalysis.svelte` wraps it with an
+  evaluation bar, the engine lines, the move list or the critical-moments
+  table, and a Lichess link. The Lichess fast paths and opening names remain
+  to do.

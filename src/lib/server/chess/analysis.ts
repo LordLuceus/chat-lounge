@@ -1,108 +1,35 @@
 import { Chess, validateFen, type Move } from "chess.js";
+import type {
+  Side,
+  Evaluation,
+  PositionInput,
+  PositionStatus,
+  AnalysisLine,
+  PositionAnalysis,
+  MoveRecord,
+  MovesResult,
+  MoveClassification,
+  AnalysedMove,
+  GameAnalysis
+} from "$lib/types/chess";
 import type { EngineScore, SearchOptions, SearchResult } from "./uci-engine";
+
+export type {
+  Side,
+  Evaluation,
+  PositionInput,
+  PositionStatus,
+  AnalysisLine,
+  PositionAnalysis,
+  MoveRecord,
+  MovesResult,
+  MoveClassification,
+  AnalysedMove,
+  GameAnalysis
+} from "$lib/types/chess";
 
 /** Runs one engine search; the pool provides it, tests fake it. */
 export type Search = (options: SearchOptions) => Promise<SearchResult>;
-
-export type Side = "white" | "black";
-
-/** An evaluation from White's point of view (positive favours White). */
-export type Evaluation =
-  | { type: "cp"; value: number }
-  | { type: "mate"; value: number }
-  | { type: "checkmate"; winner: Side }
-  | { type: "draw" };
-
-export interface PositionInput {
-  fen?: string;
-  pgn?: string;
-  moves?: string[];
-  /** With `pgn` or `moves`: use the position after this many half-moves. */
-  ply?: number;
-}
-
-export interface PositionStatus {
-  check: boolean;
-  checkmate: boolean;
-  stalemate: boolean;
-  draw: boolean;
-  gameOver: boolean;
-}
-
-export interface AnalysisLine {
-  rank: number;
-  evaluation: Evaluation;
-  /** Human-readable evaluation, e.g. `+0.35` or `#-3`. */
-  display: string;
-  /** The line in standard algebraic notation. */
-  moves: string[];
-}
-
-export interface PositionAnalysis {
-  fen: string;
-  sideToMove: Side;
-  /** The board as eight rank strings, rank 8 first. */
-  board: string[];
-  evaluation: Evaluation;
-  display: string;
-  depth: number;
-  bestMove: string | null;
-  lines: AnalysisLine[];
-  legalMoves: string[];
-  status: PositionStatus;
-  analysisUrl: string;
-  note: string;
-}
-
-export interface MoveRecord {
-  ply: number;
-  moveNumber: number;
-  side: Side;
-  san: string;
-  uci: string;
-  fen: string;
-}
-
-export interface MovesResult {
-  startFen: string;
-  fen: string;
-  sideToMove: Side;
-  moves: MoveRecord[];
-  board: string[];
-  legalMoves: string[];
-  status: PositionStatus;
-  pgn: string;
-  analysisUrl: string;
-}
-
-export type MoveClassification = "best" | "good" | "inaccuracy" | "mistake" | "blunder" | "forced";
-
-export interface AnalysedMove {
-  ply: number;
-  moveNumber: number;
-  side: Side;
-  san: string;
-  evaluationBefore: string;
-  evaluationAfter: string;
-  bestMove: string;
-  centipawnLoss: number;
-  classification: MoveClassification;
-  fenBefore: string;
-}
-
-export interface GameAnalysis {
-  plies: number;
-  analysedPlies: { from: number; to: number };
-  /** True when the time budget ran out before the end of the requested range. */
-  truncated: boolean;
-  depth: number;
-  finalEvaluation: string;
-  accuracy: Record<Side, number | null>;
-  counts: Record<Side, { inaccuracies: number; mistakes: number; blunders: number }>;
-  criticalMoments: AnalysedMove[];
-  moves: AnalysedMove[];
-  note: string;
-}
 
 export class ChessInputError extends Error {}
 
@@ -310,6 +237,7 @@ export async function analyzePosition(
       display: formatEvaluation(terminal),
       depth: 0,
       bestMove: null,
+      bestMoveUci: null,
       lines: []
     };
   }
@@ -334,7 +262,8 @@ export async function analyzePosition(
     };
   });
   const best = lines[0];
-  const bestMove = best?.moves[0] ?? (result.bestMove ? pvToSan(fen, [result.bestMove])[0] : null);
+  const bestMoveUci = result.lines[0]?.pv[0] ?? result.bestMove ?? null;
+  const bestMove = best?.moves[0] ?? (bestMoveUci ? pvToSan(fen, [bestMoveUci])[0] : null);
   const evaluation: Evaluation = best?.evaluation ?? { type: "cp", value: 0 };
 
   return {
@@ -343,6 +272,7 @@ export async function analyzePosition(
     display: formatEvaluation(evaluation),
     depth: result.depth,
     bestMove: bestMove ?? null,
+    bestMoveUci,
     lines
   };
 }

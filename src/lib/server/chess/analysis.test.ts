@@ -118,6 +118,7 @@ describe("analyzePosition", () => {
       display: "+0.30",
       depth: 16,
       bestMove: "Nf6",
+      bestMoveUci: "g8f6",
       lines: [{ rank: 1, display: "+0.30", moves: ["Nf6", "Nc3"] }],
       status: { check: false, checkmate: false, gameOver: false }
     });
@@ -158,6 +159,7 @@ describe("analyzePosition", () => {
       evaluation: { type: "checkmate", winner: "white" },
       display: "checkmate, White wins",
       bestMove: null,
+      bestMoveUci: null,
       lines: [],
       legalMoves: [],
       status: { check: true, checkmate: true, gameOver: true }

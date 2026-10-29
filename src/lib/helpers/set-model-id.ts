@@ -1,7 +1,7 @@
 import { AIProvider } from "$lib/types/db";
-import { type ApiKey } from "@prisma/client";
+import type { ApiKey } from "@prisma/client";
 
-export function setModel(apiKey: ApiKey, originalModelId: string): string {
+export function setModel(apiKey: Pick<ApiKey, "provider">, originalModelId: string): string {
   let modelId = originalModelId;
   if (apiKey.provider === AIProvider.Mistral) {
     modelId = "mistral-small-2506";

@@ -1,5 +1,5 @@
 import { getConversationMessages } from "$lib/helpers/conversation-helpers";
-import type { DBMessage } from "$lib/types/db";
+import type { AIProvider, DBMessage } from "$lib/types/db";
 import type { UIDataTypes, UIMessagePart, UITools } from "ai";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createFakePrisma, type FakePrisma } from "../../tests/fake-prisma";
@@ -43,6 +43,7 @@ const {
   updateConversationMessage,
   addToFolder
 } = await import("./conversations-service");
+const { saveApiKey } = await import("./api-keys-service");
 
 const USER = "user_1";
 const OTHER_USER = "user_2";
@@ -98,9 +99,7 @@ beforeEach(() => {
 
 /** Titles are generated with the user's key for the model's provider. */
 async function giveApiKey(userId = USER) {
-  await prisma.current.apiKey.create({
-    data: { userId, provider: MODEL.provider, key: `key-${userId}` }
-  });
+  await saveApiKey(`key-${userId}`, userId, MODEL.provider as AIProvider);
 }
 
 describe("addConversationMessage", () => {

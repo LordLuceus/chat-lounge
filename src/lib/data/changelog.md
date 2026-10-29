@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 29 Oct 2026
+
+- **Security**: the API keys you enter in Settings are now encrypted before they are stored, so they cannot be read from the database itself. Existing keys were encrypted automatically; nothing changes in how you use them.
+
 ## 25 Oct 2026
 
 - **New**: chess analysis now comes with a board. When the AI analyses a position, the reply shows a diagram with the engine's suggested move drawn on it, an evaluation bar, the top lines, and a link to open the position in Lichess. Playing out a line shows the resulting position with the last move highlighted, and a game review shows the position before the worst mistake with a table of the critical moments. Boards describe the pieces and who is to move for screen readers, and copying a message includes a one-line summary of each analysis.

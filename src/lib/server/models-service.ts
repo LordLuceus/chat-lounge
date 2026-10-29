@@ -1,4 +1,4 @@
-import { getApiKeys } from "$lib/server/api-keys-service";
+import { getApiKeyProviders } from "$lib/server/api-keys-service";
 import { prisma } from "$lib/server/db";
 import { ReasoningType } from "$lib/types/db";
 import {
@@ -55,25 +55,21 @@ export async function getModel(id: string) {
 }
 
 export async function getUserModels(userId: string, searchText?: string) {
-  const apiKeys = await getApiKeys(userId);
+  const providers = await getApiKeyProviders(userId);
 
-  if (apiKeys.length === 0) {
+  if (providers.length === 0) {
     return [];
   }
-
-  const providers = apiKeys.map((key) => key.provider);
 
   return getProviderModels(providers, searchText);
 }
 
 export async function getUserModelsGroupedByProvider(userId: string) {
-  const apiKeys = await getApiKeys(userId);
+  const providers = (await getApiKeyProviders(userId)).sort();
 
-  if (apiKeys.length === 0) {
+  if (providers.length === 0) {
     return [];
   }
-
-  const providers = apiKeys.map((key) => key.provider).sort();
 
   const allModels = await prisma.model.findMany({
     where: {

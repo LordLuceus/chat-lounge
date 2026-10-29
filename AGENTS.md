@@ -115,7 +115,7 @@ Prettier config: double quotes, no trailing commas, 100-char print width, Tailwi
 - `model-sync.ts` - models.dev sync logic
 - `admin-service.ts` / `admin.ts` - Admin data queries and the `requireAdmin` guard
 - `users-service.ts` - User CRUD, synced from Clerk webhooks
-- `api-keys-service.ts` - Per-user encrypted API key storage (including ElevenLabs)
+- `api-keys-service.ts` - Per-user API key storage (including ElevenLabs). Keys are encrypted at rest with AES-256-GCM by `api-key-crypto.ts` under `API_KEY_ENCRYPTION_KEY`, bound to their user and provider; the `encryptedKey` column stays inside the service, callers get the decrypted `key`, and `getApiKeyProviders` answers "which providers has this user set up" without decrypting. Rows stored in plaintext before encryption are sealed at startup (`hooks.server.ts`) or on first read
 - `folders-service.ts` - Folder organization for conversations
 - `search-helpers.ts` - Full-text search SQL helpers
 - `r2-storage.ts` - Cloudflare R2 uploads and presigned URLs
@@ -159,8 +159,8 @@ Prettier config: double quotes, no trailing commas, 100-char print width, Tailwi
 ### Environment
 
 - Configuration via `.env`, read with `$env/dynamic/private` and `$env/dynamic/public`
-- Key variables: `DATABASE_URL`, `REDIS_PASSWORD`, `SOCKET_PORT`, `WEBHOOK_SECRET`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `EXA_API_KEY`, `CHESS_ENGINE_PATH` (optional; `CHESS_ENGINE_INSTANCES` and `CHESS_ENGINE_THREADS` tune the engine pool, default 2 and 1), `RESEND_API_KEY`, `CONTACT_EMAIL`, `PUBLIC_APP_VERSION`, `PUBLIC_ELEVENLABS_BASE_URL`, plus Clerk keys
-- AI provider API keys are per-user (stored encrypted), not environment variables
+- Key variables: `DATABASE_URL`, `API_KEY_ENCRYPTION_KEY` (32 bytes, base64 or hex; required in production), `REDIS_PASSWORD`, `SOCKET_PORT`, `WEBHOOK_SECRET`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `EXA_API_KEY`, `CHESS_ENGINE_PATH` (optional; `CHESS_ENGINE_INSTANCES` and `CHESS_ENGINE_THREADS` tune the engine pool, default 2 and 1), `RESEND_API_KEY`, `CONTACT_EMAIL`, `PUBLIC_APP_VERSION`, `PUBLIC_ELEVENLABS_BASE_URL`, plus Clerk keys
+- AI provider API keys are per-user (stored encrypted, see `api-keys-service.ts`), not environment variables
 
 ### Deployment
 

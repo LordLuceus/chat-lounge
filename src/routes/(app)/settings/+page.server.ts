@@ -1,6 +1,8 @@
-import { saveApiKey } from "$lib/server/api-keys-service";
+import { ALL_PROVIDERS } from "$lib/helpers/api-key-utils";
+import { ApiKeyEncryptionError } from "$lib/server/api-key-crypto";
+import { MAX_API_KEY_LENGTH, saveApiKey } from "$lib/server/api-keys-service";
 import { getUser, updateUserSettings } from "$lib/server/users-service";
-import { AIProvider } from "$lib/types/db";
+import type { AIProvider } from "$lib/types/db";
 import { fail } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
 
@@ -29,11 +31,19 @@ export const actions: Actions = {
     const formData = await request.formData();
     const provider = url.searchParams.get("provider");
 
-    if (!provider) {
-      return fail(400, { message: "Missing provider" });
+    if (!provider || !(ALL_PROVIDERS as readonly string[]).includes(provider)) {
+      return fail(400, { message: "Unknown provider" });
     }
 
-    const apiKey = formData.get("apiKey") as string;
+    const apiKey = formData.get("apiKey");
+
+    if (typeof apiKey !== "string" || apiKey.trim().length === 0) {
+      return fail(400, { message: "Please enter an API key" });
+    }
+
+    if (apiKey.trim().length > MAX_API_KEY_LENGTH) {
+      return fail(400, { message: "That API key is too long" });
+    }
 
     if (!userId) {
       return fail(401, { message: "Unauthorized" });
@@ -45,7 +55,18 @@ export const actions: Actions = {
       return fail(401, { message: "Unauthorized" });
     }
 
-    await saveApiKey(apiKey, user.id, provider as AIProvider);
+    try {
+      await saveApiKey(apiKey.trim(), user.id, provider as AIProvider);
+    } catch (err) {
+      if (err instanceof ApiKeyEncryptionError) {
+        // A deployment problem, not the user's: never echo the key or the secret.
+        console.error("[api-keys] Could not save API key:", err.message);
+        return fail(500, {
+          message: "API keys cannot be saved right now. Please try again later."
+        });
+      }
+      throw err;
+    }
 
     return { success: true };
   },

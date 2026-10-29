@@ -153,7 +153,8 @@ Required environment variables (see `.env.example`):
 - `DATABASE_URL`: MySQL/MariaDB connection string
 - `REDIS_URL`: Redis/Valkey connection string
 - `CLERK_SECRET_KEY`: Clerk authentication key
-- API keys for AI providers (stored per-user in database)
+- `API_KEY_ENCRYPTION_KEY`: 32 random bytes (base64 or hex) used to encrypt users' provider API keys at rest with AES-256-GCM. Generate one with `openssl rand -base64 32`. The server refuses to start in production without it. Keep it with your backups: if it is lost, every stored API key becomes unreadable and users have to enter their keys again
+- API keys for AI providers are entered by each user in Settings and stored encrypted in the database
 - `CHESS_ENGINE_PATH` (optional): path to a Stockfish binary for the chess analysis tools; when unset, `stockfish` on the PATH is used if present, otherwise the tools are not offered. The Docker image installs it
 
 ## Contributing

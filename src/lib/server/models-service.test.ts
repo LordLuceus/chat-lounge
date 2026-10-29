@@ -1,3 +1,4 @@
+import { AIProvider } from "$lib/types/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createFakePrisma, type FakePrisma } from "../../tests/fake-prisma";
 
@@ -17,6 +18,7 @@ const {
   getUserModelsGroupedByProvider,
   reviewModel
 } = await import("./models-service");
+const { saveApiKey } = await import("./api-keys-service");
 
 beforeEach(async () => {
   prisma.current = createFakePrisma({
@@ -61,8 +63,8 @@ beforeEach(async () => {
       }
     ]
   });
-  await prisma.current.apiKey.create({ data: { userId: "u1", provider: "openai", key: "k1" } });
-  await prisma.current.apiKey.create({ data: { userId: "u1", provider: "anthropic", key: "k2" } });
+  await saveApiKey("k1", "u1", AIProvider.OpenAI);
+  await saveApiKey("k2", "u1", AIProvider.Anthropic);
 });
 
 describe("getModel", () => {

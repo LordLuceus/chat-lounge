@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { downloadUrl as downloadUrlStore, ttsGenerating } from "$lib/stores";
+import { ttsGenerating } from "$lib/stores";
 import { get } from "svelte/store";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { generateTTS } from "./tts-service";
@@ -80,6 +80,7 @@ interface FetchCall {
 function installFetch() {
   const calls: FetchCall[] = [];
   const pending: Array<(response: Response) => void> = [];
+  const abortError = () => new DOMException("The operation was aborted.", "AbortError");
   const fetchMock = vi.fn((url: string, init: RequestInit) => {
     calls.push({
       url,
@@ -88,10 +89,17 @@ function installFetch() {
     });
     return new Promise<Response>((resolve, reject) => {
       if (init.signal?.aborted) {
-        reject(new DOMException("The operation was aborted.", "AbortError"));
+        reject(abortError());
         return;
       }
       pending.push(resolve);
+      // Like the real fetch, an abort while waiting rejects the request.
+      init.signal?.addEventListener("abort", () => {
+        const index = pending.indexOf(resolve);
+        if (index === -1) return;
+        pending.splice(index, 1);
+        reject(abortError());
+      });
     });
   });
   vi.stubGlobal("fetch", fetchMock);
@@ -104,9 +112,10 @@ function installFetch() {
       }
     });
     const call = calls[calls.length - 1];
+    // Like the real fetch, an abort while reading fails the body stream.
     call.signal?.addEventListener("abort", () => {
       try {
-        controller.error(new DOMException("The operation was aborted.", "AbortError"));
+        controller.error(abortError());
       } catch {
         // already closed
       }
@@ -182,7 +191,6 @@ describe("generateTTS", () => {
     urls = installObjectUrls();
     audio = new FakeAudioElement();
     ttsGenerating.set(false);
-    downloadUrlStore.set("");
   });
 
   afterEach(() => {
@@ -297,7 +305,6 @@ describe("generateTTS", () => {
       run.stream.close();
       await flush();
       run.sourceBuffer.finishUpdate();
-      downloadUrlStore.set(run.onDownloadReady.mock.calls[0][0].downloadUrl);
     }
 
     it("switches to the downloadable file when playback ends", async () => {
@@ -363,6 +370,126 @@ describe("generateTTS", () => {
       expect(mediaSource.endOfStream).toHaveBeenCalledTimes(1);
       expect(get(ttsGenerating)).toBe(false);
     });
+
+    it("builds the download from the bytes of each chunk, not their whole buffers", async () => {
+      const { stream } = await startStreaming();
+      const backing = new Uint8Array([9, 9, 1, 2, 3, 9]).buffer;
+
+      stream.push(new Uint8Array(backing, 2, 3));
+      await flush();
+      stream.close();
+      await flush();
+
+      const blob = urls.created[1] as Blob;
+      expect(blob.size).toBe(3);
+      expect(Array.from(new Uint8Array(await blob.arrayBuffer()))).toEqual([1, 2, 3]);
+    });
+
+    it("falls back to a generic message when the error body is not JSON", async () => {
+      const run = start(audio);
+      FakeMediaSource.latest.open();
+      fetchApi.respondWith(new Response("<html>Bad gateway</html>", { status: 502 }));
+      await flush();
+
+      expect(run.onError).toHaveBeenCalledWith("Failed to fetch audio");
+    });
+
+    it("leaves the element alone when playback ends after a failure", async () => {
+      const { onError } = start(audio);
+      FakeMediaSource.latest.open();
+      fetchApi.respondWith(new Response(JSON.stringify({ message: "Nope" }), { status: 500 }));
+      await flush();
+      expect(onError).toHaveBeenCalledWith("Nope");
+
+      audio.dispatchEvent(new Event("ended"));
+
+      expect(audio.src).toBe("blob:test/1");
+      expect(audio.pause).not.toHaveBeenCalled();
+    });
+
+    it("releases the element and clears the generating flag when cancelled mid-stream", async () => {
+      const { controller, stream, mediaSource, onError, onDownloadReady } = await startStreaming();
+      stream.push(new Uint8Array([1]));
+      await flush();
+
+      controller.abort();
+      await flush();
+
+      expect(get(ttsGenerating)).toBe(false);
+      expect(mediaSource.endOfStream).toHaveBeenCalledTimes(1);
+      expect(onError).not.toHaveBeenCalled();
+      expect(onDownloadReady).not.toHaveBeenCalled();
+
+      // Nothing from the cancelled generation reacts to the element any more.
+      audio.dispatchEvent(new Event("ended"));
+      audio.dispatchEvent(new Event("seeked"));
+      expect(audio.src).toBe("blob:test/1");
+      expect(audio.pause).not.toHaveBeenCalled();
+    });
+
+    it("clears the generating flag when cancelled before the server answers", async () => {
+      const { controller, onError } = start(audio);
+      FakeMediaSource.latest.open();
+      expect(fetchApi.calls).toHaveLength(1);
+
+      controller.abort();
+      await flush();
+
+      expect(get(ttsGenerating)).toBe(false);
+      expect(onError).not.toHaveBeenCalled();
+    });
+
+    it("clears the generating flag when cancelled before the source opens", async () => {
+      const { controller, onError } = start(audio);
+      controller.abort();
+      FakeMediaSource.latest.open();
+      await flush();
+
+      expect(get(ttsGenerating)).toBe(false);
+      expect(onError).not.toHaveBeenCalled();
+    });
+
+    it("detaches a finished generation when the next one starts", async () => {
+      const first = await startStreaming();
+      await finishStream(first);
+      expect(first.onDownloadReady).toHaveBeenCalledTimes(1);
+
+      const second = await startStreaming();
+
+      expect(urls.revokeObjectURL).toHaveBeenCalledWith("blob:test/2");
+      // The first generation's handlers no longer swap the element's source.
+      audio.dispatchEvent(new Event("ended"));
+      audio.dispatchEvent(new Event("seeked"));
+      expect(audio.src).toBe("blob:test/3");
+      expect(audio.pause).not.toHaveBeenCalled();
+      expect(second.onError).not.toHaveBeenCalled();
+    });
+
+    it("stops a still-streaming generation when the next one starts", async () => {
+      const first = await startStreaming();
+      first.stream.push(new Uint8Array([1]));
+      await flush();
+
+      const second = await startStreaming();
+      expect(get(ttsGenerating)).toBe(true);
+      expect(first.mediaSource.endOfStream).toHaveBeenCalledTimes(1);
+
+      // The old stream is cancelled and its buffer is no longer fed.
+      first.sourceBuffer.finishUpdate();
+      await flush();
+      expect(() => first.stream.push(new Uint8Array([2]))).toThrow();
+      expect(first.sourceBuffer.appended).toHaveLength(1);
+      expect(first.onDownloadReady).not.toHaveBeenCalled();
+      expect(first.onError).not.toHaveBeenCalled();
+      expect(get(ttsGenerating)).toBe(true);
+
+      second.stream.push(new Uint8Array([3]));
+      await flush();
+      second.stream.close();
+      await flush();
+      expect(second.onDownloadReady).toHaveBeenCalledTimes(1);
+      expect(get(ttsGenerating)).toBe(false);
+    });
   });
 
   describe("without MediaSource support", () => {
@@ -399,6 +526,24 @@ describe("generateTTS", () => {
       await run.promise;
 
       expect(run.onError).toHaveBeenCalledWith("No voice provided");
+      expect(run.onDownloadReady).not.toHaveBeenCalled();
+      expect(get(ttsGenerating)).toBe(false);
+    });
+
+    it("falls back to a generic message when the error body is not JSON", async () => {
+      const run = start(audio);
+      fetchApi.respondWith(new Response("Bad gateway", { status: 502 }));
+      await run.promise;
+
+      expect(run.onError).toHaveBeenCalledWith("Failed to fetch audio");
+    });
+
+    it("does not report a cancelled request as an error", async () => {
+      const run = start(audio);
+      run.controller.abort();
+      await run.promise;
+
+      expect(run.onError).not.toHaveBeenCalled();
       expect(run.onDownloadReady).not.toHaveBeenCalled();
       expect(get(ttsGenerating)).toBe(false);
     });

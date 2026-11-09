@@ -1,6 +1,5 @@
 import { generateAudioFilename, ttsCleanup } from "$lib/helpers";
-import { downloadUrl as downloadUrlStore, ttsGenerating } from "$lib/stores";
-import { get } from "svelte/store";
+import { ttsGenerating } from "$lib/stores";
 
 interface TTSOptions {
   audioElement: HTMLAudioElement;
@@ -12,6 +11,29 @@ interface TTSOptions {
   signal: AbortSignal;
 }
 
+interface TTSRequest {
+  text: string;
+  voice?: string;
+  modelId?: string;
+  stream: boolean;
+}
+
+/** Stop feeding the source buffer once this much audio is buffered past the playhead. */
+const MAX_BUFFER_AHEAD_SECONDS = 600;
+
+// Generations share one audio element, so the previous generation's listeners
+// and object URLs are released before a new one starts. The download URL handed
+// to `onDownloadReady` is therefore valid until the next call to `generateTTS`.
+let teardownPrevious: (() => void) | null = null;
+
+/**
+ * Speaks `text` through `audioElement` using the `/api/tts` endpoint.
+ *
+ * When the browser supports the MediaSource API the audio is streamed and
+ * played as it arrives; once the stream is complete the full file is offered
+ * for download and used for seeking. Otherwise the whole file is fetched
+ * before playback starts.
+ */
 export async function generateTTS({
   audioElement,
   text,
@@ -21,38 +43,26 @@ export async function generateTTS({
   onError,
   signal
 }: TTSOptions): Promise<void> {
+  teardownPrevious?.();
+  teardownPrevious = null;
+
   text = ttsCleanup(text);
   ttsGenerating.set(true);
+  revokeObjectUrl(audioElement.src);
 
-  if (audioElement.src.startsWith("blob:")) {
-    URL.revokeObjectURL(audioElement.src);
-  }
+  const request: TTSRequest = { text, voice, modelId, stream: false };
+  const filename = generateAudioFilename(text);
 
-  const isStreamingSupported = window.MediaSource && MediaSource.isTypeSupported("audio/mpeg");
-  if (!isStreamingSupported) {
+  if (!isStreamingSupported()) {
     console.warn("MediaSource API not supported. Falling back to full download for playback.");
     try {
-      const response = await fetch(`/api/tts`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, voice, stream: false, modelId }),
-        signal
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to fetch audio");
-      }
-
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-      audioElement.src = audioUrl;
-      audioElement.play();
-      onDownloadReady({ downloadUrl: audioUrl, filename: generateAudioFilename(text) });
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      onError(error.message);
+      const response = await requestAudio(request, signal);
+      const downloadUrl = URL.createObjectURL(await response.blob());
+      audioElement.src = downloadUrl;
+      audioElement.play().catch(warnAutoplayBlocked);
+      onDownloadReady({ downloadUrl, filename });
+    } catch (err) {
+      if (!isAbortError(err)) onError(errorMessage(err));
     } finally {
       ttsGenerating.set(false);
     }
@@ -65,17 +75,21 @@ export async function generateTTS({
   mediaSource.addEventListener(
     "sourceopen",
     () => {
+      // The element holds its own reference to the MediaSource once attached.
       URL.revokeObjectURL(audioElement.src);
 
-      const allChunks: Uint8Array[] = [];
-      const chunkQueue: Uint8Array[] = [];
-      let isStreamFinished = false;
-
       const sourceBuffer = mediaSource.addSourceBuffer("audio/mpeg");
-      const MAX_BUFFER_AHEAD = 600; // 10 minutes
+      const allChunks: Uint8Array<ArrayBuffer>[] = [];
+      const chunkQueue: Uint8Array<ArrayBuffer>[] = [];
+      let reader: ReadableStreamDefaultReader<Uint8Array<ArrayBuffer>> | null = null;
+      let isStreamFinished = false;
+      let downloadUrl: string | null = null;
+      let hasFailed = false;
+      let isTornDown = false;
 
-      let hasEncounteredError = false;
-      const cleanup = () => {
+      // Stops feeding the buffer and closes the stream; playback of what has
+      // already been buffered continues.
+      const finishStream = () => {
         audioElement.removeEventListener("timeupdate", pump);
         sourceBuffer.removeEventListener("updateend", pump);
         if (mediaSource.readyState === "open") {
@@ -87,131 +101,162 @@ export async function generateTTS({
         }
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const handleError = (message: string, error?: any) => {
-        if (hasEncounteredError) return;
-        hasEncounteredError = true;
+      // Releases everything this generation attached to the shared element.
+      const teardown = () => {
+        if (isTornDown) return;
+        isTornDown = true;
+        finishStream();
+        audioElement.removeEventListener("ended", onPlaybackEnded);
+        audioElement.removeEventListener("seeked", onSeeked);
+        reader?.cancel().catch(() => {});
+        if (downloadUrl) URL.revokeObjectURL(downloadUrl);
+      };
+      teardownPrevious = teardown;
+
+      const fail = (message: string, error?: unknown) => {
+        if (hasFailed || isTornDown) return;
+        hasFailed = true;
         console.error(message, error);
         onError(message);
-        cleanup();
+        finishStream();
         ttsGenerating.set(false);
       };
 
       const pump = () => {
-        if (hasEncounteredError) {
-          return;
-        }
+        if (hasFailed || isTornDown) return;
 
         if (isStreamFinished && chunkQueue.length === 0) {
-          if (!sourceBuffer.updating) {
-            cleanup();
-          }
+          if (!sourceBuffer.updating) finishStream();
           return;
         }
 
         if (sourceBuffer.buffered.length > 0) {
           const bufferEnd = sourceBuffer.buffered.end(sourceBuffer.buffered.length - 1);
-          const bufferAhead = bufferEnd - audioElement.currentTime;
-          if (bufferAhead > MAX_BUFFER_AHEAD) {
-            return;
-          }
+          if (bufferEnd - audioElement.currentTime > MAX_BUFFER_AHEAD_SECONDS) return;
         }
 
-        if (sourceBuffer.updating || chunkQueue.length === 0) {
-          return;
-        }
+        if (sourceBuffer.updating || chunkQueue.length === 0) return;
 
         try {
-          const chunk = chunkQueue.shift();
-          if (chunk) {
-            sourceBuffer.appendBuffer(new Uint8Array(chunk));
-          }
+          sourceBuffer.appendBuffer(chunkQueue.shift()!);
         } catch (err) {
-          handleError("Error appending to media buffer. Playback may be incomplete.", err);
+          fail("Error appending to media buffer. Playback may be incomplete.", err);
         }
       };
-      const onPlayBackEnded = () => {
-        audioElement.removeEventListener("ended", onPlayBackEnded);
-        if (audioElement.src === get(downloadUrlStore)) return;
-        cleanup();
 
-        URL.revokeObjectURL(audioElement.src);
-        audioElement.src = get(downloadUrlStore);
-        audioElement.pause();
+      // Swaps the element over to the complete file so the native controls
+      // can replay and seek freely without the MediaSource.
+      const switchToDownload = (resume: boolean) => {
+        if (!downloadUrl || audioElement.src === downloadUrl) return;
+        finishStream();
+        const currentTime = audioElement.currentTime;
+        revokeObjectUrl(audioElement.src);
+        audioElement.src = downloadUrl;
+        if (resume) {
+          audioElement.currentTime = currentTime;
+          audioElement.play().catch(warnAutoplayBlocked);
+        } else {
+          audioElement.pause();
+        }
+      };
+
+      const onPlaybackEnded = () => {
+        audioElement.removeEventListener("ended", onPlaybackEnded);
+        switchToDownload(false);
       };
 
       const onSeeked = () => {
-        if (hasEncounteredError) return;
-
-        if (isStreamFinished && get(downloadUrlStore)) {
-          cleanup();
-          const currentTime = audioElement.currentTime;
-          URL.revokeObjectURL(audioElement.src);
-          audioElement.src = get(downloadUrlStore);
-          audioElement.currentTime = currentTime;
-          audioElement.play().catch((e) => console.warn("Autoplay was blocked:", e));
-          audioElement.removeEventListener("seeked", onSeeked);
-        }
+        if (hasFailed || !isStreamFinished || !downloadUrl) return;
+        audioElement.removeEventListener("seeked", onSeeked);
+        switchToDownload(true);
       };
 
       sourceBuffer.addEventListener("updateend", pump);
       audioElement.addEventListener("timeupdate", pump);
-      audioElement.addEventListener("ended", onPlayBackEnded);
+      audioElement.addEventListener("ended", onPlaybackEnded);
       audioElement.addEventListener("seeked", onSeeked);
 
-      const fetchAndQueueStream = async () => {
+      const streamAudio = async () => {
         try {
-          const response = await fetch(`/api/tts`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text, voice, stream: true, modelId }),
-            signal
-          });
+          const response = await requestAudio({ ...request, stream: true }, signal);
+          if (!response.body) throw new Error("The server returned no audio.");
 
-          if (!response.ok || !response.body) {
-            const error = await response
-              .json()
-              .catch(() => ({ message: "An unknown network error occurred." }));
-            throw new Error(error.message);
-          }
+          reader = response.body.getReader();
+          audioElement.play().catch(warnAutoplayBlocked);
 
-          const reader = response.body.getReader();
-          audioElement.play().catch((e) => console.warn("Autoplay was blocked:", e));
-
-          // eslint-disable-next-line no-constant-condition
-          while (true) {
-            if (hasEncounteredError) break;
+          while (!hasFailed && !isTornDown) {
             const { done, value } = await reader.read();
-            if (done) {
-              break;
-            }
+            if (done) break;
             allChunks.push(value);
             chunkQueue.push(value);
-
             pump();
           }
+          if (isTornDown) return;
 
           isStreamFinished = true;
           ttsGenerating.set(false);
-          const audioBlob = new Blob(
-            allChunks.map((chunk) => chunk.buffer as ArrayBuffer),
-            { type: "audio/mpeg" }
-          );
-          const downloadUrl = URL.createObjectURL(audioBlob);
-          downloadUrlStore.set(downloadUrl);
-          onDownloadReady({ downloadUrl, filename: generateAudioFilename(text) });
-
+          downloadUrl = URL.createObjectURL(new Blob(allChunks, { type: "audio/mpeg" }));
+          onDownloadReady({ downloadUrl, filename });
           pump();
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (err: any) {
-          if (err.name !== "AbortError") {
-            handleError(err.message, err);
+        } catch (err) {
+          if (isTornDown) return;
+          if (isAbortError(err)) {
+            // The caller cancelled; nothing more will arrive, so release the element.
+            teardown();
+            ttsGenerating.set(false);
+            return;
           }
+          fail(errorMessage(err), err);
         }
       };
 
-      fetchAndQueueStream();
+      streamAudio();
     },
     { once: true }
   );
+}
+
+function isStreamingSupported(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.MediaSource !== "undefined" &&
+    window.MediaSource.isTypeSupported("audio/mpeg")
+  );
+}
+
+async function requestAudio(request: TTSRequest, signal: AbortSignal): Promise<Response> {
+  const response = await fetch("/api/tts", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+    signal
+  });
+
+  if (!response.ok) {
+    const details: { message?: string } | null = await response.json().catch(() => null);
+    throw new Error(details?.message || "Failed to fetch audio");
+  }
+
+  return response;
+}
+
+function revokeObjectUrl(url: string) {
+  if (url.startsWith("blob:")) URL.revokeObjectURL(url);
+}
+
+// Checked by name rather than `instanceof` because DOMException comes from the
+// browser realm and may not share the page's Error prototype.
+function isAbortError(err: unknown): boolean {
+  return (
+    typeof err === "object" && err !== null && (err as { name?: unknown }).name === "AbortError"
+  );
+}
+
+function errorMessage(err: unknown): string {
+  const message = typeof err === "object" && err !== null && (err as { message?: unknown }).message;
+  return typeof message === "string" && message ? message : "Failed to fetch audio";
+}
+
+function warnAutoplayBlocked(err: unknown) {
+  console.warn("Autoplay was blocked:", err);
 }

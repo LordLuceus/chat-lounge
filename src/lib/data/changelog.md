@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 9 Nov 2026
+
+- **Fixed**: cancelling speech playback, for example by leaving a conversation while it is still being generated, no longer leaves the Speak button stuck on "Generating...". Starting a new piece of speech now fully detaches the previous one, so an older clip can no longer take over the player or the download link, and the downloaded file is built correctly from the streamed audio.
+
 ## 25 Oct 2026
 
 - **New**: chess analysis now comes with a board. When the AI analyses a position, the reply shows a diagram with the engine's suggested move drawn on it, an evaluation bar, the top lines, and a link to open the position in Lichess. Playing out a line shows the resulting position with the last move highlighted, and a game review shows the position before the worst mistake with a table of the critical moments. Boards describe the pieces and who is to move for screen readers, and copying a message includes a one-line summary of each analysis.

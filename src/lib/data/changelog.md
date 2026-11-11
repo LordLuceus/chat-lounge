@@ -1,5 +1,9 @@
 # ChatLounge Changelog
 
+## 11 Nov 2026
+
+- **New for admins**: the model used to generate conversation titles and follow-up suggestions can now be set per provider on the admin models page, instead of being fixed in the code. Each provider keeps its previous model until it is changed, and can be reset to that default.
+
 ## 9 Nov 2026
 
 - **Fixed**: cancelling speech playback, for example by leaving a conversation while it is still being generated, no longer leaves the Speak button stuck on "Generating...". Starting a new piece of speech now fully detaches the previous one, so an older clip can no longer take over the player or the download link, and the downloaded file is built correctly from the streamed audio.

@@ -1,8 +1,9 @@
-import { getConversationMessages, setModel } from "$lib/helpers";
+import { getConversationMessages } from "$lib/helpers";
 import AIService from "$lib/server/ai-service";
 import { getApiKey } from "$lib/server/api-keys-service";
 import { getConversation } from "$lib/server/conversations-service";
 import { getModel } from "$lib/server/models-service";
+import { getUtilityModelId } from "$lib/server/utility-models-service";
 import { AIProvider } from "$lib/types/db";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
@@ -37,7 +38,7 @@ export const POST = (async ({ locals, params }) => {
   const aiService = new AIService(model.provider as AIProvider, apiKey.key);
   const context = getConversationMessages(conversation);
 
-  const followupModelId = setModel(apiKey, model.id);
+  const followupModelId = await getUtilityModelId(apiKey.provider, model.id);
 
   const suggestions = await aiService.generateFollowUps(context, followupModelId);
 

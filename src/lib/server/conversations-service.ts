@@ -2,8 +2,7 @@ import {
   findLastNodeInBranch,
   formatMessageContent,
   getGeneratedImage,
-  getConversationMessages as getMessages,
-  setModel
+  getConversationMessages as getMessages
 } from "$lib/helpers";
 import AIService from "$lib/server/ai-service";
 import { getApiKey } from "$lib/server/api-keys-service";
@@ -11,6 +10,7 @@ import { prisma } from "$lib/server/db";
 import { getModel } from "$lib/server/models-service";
 import { bulkDeleteFilesFromR2 } from "$lib/server/r2-storage";
 import { createFullTextSearchCondition, getSearchQuery } from "$lib/server/search-helpers";
+import { getUtilityModelId } from "$lib/server/utility-models-service";
 import { AIProvider, type DBMessage } from "$lib/types/db";
 import {
   Prisma,
@@ -536,7 +536,7 @@ async function generateConversationName(
 
   if (!apiKey) return null;
 
-  const modelIdToUse = setModel(apiKey, model.id);
+  const modelIdToUse = await getUtilityModelId(apiKey.provider, model.id);
 
   const service = new AIService(apiKey.provider as AIProvider, apiKey.key);
 

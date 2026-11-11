@@ -63,6 +63,7 @@ const DEFAULTS: Record<string, Row> = {
     releaseDate: null
   },
   deletedModel: {},
+  utilityModel: {},
   user: {
     email: null,
     image: null,
@@ -286,6 +287,12 @@ export function createFakePrisma(options: FakePrismaOptions = {}) {
         const row = tables[table].find((r) => matches(table, r, args.where));
         if (!row) throw notFound(table);
         applyUpdate(row, args.data);
+        return shape(table, row, args);
+      },
+      upsert: async (args: Row) => {
+        const row = tables[table].find((r) => matches(table, r, args.where));
+        if (!row) return shape(table, insert(table, args.create), args);
+        applyUpdate(row, args.update);
         return shape(table, row, args);
       },
       updateMany: async (args: Row) => {

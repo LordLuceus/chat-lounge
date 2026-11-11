@@ -81,6 +81,7 @@ Prettier config: double quotes, no trailing commas, 100-char print width, Tailwi
 - Daily sync from models.dev (BullMQ cron job at 04:00 UTC, scheduled in `hooks.server.ts` in production only) adds new models with `reviewStatus: pending`
 - Admins approve or reject pending models on the admin models page; "Sync now" triggers a manual sync in development
 - Model picker sorts by `releaseDate`, newest first
+- Titles and follow-up suggestions use one small "utility" model per provider: `getUtilityModelId` (`utility-models-service.ts`) returns the admin's choice from the `UtilityModel` table (set on the admin models page), else the default in `src/lib/helpers/set-model-id.ts`
 
 **Conversation Management**
 
@@ -111,6 +112,7 @@ Prettier config: double quotes, no trailing commas, 100-char print width, Tailwi
 - `conversations-service.ts` - Conversation/message management, branching logic
 - `ai-service.ts` - AI provider integration, streaming, summarization
 - `models-service.ts` - Model registry queries, per-user model lists, review actions
+- `utility-models-service.ts` - Per-provider model for titles and follow-up suggestions, with admin overrides
 - `image-models.ts` - Per-provider image generation models and selection from the user's API keys
 - `model-sync.ts` - models.dev sync logic
 - `admin-service.ts` / `admin.ts` - Admin data queries and the `requireAdmin` guard

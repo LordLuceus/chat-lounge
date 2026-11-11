@@ -273,6 +273,17 @@ model DeletedModel {
   @@map("deletedModel")
 }
 
+/// Admin overrides for the model each provider uses for background tasks
+/// (conversation titles, follow-up suggestions). Providers without a row use
+/// the default in src/lib/helpers/set-model-id.ts.
+model UtilityModel {
+  provider  AIProvider @id
+  modelId   String     @db.VarChar(100)
+  updatedAt DateTime   @default(now()) @updatedAt @db.Timestamp(3)
+
+  @@map("utilityModel")
+}
+
 enum ModelReviewStatus {
   pending
   approved

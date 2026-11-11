@@ -6,6 +6,12 @@ import {
 } from "$lib/server/admin-service";
 import { syncModels } from "$lib/server/model-sync";
 import { getModelsForReview, reviewModel } from "$lib/server/models-service";
+import {
+  getUtilityModels,
+  isUtilityModelProvider,
+  resetUtilityModel,
+  setUtilityModel
+} from "$lib/server/utility-models-service";
 import { ModelReviewStatus, ReasoningType } from "@prisma/client";
 import { fail } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
@@ -15,13 +21,15 @@ const REASONING_TYPES = Object.values(ReasoningType) as string[];
 export const load: PageServerLoad = async ({ locals }) => {
   await requireAdmin(locals);
 
-  const [models, approved] = await Promise.all([
+  const [models, approved, utilityModels] = await Promise.all([
     getModelsForReview(),
-    getApprovedModelsWithUsage()
+    getApprovedModelsWithUsage(),
+    getUtilityModels()
   ]);
 
   return {
     approved,
+    utilityModels,
     pending: models.filter((m) => m.reviewStatus === ModelReviewStatus.pending),
     rejected: models.filter((m) => m.reviewStatus === ModelReviewStatus.rejected)
   };
@@ -117,6 +125,40 @@ export const actions: Actions = {
         message: err instanceof Error ? err.message : "Could not delete the model"
       });
     }
+  },
+
+  setUtilityModel: async ({ locals, request }) => {
+    await requireAdmin(locals);
+    const formData = await request.formData();
+    const provider = formData.get("provider");
+    const modelId = formData.get("modelId");
+
+    if (!isUtilityModelProvider(provider)) {
+      return fail(400, { message: "Invalid provider" });
+    }
+
+    if (typeof modelId !== "string" || !modelId.trim() || modelId.trim().length > 100) {
+      return fail(400, { message: "Enter a model ID of up to 100 characters" });
+    }
+
+    await setUtilityModel(provider, modelId.trim());
+
+    return {
+      message: `Titles and follow-up suggestions for ${provider} now use ${modelId.trim()}.`
+    };
+  },
+
+  resetUtilityModel: async ({ locals, request }) => {
+    await requireAdmin(locals);
+    const provider = (await request.formData()).get("provider");
+
+    if (!isUtilityModelProvider(provider)) {
+      return fail(400, { message: "Invalid provider" });
+    }
+
+    await resetUtilityModel(provider);
+
+    return { message: `Titles and follow-up suggestions for ${provider} use the default again.` };
   },
 
   sync: async ({ locals }) => {
